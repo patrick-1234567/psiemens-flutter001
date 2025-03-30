@@ -103,8 +103,9 @@ class _MyHomePageState extends State<MyHomePage> {
                   builder: (BuildContext context) {
                     return AlertDialog(
                       title: const Text('Advertencia'),
-                      content:
-                          const Text('Esta es una advertencia importante.'),
+                      content: const Text(
+                        'Esta es una advertencia importante.',
+                      ),
                       actions: <Widget>[
                         TextButton(
                           onPressed: () {
@@ -126,9 +127,8 @@ class _MyHomePageState extends State<MyHomePage> {
                   MaterialPageRoute(builder: (context) => const LoginScreen()),
                 );
               },
-              child: const Text('Ir a Login'),
+              child: const Text('Martin  Login'),
             ),
-            child: const Text('colabaoracion'),
           ],
         ),
       ),
