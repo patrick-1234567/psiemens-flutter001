@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:psiemens/api/service/auth_service.dart';
-
+import 'package:psiemens/views/welcome_screen.dart';
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
 
@@ -62,9 +62,11 @@ class LoginScreen extends StatelessWidget {
 
                     // Manejo del resultado del login
                     if (success) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Inicio de sesión exitoso.'),
+                      // Redirige a la pantalla de bienvenida
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const WelcomeScreen(),
                         ),
                       );
                     } else {
