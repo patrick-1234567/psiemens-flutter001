@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'login_screen.dart';
+import 'views/login_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -128,7 +128,7 @@ class _MyHomePageState extends State<MyHomePage> {
               },
               child: const Text('Ir a Login'),
             ),
-            child: const Text('colabaoracion'),
+            const Text('colabaoracion'),
           ],
         ),
       ),
