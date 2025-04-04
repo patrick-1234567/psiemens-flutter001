@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:psiemens/views/welcome_screen.dart';
 import 'views/login_screen.dart';
-
+import 'package:psiemens/views/container.dart';
+import 'package:psiemens/views/app_container.dart';
 void main() {
   runApp(const MyApp());
 }
@@ -31,7 +33,8 @@ class MyApp extends StatelessWidget {
         // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.yellow),
       ),
-      home: const MyHomePage(title: 'Flutter Demo Patrick Home Page'),
+      //home: const MyHomePage(title: 'Flutter Demo Patrick Home Page'),
+      home: const MiApp(),
     );
   }
 }
