@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'task_screen.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -10,9 +11,24 @@ class WelcomeScreen extends StatelessWidget {
         title: const Text('Bienvenido'),
       ),
       body: Center(
-        child: const Text(
-          '¡Bienvenido! El login fue exitoso.',
-          style: TextStyle(fontSize: 24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              '¡Bienvenido! El login fue exitoso.',
+              style: TextStyle(fontSize: 24),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const TaskScreen()),
+                );
+              },
+              child: const Text('Lista de Tareas'),
+            ),
+          ],
         ),
       ),
     );

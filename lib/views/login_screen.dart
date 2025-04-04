@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:psiemens/api/service/auth_service.dart';
 import 'package:psiemens/views/welcome_screen.dart';
+
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
 
@@ -54,22 +55,34 @@ class LoginScreen extends StatelessWidget {
               ElevatedButton(
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
-                    String username = usernameController.text.trim();
-                    String password = passwordController.text.trim();
+                    final username = usernameController.text.trim();
+                    final password = passwordController.text.trim();
 
                     // Llama al servicio de autenticación
-                    bool success = await authService.login(username, password);
-
-                    // Manejo del resultado del login
-                    if (success) {
-                      // Redirige a la pantalla de bienvenida
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const WelcomeScreen(),
-                        ),
-                      );
-                    } else {
+                    try{
+                        final success = await authService.login(username, password);
+                    
+                      Navigator.pop(context); // Cierra el teclado
+                      // Manejo del resultado del login
+                      if (success) {
+                        // Redirige a la pantalla de bienvenida
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const WelcomeScreen(),
+                          ),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Error en el inicio de sesión.'),
+                          ),
+                        );
+                      }
+                    }catch(e){
+                      Navigator.pop(context); // Cierra el teclado
+                      // Manejo del resultado del login
+                      // Manejo de errores en la llamada al servicio
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Error en el inicio de sesión.'),
