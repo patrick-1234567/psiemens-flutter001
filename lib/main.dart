@@ -33,8 +33,8 @@ class MyApp extends StatelessWidget {
         // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.yellow),
       ),
-      //home: const MyHomePage(title: 'Flutter Demo Patrick Home Page'),
-      home: const MiApp(),
+      home: const MyHomePage(title: 'Flutter Demo Patrick Home Page'),
+      //home: const MiApp(),
     );
   }
 }
@@ -162,18 +162,21 @@ class _MyHomePageState extends State<MyHomePage> {
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           FloatingActionButton(
+            heroTag:  'btnIncrement',
             onPressed: _incrementCounter,
             tooltip: 'Increment',
             child: const Icon(Icons.add),
           ),
           const SizedBox(width: 16), // Espaciado entre los botones
           FloatingActionButton(
+            heroTag: 'btnDecrement',
             onPressed: _decrementCounter,
             tooltip: 'Decrement',
             child: const Icon(Icons.remove),
           ),
           const SizedBox(width: 16), // Espaciado entre los botones
           FloatingActionButton(
+            heroTag: 'btnReset',
             onPressed: _resetCounter,
             tooltip: 'Reset',
             child: const Icon(Icons.refresh),

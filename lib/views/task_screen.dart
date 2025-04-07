@@ -1,200 +1,246 @@
 import 'package:flutter/material.dart';
 
-class TaskScreen extends StatefulWidget {
-  const TaskScreen({super.key});
-
-  @override
-  State<TaskScreen> createState() => _TaskScreenState();
+void main() {
+  runApp(MyApp());
 }
 
-class _TaskScreenState extends State<TaskScreen> {
-  final List<Map<String, dynamic>> _tasks = []; // Lista de tareas con título y fecha
-  final TextEditingController _taskController = TextEditingController();
-  DateTime? _selectedDate;
-
-  void _addTask() {
-    if (_taskController.text.isNotEmpty && _selectedDate != null) {
-      setState(() {
-        _tasks.add({
-          'title': _taskController.text,
-          'date': _selectedDate,
-        }); // Agrega la tarea con título y fecha
-      });
-      _taskController.clear(); // Limpia el campo de texto
-      _selectedDate = null; // Limpia la fecha seleccionada
-      Navigator.of(context).pop(); // Cierra el diálogo
-    }
-  }
-
-  void _editTask(int index) {
-    _taskController.text = _tasks[index]['title']; // Prellena el campo con el título existente
-    _selectedDate = _tasks[index]['date']; // Prellena la fecha existente
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Editar Tarea'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: _taskController,
-                decoration: const InputDecoration(hintText: 'Ingrese una tarea'),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Text(
-                    _selectedDate == null
-                        ? 'Seleccione una fecha'
-                        : 'Fecha: ${_selectedDate!.toLocal()}'.split(' ')[0],
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.calendar_today),
-                    onPressed: () async {
-                      DateTime? pickedDate = await showDatePicker(
-                        context: context,
-                        initialDate: _selectedDate ?? DateTime.now(),
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime(2100),
-                      );
-                      if (pickedDate != null) {
-                        setState(() {
-                          _selectedDate = pickedDate;
-                        });
-                      }
-                    },
-                  ),
-                ],
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Cierra el diálogo sin guardar
-              },
-              child: const Text('Cancelar'),
-            ),
-            TextButton(
-              onPressed: () {
-                if (_taskController.text.isNotEmpty && _selectedDate != null) {
-                  setState(() {
-                    _tasks[index] = {
-                      'title': _taskController.text,
-                      'date': _selectedDate,
-                    }; // Actualiza la tarea
-                  });
-                  _taskController.clear(); // Limpia el campo de texto
-                  _selectedDate = null; // Limpia la fecha seleccionada
-                  Navigator.of(context).pop(); // Cierra el diálogo
-                }
-              },
-              child: const Text('Guardar'),
-            ),
-          ],
-        );
-      },
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Lista de Tareas',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+      ),
+      home: TasksScreen(),
     );
   }
+}
 
-  void _showAddTaskDialog() {
-    _taskController.clear(); // Limpia el campo antes de agregar una nueva tarea
-    _selectedDate = null; // Limpia la fecha seleccionada
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Agregar Tarea'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: _taskController,
-                decoration: const InputDecoration(hintText: 'Ingrese una tarea'),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Text(
-                    _selectedDate == null
-                        ? 'Seleccione una fecha'
-                        : 'Fecha: ${_selectedDate!.toLocal()}'.split(' ')[0],
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.calendar_today),
-                    onPressed: () async {
-                      DateTime? pickedDate = await showDatePicker(
-                        context: context,
-                        initialDate: DateTime.now(),
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime(2100),
-                      );
-                      if (pickedDate != null) {
-                        setState(() {
-                          _selectedDate = pickedDate;
-                        });
-                      }
-                    },
-                  ),
-                ],
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Cierra el diálogo sin agregar
-              },
-              child: const Text('Cancelar'),
-            ),
-            TextButton(
-              onPressed: _addTask, // Llama a la función para agregar la tarea
-              child: const Text('Agregar'),
-            ),
-          ],
-        );
-      },
-    );
-  }
+class TasksScreen extends StatefulWidget {
+  @override
+  _TasksScreenState createState() => _TasksScreenState();
+}
+
+class _TasksScreenState extends State<TasksScreen> {
+  // Lista de tareas
+  final List<Map<String, dynamic>> tasks = [];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Lista de Tareas'),
+        title: Text('Lista de Tareas'),
+        centerTitle: true,
       ),
-      body: _tasks.isEmpty
-          ? const Center(
-              child: Text(
-                'No hay tareas. Presione el botón para agregar una.',
-                style: TextStyle(fontSize: 16),
-              ),
+      body: tasks.isEmpty
+          ? Center(
+              child: Text('No hay tareas. Agrega una nueva.'),
             )
           : ListView.builder(
-              itemCount: _tasks.length,
+              itemCount: tasks.length,
               itemBuilder: (context, index) {
-                return ListTile(
-                  leading: const Icon(Icons.check_box_outline_blank),
-                  title: Text(_tasks[index]['title']),
-                  subtitle: Text(
-                    _tasks[index]['date'] != null
-                        ? 'Fecha: ${(_tasks[index]['date'] as DateTime).toLocal()}'.split(' ')[0]
-                        : 'Sin fecha',
-                  ),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.edit),
-                    onPressed: () => _editTask(index), // Llama a la función para editar
+                final task = tasks[index];
+                return Card(
+                  margin: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  child: ListTile(
+                    title: Text(task['titulo']),
+                    subtitle: Text(
+                        '${task['descripcion']} - ${task['fecha'] ?? 'Sin fecha'}'),
+                    trailing: Icon(Icons.arrow_forward),
+                    onTap: () {
+                      _showTaskOptionsModal(context, index);
+                    },
                   ),
                 );
               },
             ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _showAddTaskDialog,
-        child: const Icon(Icons.add),
+        onPressed: () {
+          _showTaskModal(context);
+        },
+        child: Icon(Icons.add),
       ),
+    );
+  }
+
+  void _showTaskModal(BuildContext context) {
+    final TextEditingController titleController = TextEditingController();
+    final TextEditingController descriptionController = TextEditingController();
+    DateTime? selectedDate;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Agregar Tarea'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: titleController,
+                  decoration: InputDecoration(labelText: 'Título'),
+                ),
+                TextField(
+                  controller: descriptionController,
+                  decoration: InputDecoration(labelText: 'Descripción'),
+                ),
+                SizedBox(height: 10),
+                Row(
+                  children: [
+                    Text(selectedDate == null
+                        ? 'Seleccionar fecha'
+                        : 'Fecha: ${selectedDate!.toLocal()}'.split(' ')[0]),
+                    Spacer(),
+                    TextButton(
+                      onPressed: () async {
+                        DateTime? pickedDate = await showDatePicker(
+                          context: context,
+                          initialDate: DateTime.now(),
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime(2100),
+                        );
+                        if (pickedDate != null) {
+                          setState(() {
+                            selectedDate = pickedDate;
+                          });
+                        }
+                      },
+                      child: Text('Elegir Fecha'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (titleController.text.isNotEmpty &&
+                    descriptionController.text.isNotEmpty) {
+                  setState(() {
+                    tasks.add({
+                      'titulo': titleController.text,
+                      'descripcion': descriptionController.text,
+                      'fecha': selectedDate != null
+                          ? '${selectedDate!.toLocal().toString().split(' ')[0]}'
+                          : 'Sin fecha',
+                    });
+                  });
+                  Navigator.of(context).pop();
+                } else {
+                  // Mostrar un mensaje de error si los campos están vacíos
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Por favor, completa todos los campos')),
+                  );
+                }
+              },
+              child: Text('Guardar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showTaskOptionsModal(BuildContext context, int index) {
+    final task = tasks[index];
+    final TextEditingController titleController =
+        TextEditingController(text: task['titulo']);
+    final TextEditingController descriptionController =
+        TextEditingController(text: task['descripcion']);
+    DateTime? selectedDate = task['fecha'] != 'Sin fecha'
+        ? DateTime.parse(task['fecha'])
+        : null;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Editar Tarea'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: titleController,
+                  decoration: const InputDecoration(labelText: 'Título'),
+                ),
+                TextField(
+                  controller: descriptionController,
+                  decoration: const InputDecoration(labelText: 'Descripción'),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Text(selectedDate == null
+                        ? 'Seleccionar fecha'
+                        : 'Fecha: ${selectedDate?.toLocal()}'.split(' ')[0]),
+                    const Spacer(),
+                    TextButton(
+                      onPressed: () async {
+                        DateTime? pickedDate = await showDatePicker(
+                          context: context,
+                          initialDate: selectedDate ?? DateTime.now(),
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime(2100),
+                        );
+                        if (pickedDate != null) {
+                          setState(() {
+                            selectedDate = pickedDate;
+                          });
+                        }
+                      },
+                      child: const Text('Elegir Fecha'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                  setState(() {
+                    tasks[index] = {
+                      'titulo': titleController.text,
+                      'descripcion': descriptionController.text,
+                      'fecha': selectedDate != null
+                          ? '${selectedDate?.toLocal().toString().split(' ')[0]}'
+                          : 'Sin fecha',
+                    };
+                  });
+                  Navigator.of(context).pop();
+              },
+              child: const Text('Guardar'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  tasks.removeAt(index); // Elimina la tarea de la lista
+                });
+                Navigator.of(context).pop(); // Cierra el diálogo
+              },
+              child: const Text('Eliminar'),
+            ),
+          ],
+        );
+      },
     );
   }
 }
