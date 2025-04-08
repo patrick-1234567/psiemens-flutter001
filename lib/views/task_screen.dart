@@ -1,107 +1,127 @@
 import 'package:flutter/material.dart';
+import 'package:psiemens/domain/task.dart';
+import '../constants.dart';
+import '../api/service/task_service.dart';
+import '../data/task_repository.dart';
+import '../helpers/task_card_helper.dart'; // Importa el helper para los Cards
 
-class TaskScreen extends StatefulWidget {
-  const TaskScreen({super.key});
-
+class TasksScreen extends StatefulWidget {
   @override
-  State<TaskScreen> createState() => _TaskScreenState();
+  _TasksScreenState createState() => _TasksScreenState();
 }
 
-class _TaskScreenState extends State<TaskScreen> {
-  final List<Map<String, dynamic>> _tasks = []; // Lista de tareas con título y fecha
-  final TextEditingController _taskController = TextEditingController();
-  DateTime? _selectedDate;
+class _TasksScreenState extends State<TasksScreen> {
+  final TaskService taskService = TaskService(TaskRepository());
+  final ScrollController _scrollController = ScrollController();
+  List<Task> tasks = [];
+  bool isLoading = false;
 
-  void _addTask() {
-    if (_taskController.text.isNotEmpty && _selectedDate != null) {
-      setState(() {
-        _tasks.add({
-          'title': _taskController.text,
-          'date': _selectedDate,
-        }); // Agrega la tarea con título y fecha
-      });
-      _taskController.clear(); // Limpia el campo de texto
-      _selectedDate = null; // Limpia la fecha seleccionada
-      Navigator.of(context).pop(); // Cierra el diálogo
+  @override
+  void initState() {
+    super.initState();
+    tasks = taskService.getAllTasks(); // Carga inicial de tareas
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels ==
+        _scrollController.position.maxScrollExtent) {
+      _loadMoreTasks();
     }
   }
 
-  void _editTask(int index) {
-    _taskController.text = _tasks[index]['title']; // Prellena el campo con el título existente
-    _selectedDate = _tasks[index]['date']; // Prellena la fecha existente
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Editar Tarea'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: _taskController,
-                decoration: const InputDecoration(hintText: 'Ingrese una tarea'),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Text(
-                    _selectedDate == null
-                        ? 'Seleccione una fecha'
-                        : 'Fecha: ${_selectedDate!.toLocal()}'.split(' ')[0],
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.calendar_today),
-                    onPressed: () async {
-                      DateTime? pickedDate = await showDatePicker(
-                        context: context,
-                        initialDate: _selectedDate ?? DateTime.now(),
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime(2100),
-                      );
-                      if (pickedDate != null) {
-                        setState(() {
-                          _selectedDate = pickedDate;
-                        });
-                      }
-                    },
-                  ),
-                ],
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Cierra el diálogo sin guardar
-              },
-              child: const Text('Cancelar'),
-            ),
-            TextButton(
-              onPressed: () {
-                if (_taskController.text.isNotEmpty && _selectedDate != null) {
-                  setState(() {
-                    _tasks[index] = {
-                      'title': _taskController.text,
-                      'date': _selectedDate,
-                    }; // Actualiza la tarea
-                  });
-                  _taskController.clear(); // Limpia el campo de texto
-                  _selectedDate = null; // Limpia la fecha seleccionada
-                  Navigator.of(context).pop(); // Cierra el diálogo
-                }
-              },
-              child: const Text('Guardar'),
-            ),
-          ],
-        );
-      },
-    );
+  void _loadMoreTasks() {
+    if (isLoading) return;
+
+    setState(() {
+      isLoading = true;
+    });
+
+    // Simula la carga de más tareas
+    Future.delayed(const Duration(seconds: 2), () {
+      final newTasks = List.generate(
+        5,
+        (index) => Task(
+          title: 'Tarea ${tasks.length + index + 1}',
+          type: index % 2 == 0 ? 'normal' : 'urgente',
+        ),
+      );
+
+      setState(() {
+        tasks.addAll(newTasks);
+        isLoading = false;
+      });
+    });
   }
 
-  void _showAddTaskDialog() {
-    _taskController.clear(); // Limpia el campo antes de agregar una nueva tarea
-    _selectedDate = null; // Limpia la fecha seleccionada
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: AppBar(
+      title: Text(AppConstants.TITLE_APPBAR), // Usando la constante
+      centerTitle: true,
+    ),
+    backgroundColor: Colors.grey[200],
+    body: tasks.isEmpty
+        ? Center(
+            child: Text(AppConstants.EMPTY_LIST), // Usando la constante
+          )
+        : ListView.builder(
+            controller: _scrollController, // Controlador para el scroll
+            itemCount: tasks.length + (isLoading ? 1 : 0),
+            itemBuilder: (context, index) {
+              if (index == tasks.length) {
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: CircularProgressIndicator(),
+                  ),
+                );
+              }
+
+              final task = tasks[index];
+              return Dismissible(
+                key: Key(task.title), // Clave única para cada tarea
+                direction: DismissDirection.startToEnd, // Deslizar hacia la izquierda
+                onDismissed: (direction) {
+                  setState(() {
+                    tasks.removeAt(index); // Elimina la tarea de la lista
+                  });
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Tarea "${task.title}" eliminada')),
+                  );
+                },
+                background: Container(
+                  color: Colors.red,
+                  alignment: Alignment.centerLeft,
+                  padding: const EdgeInsets.only(left: 16.0),
+                  child: const Icon(Icons.delete, color: Colors.white),
+                ),
+                child: TaskCardHelper.buildTaskCard(task), // Usa el helper para construir el Card
+              );
+            },
+          ),
+    floatingActionButton: FloatingActionButton(
+      onPressed: () {
+        _showTaskModal(context);
+      },
+      child: const Icon(Icons.add),
+    ),
+  );
+}
+  
+
+  void _showTaskModal(BuildContext context) {
+    final TextEditingController titleController = TextEditingController();
+    final TextEditingController typeController = TextEditingController();
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -111,90 +131,45 @@ class _TaskScreenState extends State<TaskScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
-                controller: _taskController,
-                decoration: const InputDecoration(hintText: 'Ingrese una tarea'),
+                controller: titleController,
+                decoration: const InputDecoration(labelText: 'Título'),
               ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Text(
-                    _selectedDate == null
-                        ? 'Seleccione una fecha'
-                        : 'Fecha: ${_selectedDate!.toLocal()}'.split(' ')[0],
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.calendar_today),
-                    onPressed: () async {
-                      DateTime? pickedDate = await showDatePicker(
-                        context: context,
-                        initialDate: DateTime.now(),
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime(2100),
-                      );
-                      if (pickedDate != null) {
-                        setState(() {
-                          _selectedDate = pickedDate;
-                        });
-                      }
-                    },
-                  ),
-                ],
+              TextField(
+                controller: typeController,
+                decoration: const InputDecoration(labelText: 'Tipo (opcional)'),
               ),
             ],
           ),
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Cierra el diálogo sin agregar
+                Navigator.of(context).pop();
               },
               child: const Text('Cancelar'),
             ),
-            TextButton(
-              onPressed: _addTask, // Llama a la función para agregar la tarea
-              child: const Text('Agregar'),
+            ElevatedButton(
+              onPressed: () {
+                if (titleController.text.isNotEmpty) {
+                  setState(() {
+                    taskService.createTask(
+                      titleController.text,
+                      type: typeController.text.isNotEmpty
+                          ? typeController.text
+                          : 'normal',
+                    );
+                  });
+                  Navigator.of(context).pop();
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Por favor, ingresa un título')),
+                  );
+                }
+              },
+              child: const Text('Guardar'),
             ),
           ],
         );
       },
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Lista de Tareas'),
-      ),
-      body: _tasks.isEmpty
-          ? const Center(
-              child: Text(
-                'No hay tareas. Presione el botón para agregar una.',
-                style: TextStyle(fontSize: 16),
-              ),
-            )
-          : ListView.builder(
-              itemCount: _tasks.length,
-              itemBuilder: (context, index) {
-                return ListTile(
-                  leading: const Icon(Icons.check_box_outline_blank),
-                  title: Text(_tasks[index]['title']),
-                  subtitle: Text(
-                    _tasks[index]['date'] != null
-                        ? 'Fecha: ${(_tasks[index]['date'] as DateTime).toLocal()}'.split(' ')[0]
-                        : 'Sin fecha',
-                  ),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.edit),
-                    onPressed: () => _editTask(index), // Llama a la función para editar
-                  ),
-                );
-              },
-            ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showAddTaskDialog,
-        child: const Icon(Icons.add),
-      ),
     );
   }
 }
