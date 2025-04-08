@@ -2,11 +2,43 @@ import '../domain/task.dart';
 
 class TaskRepository {
   final List<Task> _tasks = [
-    Task(title: 'Tarea 1', type: "urgente"),
-    Task(title: 'Tarea 2'),
-    Task(title: 'Tarea 3', type: "urgente"),
-    Task(title: 'Tarea 4'),
-    Task(title: 'Tarea 5', type: "urgente"),
+    Task(
+      title: 'Tarea 1',
+      type: "urgente",
+      fechaLimite: DateTime.now().add(Duration(days: 3)), // Fecha límite en 3 días
+    ),
+    Task(
+      title: 'Tarea 2',
+      fechaLimite: DateTime.now().add(Duration(days: 5)), // Fecha límite en 5 días
+    ),
+    Task(
+      title: 'Tarea 3',
+      type: "urgente",
+      fechaLimite: DateTime.now().add(Duration(days: 7)), // Fecha límite en 7 días
+    ),
+    Task(
+      title: 'Tarea 4',
+      fechaLimite: DateTime.now().add(Duration(days: 10)), // Fecha límite en 10 días
+    ),
+    Task(
+      title: 'Tarea 5',
+      type: "urgente",
+      fechaLimite: DateTime.now().add(Duration(days: 14)), // Fecha límite en 14 días
+    ),
+    Task(
+      title: 'Tarea 6',
+      type: "urgente",
+      fechaLimite: DateTime.now().add(Duration(days: 7)), // Fecha límite en 7 días
+    ),
+    Task(
+      title: 'Tarea 7',
+      fechaLimite: DateTime.now().add(Duration(days: 10)), // Fecha límite en 10 días
+    ),
+    Task(
+      title: 'Tarea 8',
+      type: "urgente",
+      fechaLimite: DateTime.now().add(Duration(days: 14)), // Fecha límite en 14 días
+    ),
   ];
 
   // Obtener todas las tareas
@@ -16,9 +48,7 @@ class TaskRepository {
 
   // Agregar una nueva tarea
   void addTask(Task task) {
-    final type = _tasks.length % 2 == 0 ? 'normal' : 'urgente';
-    final newTask = Task(title: task.title, type: type);
-    _tasks.add(newTask);
+    _tasks.add(task);
   }
 
   // Actualizar una tarea existente

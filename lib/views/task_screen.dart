@@ -50,6 +50,7 @@ class _TasksScreenState extends State<TasksScreen> {
         (index) => Task(
           title: 'Tarea ${tasks.length + index + 1}',
           type: index % 2 == 0 ? 'normal' : 'urgente',
+          fechaLimite: DateTime.now().add(Duration(days: index + 1)),
         ),
       );
 

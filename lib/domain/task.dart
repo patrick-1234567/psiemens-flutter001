@@ -1,6 +1,12 @@
 class Task {
   final String title;
   final String type;
-
-  Task({required this.title, this.type = 'normal'});
+  final DateTime fechaLimite;
+  List<String> pasos = [];
+  
+  Task({
+    required this.title,
+    this.type = 'normal',
+    required this.fechaLimite,
+    });
 }

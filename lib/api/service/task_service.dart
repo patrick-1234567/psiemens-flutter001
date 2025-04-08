@@ -16,10 +16,11 @@ class TaskService {
 
   // Crear una nueva tarea
   void createTask(String title, {String type = 'normal'}) {
-    final newTask = Task(title: title, type: type);
+    final fechaLimite = DateTime.now().add(Duration(days: 7)); // Fecha límite en 7 días
+    final newTask = Task(title: title, type: type, fechaLimite: fechaLimite);
     _taskRepository.addTask(newTask);
     print('Operación: Crear tarea');
-    print('Tarea creada: ${newTask.title}, Tipo: ${newTask.type}');
+    print('Tarea creada: ${newTask.title}, Tipo: ${newTask.type}, Fecha Límite: ${newTask.fechaLimite}');
   }
 
   // Actualizar una tarea existente
@@ -29,10 +30,11 @@ class TaskService {
       final updatedTask = Task(
         title: newTitle,
         type: newType ?? tasks[index].type,
+        fechaLimite: tasks[index].fechaLimite, // Mantener la fecha límite existente
       );
       _taskRepository.updateTask(index, updatedTask);
       print('Operación: Actualizar tarea');
-      print('Tarea actualizada: ${updatedTask.title}, Tipo: ${updatedTask.type}');
+      print('Tarea actualizada: ${updatedTask.title}, Tipo: ${updatedTask.type}, Fecha Límite: ${updatedTask.fechaLimite}');
     } else {
       print('Error: Índice fuera de rango al intentar actualizar la tarea.');
     }
@@ -49,5 +51,14 @@ class TaskService {
     } else {
       print('Error: Índice fuera de rango al intentar eliminar la tarea.');
     }
+  }
+
+  List<String> obtenerPasos(String titulo) {
+    print('Operación: Obtener pasos para la tarea "$titulo"');
+    return [
+      'Paso 1: Planificar $titulo',
+      'Paso 2: Ejecutar $titulo',
+      'Paso 3: Revisar $titulo',
+    ];
   }
 }
