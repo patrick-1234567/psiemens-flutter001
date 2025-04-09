@@ -68,6 +68,7 @@ void dispose() {
 Widget build(BuildContext context) {
   return Scaffold(
     appBar: AppBar(
+      backgroundColor: Colors.blue,
       title: Text(AppConstants.TITLE_APPBAR), // Usando la constante
       centerTitle: true,
     ),
@@ -120,6 +121,7 @@ Widget build(BuildContext context) {
       onPressed: () {
         _showTaskModal(context);
       },
+      backgroundColor: Colors.blue,
       child: const Icon(Icons.add),
     ),
   );
