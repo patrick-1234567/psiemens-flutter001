@@ -7,58 +7,96 @@ class TaskService {
   TaskService(this._taskRepository);
 
   // Obtener todas las tareas
-  List<Task> getAllTasks() {
-    final tasks = _taskRepository.getTasks();
+  Future<List<Task>> getAllTasks() async {
+    final tasks = await _taskRepository.getTasks(); // Llama al método asincrónico
     print('Operación: Obtener todas las tareas');
     print('Tareas: ${tasks.map((task) => task.title).toList()}');
     return tasks;
   }
 
   // Crear una nueva tarea
-  void createTask(String title, {String type = 'normal'}) {
-    final fechaLimite = DateTime.now().add(Duration(days: 7)); // Fecha límite en 7 días
-    final newTask = Task(title: title, type: type, fechaLimite: fechaLimite);
-    _taskRepository.addTask(newTask);
+  Future<void> createTask(String title, {String type = 'normal', String description = '', required DateTime fechaLimite}) async {
+    final pasos = _generateSteps(title, fechaLimite); // Generar pasos para la tarea
+    final newTask = Task(
+      title: title,
+      type: type,
+      deadline: fechaLimite, // Asignar la fecha límite
+      description: description,
+      steps: pasos,
+    );
+    await _taskRepository.addTask(newTask); // Llama al método asincrónico
     print('Operación: Crear tarea');
-    print('Tarea creada: ${newTask.title}, Tipo: ${newTask.type}, Fecha Límite: ${newTask.fechaLimite}');
+    print('Tarea creada: ${newTask.title}, Tipo: ${newTask.type}, Fecha Límite: ${newTask.deadline}, Descripción: ${newTask.description}');
   }
 
   // Actualizar una tarea existente
-  void updateTask(int index, String newTitle, {String? newType}) {
-    final tasks = _taskRepository.getTasks();
+  Future<void> updateTask(int index, String newTitle, {String? newType, required DateTime newFechaLimite}) async {
+    final tasks = await _taskRepository.getTasks(); // Llama al método asincrónico
     if (index >= 0 && index < tasks.length) {
       final updatedTask = Task(
         title: newTitle,
         type: newType ?? tasks[index].type,
-        fechaLimite: tasks[index].fechaLimite, // Mantener la fecha límite existente
+        deadline: newFechaLimite, // Actualizar la fecha límite
+        description: tasks[index].description,
+        steps: tasks[index].steps,
       );
-      _taskRepository.updateTask(index, updatedTask);
+      await _taskRepository.updateTask(index, updatedTask); // Llama al método asincrónico
       print('Operación: Actualizar tarea');
-      print('Tarea actualizada: ${updatedTask.title}, Tipo: ${updatedTask.type}, Fecha Límite: ${updatedTask.fechaLimite}');
+      print('Tarea actualizada: ${updatedTask.title}, Tipo: ${updatedTask.type}, Fecha Límite: ${updatedTask.deadline}');
     } else {
       print('Error: Índice fuera de rango al intentar actualizar la tarea.');
     }
   }
 
   // Eliminar una tarea
-  void deleteTask(int index) {
-    final tasks = _taskRepository.getTasks();
-    if (index >= 0 && index < tasks.length) {
-      final deletedTask = tasks[index];
-      _taskRepository.deleteTask(index);
-      print('Operación: Eliminar tarea');
-      print('Tarea eliminada: ${deletedTask.title}, Tipo: ${deletedTask.type}');
-    } else {
-      print('Error: Índice fuera de rango al intentar eliminar la tarea.');
-    }
+  Future<void> deleteTask(int index) async {
+    await _taskRepository.deleteTask(index); // Llama al método asincrónico
+    print('Operación: Eliminar tarea');
   }
 
-  List<String> obtenerPasos(String titulo) {
-    print('Operación: Obtener pasos para la tarea "$titulo"');
+  Future<List<Task>> loadMoreTasks(int count, int startIndex) async {
+  // Llama al repositorio para cargar más tareas
+  return await _taskRepository.loadMoreTasks(count, startIndex);
+}
+
+Future<List<Task>> getTasksWithSteps() async {
+    final tasks = await _taskRepository.getTasks(); // Obtiene las tareas del repositorio
+    return tasks.map((task) {
+      final steps = _generateSteps(task.title, task.deadline); // Genera pasos simulados
+      return Task(
+        title: task.title,
+        type: task.type,
+        deadline: task.deadline,
+        description: task.description,
+        steps: steps, // Asigna los pasos generados
+      );
+    }).toList();
+  }
+
+Future<List<Task>> getMoreTasksWithSteps(int count, int startIndex) async {
+  // Obtiene más tareas del repositorio
+  final tasks = await _taskRepository.loadMoreTasks(count, startIndex);
+  // Genera pasos para cada tarea
+  return tasks.map((task) {
+    final steps = _generateSteps(task.title, task.deadline);
+    return Task(
+      title: task.title,
+      type: task.type,
+      deadline: task.deadline,
+      description: task.description,
+      steps: steps, // Asigna los pasos generados
+    );
+  }).toList();
+}
+
+  // Generar pasos para una tarea
+  List<String> _generateSteps(String title, DateTime deadline) {
+    print('Operación: Obtener pasos para la tarea "$title"');
     return [
-      'Paso 1: Planificar $titulo',
-      'Paso 2: Ejecutar $titulo',
-      'Paso 3: Revisar $titulo',
+      'Paso 1: Analizar el título "$title".',
+      'Paso 2: Planificar antes del ${deadline.toLocal()}',
+      'Paso 3: Ejecutar las acciones necesarias.',
+      'Paso 4: Revisar y validar los resultados.',
     ];
   }
 }

@@ -1,12 +1,15 @@
 class Task {
   final String title;
   final String type;
-  final DateTime fechaLimite;
-  List<String> pasos = [];
+  final DateTime deadline;
+  final String description;
+  List<String> steps;
   
   Task({
     required this.title,
     this.type = 'normal',
-    required this.fechaLimite,
+    required this.deadline,
+    this.description = '',
+    this.steps = const [],
     });
 }
