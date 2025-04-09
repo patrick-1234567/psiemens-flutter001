@@ -33,7 +33,7 @@ class MyApp extends StatelessWidget {
         // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.yellow),
       ),
-      home: const MyHomePage(title: 'Flutter Demo Patrick Home Page'),
+      home: LoginScreen(),
       //home: const MiApp(),
     );
   }
@@ -93,7 +93,7 @@ class _MyHomePageState extends State<MyHomePage> {
         // TRY THIS: Try changing the color here to a specific color (to
         // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
         // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        backgroundColor: Colors.blue,
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
@@ -143,16 +143,11 @@ class _MyHomePageState extends State<MyHomePage> {
                   },
                 );
               },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white, // Cambia el color de fondo
+                foregroundColor: Colors.blue, // Cambia el color del texto
+              ),
               child: const Text('Mostrar Advertencia'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const LoginScreen()),
-                );
-              },
-              child: const Text('Ir a Login'),
             ),
             const Text('colabaoracion'),
           ],
@@ -165,6 +160,7 @@ class _MyHomePageState extends State<MyHomePage> {
             heroTag:  'btnIncrement',
             onPressed: _incrementCounter,
             tooltip: 'Increment',
+            backgroundColor: Colors.blue,
             child: const Icon(Icons.add),
           ),
           const SizedBox(width: 16), // Espaciado entre los botones
@@ -172,6 +168,7 @@ class _MyHomePageState extends State<MyHomePage> {
             heroTag: 'btnDecrement',
             onPressed: _decrementCounter,
             tooltip: 'Decrement',
+            backgroundColor: Colors.blue,
             child: const Icon(Icons.remove),
           ),
           const SizedBox(width: 16), // Espaciado entre los botones
@@ -179,6 +176,7 @@ class _MyHomePageState extends State<MyHomePage> {
             heroTag: 'btnReset',
             onPressed: _resetCounter,
             tooltip: 'Reset',
+            backgroundColor: Colors.blue,
             child: const Icon(Icons.refresh),
           ),
         ],
