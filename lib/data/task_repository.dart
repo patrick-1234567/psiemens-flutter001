@@ -77,7 +77,7 @@ class TaskRepository {
     (index) => Task(
       title: 'Tarea ${startIndex + index + 1}',
       type: index % 2 == 0 ? 'normal' : 'urgente',
-      deadline: DateTime.now().add(Duration(days: index + 1)),
+      deadline: DateTime.now().add(const Duration(days: 1)),
       description: 'Descripción de la tarea ${startIndex + index + 1}',
     ),
   );

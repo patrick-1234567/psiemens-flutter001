@@ -100,7 +100,7 @@ Widget build(BuildContext context) {
                   });
 
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Tarea "${task.title}" eliminada')),
+                    SnackBar(content: Text(AppConstants.TAREA_ELIMINADA)),
                   );
                 },
                 background: Container(
