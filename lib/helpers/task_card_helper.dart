@@ -44,51 +44,55 @@ class TaskCardHelper {
   }
 
   static Widget buildSportsCard(Task task, int index) {
-    return CustomCard(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      borderRadius: CommonWidgetsHelper.buildRoundedBorder().borderRadius!,
-      backgroundColor: Colors.white,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-          child: ClipRRect(
-            borderRadius: CommonWidgetsHelper.buildRoundedBorder().borderRadius!,
-            child: Image.network(
-              'https://picsum.photos/200/300?random=$index',
-              height: 300, // Altura fija
-              width: 200,  // Ancho fijo
-              fit: BoxFit.cover,
+  return Card(
+    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    elevation: 8, // Sombra del Card
+    shape: RoundedRectangleBorder(
+      borderRadius: CommonWidgetsHelper.buildRoundedBorder().borderRadius!, // Usando buildRoundedBorder
+    ),
+    child: Padding(
+      padding: const EdgeInsets.all(16.0), // Padding interno de 16 píxeles
+      child: Center( // Centra todo el contenido
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center, // Asegura que el contenido esté centrado
+          children: [
+            // Imagen centrada
+            Center(
+              child: ClipRRect(
+                borderRadius: CommonWidgetsHelper.buildRoundedBorder().borderRadius!, // Usando buildRoundedBorder
+                child: Image.network(
+                  'https://picsum.photos/200/300?random=$index',
+                  height: 300, // Altura fija
+                  width: 200,  // Ancho fijo
+                  fit: BoxFit.cover,
+                ),
+              ),
             ),
-          ),
+            CommonWidgetsHelper.buildSpacing(), // Espaciado
+
+            // Título
+            CommonWidgetsHelper.buildBoldTitle(task.title),
+
+            CommonWidgetsHelper.buildSpacing(), // Espaciado
+
+            // Pasos
+            CommonWidgetsHelper.buildInfoLines(
+              task.steps.isNotEmpty ? '- ${task.steps[0]}' : 'Sin pasos',
+              task.steps.length > 1 ? '- ${task.steps[1]}' : null,
+              task.steps.length > 2 ? '- ${task.steps[2]}' : null,
+            ),
+
+            CommonWidgetsHelper.buildSpacing(), // Espaciado
+
+            // Fecha límite
+            CommonWidgetsHelper.buildBoldFooter(
+              '${AppConstants.FECHA_LIMITE}${task.deadline.toLocal()}',
+            ),
+          ],
         ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                CommonWidgetsHelper.buildBoldTitle(task.title),
-                CommonWidgetsHelper.buildSpacing(), // Reemplaza SizedBox
-                Text(
-                  AppConstants.PASO_TITULO,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                CommonWidgetsHelper.buildSpacing(), // Reemplaza SizedBox
-                ...task.steps.map((step) => Text(
-                      '- $step',
-                      style: const TextStyle(fontSize: 14, color: Colors.grey),
-                    )),
-                CommonWidgetsHelper.buildSpacing(), // Reemplaza SizedBox
-                Text(
-                  'Fecha límite: ${task.deadline.toLocal()}',
-                  style: const TextStyle(fontSize: 14, color: Colors.black54),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
-    );
-  }
+    ),
+  );
+}
 }
 

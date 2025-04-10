@@ -69,7 +69,9 @@ Widget build(BuildContext context) {
   return Scaffold(
     appBar: AppBar(
       backgroundColor: Colors.blue,
-      title: Text(AppConstants.TITLE_APPBAR), // Usando la constante
+      title: Text(
+        '${AppConstants.TITLE_APPBAR} - Total: ${tasks.length}', // Muestra el título con el total de tareas
+      ),
       centerTitle: true,
     ),
     backgroundColor: Colors.grey[200],
@@ -113,8 +115,9 @@ Widget build(BuildContext context) {
                   context,
                   task,
                   tasks,
-                  () => _showEditTaskModal(context, index), 
-                ));
+                  () => _showEditTaskModal(context, index),
+                ),
+              );
             },
           ),
     floatingActionButton: FloatingActionButton(
