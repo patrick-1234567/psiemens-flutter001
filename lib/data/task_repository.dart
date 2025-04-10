@@ -5,29 +5,29 @@ class TaskRepository {
     Task(
       title: 'Tarea 1',
       type: "urgente",
-      deadline: DateTime.now().add(Duration(days: 3)),
+      deadline: DateTime(2025, 4, 10),
       description: 'Descripción de la tarea 1',
     ),
     Task(
       title: 'Tarea 2',
-      deadline: DateTime.now().add(Duration(days: 5)),
+      deadline: DateTime.now().add(Duration(days: 2)),
       description: 'Descripción de la tarea 2',
     ),
     Task(
       title: 'Tarea 3',
       type: "urgente",
-      deadline: DateTime.now().add(Duration(days: 7)),
+      deadline: DateTime.now().add(Duration(days: 3)),
       description: 'Descripción de la tarea 3',
     ),
     Task(
       title: 'Tarea 4',
-      deadline: DateTime.now().add(Duration(days: 10)),
+      deadline: DateTime.now().add(Duration(days: 4)),
       description: 'Descripción de la tarea 4',
     ),
     Task(
       title: 'Tarea 5',
       type: "urgente",
-      deadline: DateTime.now().add(Duration(days: 14)),
+      deadline: DateTime.now().add(Duration(days: 5)),
       description: 'Descripción de la tarea 5',
     ),
     Task(

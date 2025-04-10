@@ -19,12 +19,29 @@ class LoginScreen extends StatelessWidget {
             children: [
               TextFormField(
                 controller: usernameController,
-                decoration: const InputDecoration(labelText: 'Usuario'),
+                decoration: const InputDecoration(
+                  labelText: 'Usuario',
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.blue, width: 2),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.blue, width: 2),
+                  ),
+                ),
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: passwordController,
-                decoration: const InputDecoration(labelText: 'Contraseña'),
+                decoration: const InputDecoration(
+                  labelText: 'Contraseña',
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.blue, width: 2),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.blue, width: 2),
+                  ),
+                  
+                  ),
                 obscureText: true,
               ),
               const SizedBox(height: 16),
@@ -47,6 +64,13 @@ class LoginScreen extends StatelessWidget {
                     );
                   }
                 },
+                style: ElevatedButton.styleFrom(
+                  foregroundColor: Colors.blue, // Cambia el color del texto
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12), // Ajusta el tamaño del botón
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                ),
                 child: const Text('Iniciar Sesión'),
               ),
             ],
