@@ -1,3 +1,5 @@
+
+
 import '../../data/task_repository.dart';
 import '../../domain/task.dart';
 
@@ -62,7 +64,7 @@ class TaskService {
 Future<List<Task>> getTasksWithSteps() async {
     final tasks = await _taskRepository.getTasks(); // Obtiene las tareas del repositorio
     return tasks.map((task) {
-      final steps = _generateSteps(task.title, task.deadline); // Genera pasos simulados
+      final steps = _generateSteps(task.title, task.deadline).take(2).toList(); // Genera pasos simulados
       return Task(
         title: task.title,
         type: task.type,

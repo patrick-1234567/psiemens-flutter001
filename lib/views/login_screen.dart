@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
 import 'welcome_screen.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
+  @override
+  _LoginScreenState createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  String? usernameError;
+  String? passwordError;
 
   @override
   Widget build(BuildContext context) {
@@ -14,39 +23,59 @@ class LoginScreen extends StatelessWidget {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
+          key: _formKey,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              // Campo de usuario
               TextFormField(
                 controller: usernameController,
-                decoration: const InputDecoration(labelText: 'Usuario'),
+                decoration: InputDecoration(
+                  labelText: 'Usuario',
+                  errorText: usernameError, // Muestra el mensaje de error
+                ),
               ),
               const SizedBox(height: 16),
+
+              // Campo de contraseña
               TextFormField(
                 controller: passwordController,
-                decoration: const InputDecoration(labelText: 'Contraseña'),
+                decoration: InputDecoration(
+                  labelText: 'Contraseña',
+                  errorText: passwordError, // Muestra el mensaje de error
+                ),
                 obscureText: true,
               ),
               const SizedBox(height: 16),
+
+              // Botón de inicio de sesión
               ElevatedButton(
                 onPressed: () {
-                  // Simula un login exitoso
-                  final username = usernameController.text.trim();
-                  final password = passwordController.text.trim();
+                  setState(() {
+                    usernameError = usernameController.text.isEmpty
+                        ? 'Por favor, ingresa tu usuario'
+                        : null;
+                    passwordError = passwordController.text.isEmpty
+                        ? 'Por favor, ingresa tu contraseña'
+                        : null;
 
-                  if (username.isNotEmpty && password.isNotEmpty) {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const WelcomeScreen(),
-                      ),
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Por favor, ingresa tus credenciales')),
-                    );
-                  }
+                    if (usernameError == null && passwordError == null) {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const WelcomeScreen(),
+                        ),
+                      );
+                    }
+                  });
                 },
+                style: ElevatedButton.styleFrom(
+                  foregroundColor: Colors.blue, // Cambia el color del texto
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12), // Ajusta el tamaño del botón
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                ),
                 child: const Text('Iniciar Sesión'),
               ),
             ],

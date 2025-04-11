@@ -58,7 +58,7 @@ void _onScroll() {
     _loadMoreTasks(); // Llama a _loadMoreTasks cuando se llega al final del scroll
   }
 }
-
+@override
 void dispose() {
   _scrollController.dispose(); // Limpia el ScrollController
   super.dispose();
@@ -69,7 +69,9 @@ Widget build(BuildContext context) {
   return Scaffold(
     appBar: AppBar(
       backgroundColor: Colors.blue,
-      title: Text(AppConstants.TITLE_APPBAR), // Usando la constante
+      title: Text(
+        '${AppConstants.TITLE_APPBAR} - Total: ${tasks.length}', // Muestra el título con el total de tareas
+      ),
       centerTitle: true,
     ),
     backgroundColor: Colors.grey[200],
@@ -100,7 +102,7 @@ Widget build(BuildContext context) {
                   });
 
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Tarea "${task.title}" eliminada')),
+                    SnackBar(content: Text(AppConstants.TAREA_ELIMINADA)),
                   );
                 },
                 background: Container(
@@ -113,8 +115,9 @@ Widget build(BuildContext context) {
                   context,
                   task,
                   tasks,
-                  () => _showEditTaskModal(context, index), 
-                ));
+                  () => _showEditTaskModal(context, index),
+                ),
+              );
             },
           ),
     floatingActionButton: FloatingActionButton(
@@ -138,10 +141,10 @@ void _showTaskModal(BuildContext context) {
     builder: (BuildContext context) {
       return AlertDialog(
         title: const Text('Agregar Tarea'),
-        content: SingleChildScrollView( // Permite el desplazamiento si el teclado aparece
+        content: SingleChildScrollView(
           child: Padding(
             padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom, // Ajusta el espacio para el teclado
+              bottom: MediaQuery.of(context).viewInsets.bottom,
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -185,16 +188,22 @@ void _showTaskModal(BuildContext context) {
             child: const Text('Cancelar'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               if (titleController.text.isNotEmpty && selectedDate != null) {
+                // Llama a createTask para agregar la tarea
+                await taskService.createTask(
+                  titleController.text,
+                  type: typeController.text.isNotEmpty ? typeController.text : 'normal',
+                  description: descriptionController.text,
+                  fechaLimite: selectedDate!,
+                );
+
+                // Actualiza la lista de tareas
+                final updatedTasks = await taskService.getTasksWithSteps();
                 setState(() {
-                  taskService.createTask(
-                    titleController.text,
-                    type: typeController.text.isNotEmpty ? typeController.text : 'normal',
-                    description: descriptionController.text,
-                    fechaLimite: selectedDate!, // Pasar la fecha seleccionada
-                  );
+                  tasks = updatedTasks;
                 });
+
                 Navigator.of(context).pop();
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -208,14 +217,14 @@ void _showTaskModal(BuildContext context) {
       );
     },
   );
-} 
+}
 
 void _showEditTaskModal(BuildContext context, int index) {
   final task = tasks[index];
   final TextEditingController titleController = TextEditingController(text: task.title);
   final TextEditingController typeController = TextEditingController(text: task.type);
   final TextEditingController descriptionController = TextEditingController(text: task.description);
-  DateTime? selectedDate = task.deadline;
+  DateTime? selectedDate = task.deadline; // Inicializa con la fecha existente
 
   showDialog(
     context: context,
@@ -247,15 +256,19 @@ void _showEditTaskModal(BuildContext context, int index) {
                   onPressed: () async {
                     final DateTime? pickedDate = await showDatePicker(
                       context: context,
-                      initialDate: selectedDate ?? DateTime.now(),
-                      firstDate: DateTime.now(),
-                      lastDate: DateTime(2100),
+                      initialDate: selectedDate ?? DateTime.now(), // Muestra la fecha existente
+                      firstDate: DateTime(2000), // Fecha mínima
+                      lastDate: DateTime(2100), // Fecha máxima
                     );
                     if (pickedDate != null) {
-                      selectedDate = pickedDate;
+                      selectedDate = pickedDate; // Actualiza la fecha seleccionada
                     }
                   },
-                  child: const Text('Seleccionar Fecha'),
+                  child: Text(
+                    selectedDate != null
+                        ? 'Fecha seleccionada: ${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}'
+                        : 'Seleccionar Fecha',
+                  ),
                 ),
               ],
             ),

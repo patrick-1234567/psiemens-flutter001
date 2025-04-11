@@ -7,12 +7,12 @@ class CustomCard extends StatelessWidget {
   final Color backgroundColor;
 
   const CustomCard({
-    Key? key,
+    super.key,
     required this.child,
     this.margin = const EdgeInsets.all(8.0),
     this.borderRadius = const BorderRadius.all(Radius.circular(10)),
     this.backgroundColor = Colors.white,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
