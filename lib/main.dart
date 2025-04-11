@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:psiemens/views/welcome_screen.dart';
+
 import 'views/login_screen.dart';
-import 'package:psiemens/views/container.dart';
-import 'package:psiemens/views/app_container.dart';
+
+
 void main() {
   runApp(const MyApp());
 }
@@ -121,35 +121,6 @@ class _MyHomePageState extends State<MyHomePage> {
                         : Colors.black,
               ),
             ),
-            Text("Hola soy patrick"),
-            ElevatedButton(
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      title: const Text('Advertencia'),
-                      content:
-                          const Text('Esta es una advertencia importante.'),
-                      actions: <Widget>[
-                        TextButton(
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
-                          child: const Text('Cerrar'),
-                        ),
-                      ],
-                    );
-                  },
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white, // Cambia el color de fondo
-                foregroundColor: Colors.blue, // Cambia el color del texto
-              ),
-              child: const Text('Mostrar Advertencia'),
-            ),
-            const Text('colabaoracion'),
           ],
         ),
       ),

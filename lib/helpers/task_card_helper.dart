@@ -86,7 +86,7 @@ class TaskCardHelper {
 
             // Fecha límite
             CommonWidgetsHelper.buildBoldFooter(
-              '${AppConstants.FECHA_LIMITE}${task.deadline.toLocal()}',
+              '${AppConstants.FECHA_LIMITE}${task.deadline!.day}/${task.deadline!.month}/${task.deadline!.year}',
             ),
           ],
         ),
