@@ -70,14 +70,14 @@ Widget build(BuildContext context) {
     appBar: AppBar(
       backgroundColor: Colors.blue,
       title: Text(
-        '${AppConstants.TITLE_APPBAR} - Total: ${tasks.length}', // Muestra el título con el total de tareas
+        '${AppConstants.titleAppbar} - Total: ${tasks.length}', // Muestra el título con el total de tareas
       ),
       centerTitle: true,
     ),
     backgroundColor: Colors.grey[200],
     body: tasks.isEmpty
         ? Center(
-            child: Text(AppConstants.EMPTY_LIST), // Usando la constante
+            child: Text(AppConstants.emptyList), // Usando la constante
           )
         : ListView.builder(
             controller: _scrollController, // Controlador para el scroll
@@ -102,7 +102,7 @@ Widget build(BuildContext context) {
                   });
 
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(AppConstants.TAREA_ELIMINADA)),
+                    SnackBar(content: Text(AppConstants.tareaEliminada)),
                   );
                 },
                 background: Container(

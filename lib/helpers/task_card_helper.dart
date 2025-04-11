@@ -31,8 +31,8 @@ class TaskCardHelper {
           ),
           title: CommonWidgetsHelper.buildBoldTitle(task.title),
           subtitle: CommonWidgetsHelper.buildInfoLines(
-            '${AppConstants.TASK_TYPE_LABEL}${task.type}', // Muestra el tipo
-            task.steps.isNotEmpty ? '${AppConstants.PASO_TITULO}${task.steps.first}' : 'Sin pasos',
+            '${AppConstants.taskTypeLabel}${task.type}', // Muestra el tipo
+            task.steps.isNotEmpty ? '${AppConstants.pasoTitulo}${task.steps.first}' : 'Sin pasos',
           ),
           trailing: IconButton(
             icon: const Icon(Icons.edit, color: Colors.blue),
@@ -86,7 +86,7 @@ class TaskCardHelper {
 
             // Fecha límite
             CommonWidgetsHelper.buildBoldFooter(
-              '${AppConstants.FECHA_LIMITE}${task.deadline!.day}/${task.deadline!.month}/${task.deadline!.year}',
+              '${AppConstants.fechaLimite}${task.deadline!.day}/${task.deadline!.month}/${task.deadline!.year}',
             ),
           ],
         ),

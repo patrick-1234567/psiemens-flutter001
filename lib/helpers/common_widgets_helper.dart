@@ -65,8 +65,8 @@ class CommonWidgetsHelper {
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       title: buildBoldTitle(title),
       subtitle: buildInfoLines(
-        '${AppConstants.TASK_TYPE_LABEL}$type',
-        '${AppConstants.PASO_TITULO}$firstStep',
+        '${AppConstants.taskTypeLabel}$type',
+        '${AppConstants.pasoTitulo}$firstStep',
       ),
       tileColor: Colors.white,
       shape: RoundedRectangleBorder(
