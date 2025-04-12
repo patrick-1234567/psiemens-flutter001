@@ -1,7 +1,7 @@
 
 
-import '../../data/task_repository.dart';
-import '../../domain/task.dart';
+import 'package:psiemens/data/task_repository.dart';
+import 'package:psiemens/domain/task.dart';
 
 class TaskService {
   final TaskRepository _taskRepository;

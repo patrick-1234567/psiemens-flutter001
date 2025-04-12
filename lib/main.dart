@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'views/login_screen.dart';
+import 'package:psiemens/views/login_screen.dart';
 
 
 void main() {

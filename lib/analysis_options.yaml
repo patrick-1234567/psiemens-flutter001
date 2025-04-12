@@ -3,5 +3,6 @@ linter:
     prefer_const_constructors: true # Prefiere usar constructores const cuando sea posible
     avoid_print: true               # Evita el uso de print en el código
     unnecessary_brace_in_string_interps: true # Evita el uso innecesario de llaves en interpolaciones de strings
-    - always_declare_return_types # Obliga a declarar siempre el tipo de retorno en funciones y métodos
-    - always_use_package_imports # Obliga a usar imports con 'package:' para evitar rutas relativas
+    constant_identifier_names: true
+    always_declare_return_types: true # Obliga a declarar siempre el tipo de retorno en funciones y métodos
+    always_use_package_imports: true # Obliga a usar imports con 'package:' para evitar rutas relativas

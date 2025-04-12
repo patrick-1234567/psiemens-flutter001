@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:psiemens/views/login_screen.dart';
-import 'task_screen.dart';
-import '../main.dart'; // Importa MyHomePage
+import 'package:psiemens/views/task_screen.dart';
+import 'package:psiemens/views/start_screen.dart';
+import 'package:psiemens/main.dart'; // Importa MyHomePage
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -50,6 +51,16 @@ class WelcomeScreen extends StatelessWidget {
               },
             ),
             ListTile(
+              leading: const Icon(Icons.quiz),
+              title: const Text('Juego de Preguntas'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const StartScreen()),
+                );
+              },
+            ),
+            ListTile(
               leading: const Icon(Icons.logout),
               title: const Text('Cerrar Sesión'),
               onTap: () {
@@ -62,8 +73,8 @@ class WelcomeScreen extends StatelessWidget {
           ],
         ),
       ),
-      body: Center(
-        child: Column(
+      body: const Center(
+        child: const Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Text(
