@@ -9,7 +9,7 @@ class AuthService {
     }
 
     // Simula un retraso como si estuviera llamando a un backend
-    await Future.delayed(Duration(seconds: 2));
+    await Future.delayed(const Duration(seconds: 2));
 
     // Imprime las credenciales en la consola
     print('Username: $username');

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../api/service/question_service.dart';
-import '../data/question_repository.dart';
-import '../domain/question.dart';
-import 'result_screen.dart';
+import 'package:psiemens/api/service/question_service.dart';
+import 'package:psiemens/data/question_repository.dart';
+import 'package:psiemens/domain/question.dart';
+import 'package:psiemens/views/result_screen.dart';
 
 class GameScreen extends StatefulWidget {
   const GameScreen({super.key});

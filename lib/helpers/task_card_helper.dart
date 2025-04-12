@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:psiemens/views/sports_card_screen.dart';
-import '../domain/task.dart';
-import '../constants.dart';
-import '../components/card.dart'; // Importa el CustomCard
-import '../helpers/common_widgets_helper.dart'; // Importa CommonWidgetsHelper
+import 'package:psiemens/domain/task.dart';
+import 'package:psiemens/constants.dart';
+import 'package:psiemens/components/card.dart'; // Importa el CustomCard
+import 'package:psiemens/helpers/common_widgets_helper.dart'; // Importa CommonWidgetsHelper
 
 class TaskCardHelper {
   static Widget buildTaskCard(BuildContext context, Task task, List<Task> tasks, VoidCallback onEdit) {
@@ -86,7 +86,7 @@ class TaskCardHelper {
 
             // Fecha límite
             CommonWidgetsHelper.buildBoldFooter(
-              '${AppConstants.fechaLimite}${task.deadline!.day}/${task.deadline!.month}/${task.deadline!.year}',
+              '${AppConstants.fechaLimite}${task.deadline.day}/${task.deadline.month}/${task.deadline.year}',
             ),
           ],
         ),

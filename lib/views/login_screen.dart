@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'welcome_screen.dart';
+import 'package:psiemens/views/welcome_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   @override

@@ -1,4 +1,4 @@
-import '../domain/question.dart';
+import 'package:psiemens/domain/question.dart';
 
 class QuestionRepository {
   // Método para obtener preguntas iniciales

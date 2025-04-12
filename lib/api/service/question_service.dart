@@ -1,5 +1,5 @@
-import '../../data/question_repository.dart';
-import '../../domain/question.dart';
+import 'package:psiemens/data/question_repository.dart';
+import 'package:psiemens/domain/question.dart';
 
 class QuestionService {
   final QuestionRepository _questionRepository;

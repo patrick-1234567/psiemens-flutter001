@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../constants.dart';
+import 'package:psiemens/constants.dart';
 
 class CommonWidgetsHelper {
   // Método para construir un título en negrita con tamaño 20

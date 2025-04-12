@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import '../constants.dart';
-import 'start_screen.dart';
-import 'game_screen.dart';
+import 'package:psiemens/constants.dart';
+import 'package:psiemens/views/game_screen.dart';
 class ResultScreen extends StatelessWidget {
   final int finalScore; // Puntaje final
   final int totalQuestions; // Total de preguntas

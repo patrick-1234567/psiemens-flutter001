@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:psiemens/domain/task.dart';
-import '../constants.dart';
-import '../api/service/task_service.dart';
-import '../data/task_repository.dart';
-import '../helpers/task_card_helper.dart'; // Importa el helper para los Cards
+import 'package:psiemens/constants.dart';
+import 'package:psiemens/api/service/task_service.dart';
+import 'package:psiemens/data/task_repository.dart';
+import 'package:psiemens/helpers/task_card_helper.dart'; // Importa el helper para los Cards
 
 class TasksScreen extends StatefulWidget {
   @override
@@ -76,8 +76,8 @@ Widget build(BuildContext context) {
     ),
     backgroundColor: Colors.grey[200],
     body: tasks.isEmpty
-        ? Center(
-            child: Text(AppConstants.emptyList), // Usando la constante
+        ? const Center(
+            child: const Text(AppConstants.emptyList), // Usando la constante
           )
         : ListView.builder(
             controller: _scrollController, // Controlador para el scroll
@@ -102,7 +102,7 @@ Widget build(BuildContext context) {
                   });
 
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(AppConstants.tareaEliminada)),
+                    const SnackBar(content: const Text(AppConstants.tareaEliminada)),
                   );
                 },
                 background: Container(
