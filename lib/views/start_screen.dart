@@ -11,6 +11,12 @@ class StartScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text(GameConstants.titleApp),
         backgroundColor: Colors.blue,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
       ),
       body: Center(
         child: Column(

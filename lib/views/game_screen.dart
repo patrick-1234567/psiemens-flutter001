@@ -16,7 +16,6 @@ class _GameScreenState extends State<GameScreen> {
   late List<Question> questionsList;
   int currentQuestionIndex = 0; // Índice de la pregunta actual
   int userScore = 0; // Puntaje del usuario
-  final double spacingHeight = 16.0; // Espaciado entre elementos
   int? selectedAnswerIndex; // Índice de la respuesta seleccionada
   bool? isCorrectAnswer; // Estado para manejar si la respuesta es correcta
 
@@ -36,9 +35,20 @@ class _GameScreenState extends State<GameScreen> {
       if (isCorrectAnswer == true) {
         userScore++;
       }
-    });
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          isCorrectAnswer == true ? '¡Correcto!' : '¡Incorrecto!',
+          style: const TextStyle(fontSize: 16),
+        ),
+        backgroundColor: isCorrectAnswer == true ? Colors.green : Colors.red,
+        duration: const Duration(seconds: 1), // Duración del SnackBar
+      ),
+    );
+  });
 
-    // Retraso antes de navegar a la siguiente pregunta o a la pantalla de resultados
+    // Retraso antes de avanzar a la siguiente pregunta o a la pantalla de resultados
     Future.delayed(const Duration(seconds: 1), () {
       if (currentQuestionIndex < questionsList.length - 1) {
         setState(() {
@@ -50,7 +60,10 @@ class _GameScreenState extends State<GameScreen> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => ResultScreen(userScore: userScore), // Navega a la pantalla de resultados
+            builder: (context) => ResultScreen(
+              finalScore: userScore,
+              totalQuestions: questionsList.length,
+            ),
           ),
         );
       }
@@ -88,7 +101,7 @@ class _GameScreenState extends State<GameScreen> {
               ),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: spacingHeight), // Espaciado entre la pregunta y las opciones
+            const SizedBox(height: 16), // Espaciado entre la pregunta y las opciones
             ...currentQuestion.answerOptions.asMap().entries.map((entry) {
               final index = entry.key;
               final answer = entry.value;
@@ -96,26 +109,28 @@ class _GameScreenState extends State<GameScreen> {
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8.0), // Espaciado entre botones
                 child: ElevatedButton(
-                  onPressed: selectedAnswerIndex == null
-                      ? () => _answerQuestion(index)
-                      : null, // Desactiva los botones después de seleccionar
-                  style: ElevatedButton.styleFrom(
-                    foregroundColor: Colors.white, // Texto blanco
-                    backgroundColor: selectedAnswerIndex == index
-                        ? (isCorrectAnswer == true ? Colors.green : Colors.red) // Verde si es correcta, rojo si no
-                        : Colors.blue, // Fondo azul por defecto
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  child: Text(
-                    answer,
-                    style: const TextStyle(fontSize: 16), // Tamaño de texto
-                  ),
-                ),
-              );
-            }).toList(),
+                  onPressed: () {
+                    if (selectedAnswerIndex == null) {
+                      _answerQuestion(index); // Llama al método para manejar la respuesta
+                  }
+              },
+            style: ElevatedButton.styleFrom(
+              foregroundColor: Colors.black, // Texto blanco
+              backgroundColor: selectedAnswerIndex == index
+                ? (isCorrectAnswer == true ? Colors.green : Colors.red) // Verde si es correcta, rojo si no
+                : Colors.blue, // Fondo azul por defecto
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            child: Text(
+              answer,
+              style: const TextStyle(fontSize: 16), // Tamaño de texto
+            ),
+          ),
+        );
+      }).toList(),
           ],
         ),
       ),
