@@ -6,3 +6,11 @@ class AppConstants {
   static const String fechaLimite = 'Fecha límite: '; // Nueva constante
   static const String tareaEliminada = 'Tarea eliminada'; // Nueva constante
 }
+
+class GameConstants {
+  static const String titleApp = 'Juego de Preguntas';
+  static const String welcomeMessage = '¡Bienvenido al Juego de Preguntas!';
+  static const String startGame = 'Iniciar Juego';
+  static const String finalScore = 'Puntuación Final: ';
+  static const String playAgain = 'Jugar de Nuevo';
+}
