@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:psiemens/views/login_screen.dart';
 import 'task_screen.dart';
+import 'start_screen.dart';
 import '../main.dart'; // Importa MyHomePage
 
 class WelcomeScreen extends StatelessWidget {
@@ -46,6 +47,16 @@ class WelcomeScreen extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const MyHomePage(title: 'Contador')),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.quiz),
+              title: const Text('Juego de Preguntas'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const StartScreen()),
                 );
               },
             ),
