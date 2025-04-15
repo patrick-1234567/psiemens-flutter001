@@ -62,7 +62,7 @@ class WelcomeScreen extends StatelessWidget {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.quiz),
+              leading: const Icon(Icons.money),
               title: const Text('Cotizaciones'),
               onTap: () {
                 Navigator.push(
