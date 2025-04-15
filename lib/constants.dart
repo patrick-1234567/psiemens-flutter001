@@ -14,3 +14,10 @@ class GameConstants {
   static const String finalScore = 'Puntuación Final: ';
   static const String playAgain = 'Jugar de Nuevo';
 }
+
+class FinanceConstants {
+  static const String titleApp = 'Cotizaciones Financieras';
+  static const String loadingMessage = 'Cargando cotizaciones...';
+  static const String emptyList = 'No hay cotizaciones';
+  static const String errorMessage = 'Error al cargar cotizaciones';
+}
