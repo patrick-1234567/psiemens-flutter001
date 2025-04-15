@@ -1,0 +1,7 @@
+organization=patrick-1234567
+projectKey=patrick-1234567_psiemens-flutter001
+serverUrl=https://sonarcloud.io
+serverVersion=8.0.0.61895
+dashboardUrl=https://sonarcloud.io/dashboard?id=patrick-1234567_psiemens-flutter001
+ceTaskId=AZY0RzDH3MRs2bFMUnLJ
+ceTaskUrl=https://sonarcloud.io/api/ce/task?id=AZY0RzDH3MRs2bFMUnLJ

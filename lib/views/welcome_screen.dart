@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:psiemens/views/login_screen.dart';
 import 'package:psiemens/views/task_screen.dart';
 import 'package:psiemens/views/start_screen.dart';
-import 'package:psiemens/main.dart'; // Importa MyHomePage
+import 'package:psiemens/main.dart';
+import 'package:psiemens/views/quote_screen.dart'; 
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -57,6 +58,16 @@ class WelcomeScreen extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const StartScreen()),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.money),
+              title: const Text('Cotizaciones'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const QuoteScreen()),
                 );
               },
             ),
