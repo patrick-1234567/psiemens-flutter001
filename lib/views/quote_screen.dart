@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:psiemens/api/service/quote_service.dart'; // Asegúrate que la ruta sea correcta
-import 'package:psiemens/data/quote_repository.dart'; // Asegúrate que la ruta sea correcta
-import 'package:psiemens/domain/quote.dart'; // Asegúrate que la ruta sea correcta
+import 'package:psiemens/api/service/quote_service.dart';
+import 'package:psiemens/data/quote_repository.dart';
+import 'package:psiemens/domain/quote.dart';
+// Asegúrate de que este import es necesario aquí, si no, puedes quitarlo.
+// import 'package:psiemens/constants.dart';
 
 class QuoteScreen extends StatefulWidget {
   const QuoteScreen({super.key});
@@ -11,116 +13,189 @@ class QuoteScreen extends StatefulWidget {
 }
 
 class _QuoteScreenState extends State<QuoteScreen> {
-  // Instancia del servicio (Idealmente, esto se inyectaría con un gestor de dependencias)
-  late final QuoteService _quoteService;
+  // --- State Variables ---
+  final List<Quote> _quotes = [];
+  int _currentPageForRandom = 1;
+  bool _isLoading = false;
+  bool _hasMoreQuotes = true;
+  String? _error;
+  bool _initialLoadComplete = false;
 
-  // Estado para manejar la carga y los datos
-  Future<List<Quote>>? _quotesFuture;
+  final QuoteService _quoteService = QuoteService(quoteRepository: QuoteRepository());
+  final ScrollController _scrollController = ScrollController();
+
+  // --- Constantes de UI ---
+  final double spacingHeight = 10.0; // Variable para el espaciado
 
   @override
   void initState() {
     super.initState();
-    // Creamos las instancias aquí (o las obtenemos de un inyector)
-    final repository = QuoteRepository();
-    _quoteService = QuoteService(repository);
-    // Iniciamos la carga de datos
-    _loadQuotes();
+    _loadQuotes(isInitialLoad: true);
+    _scrollController.addListener(_onScroll);
   }
 
-  void _loadQuotes() {
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_initialLoadComplete &&
+        !_isLoading &&
+        _hasMoreQuotes &&
+        _scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent * 0.9) {
+      _loadQuotes();
+    }
+  }
+
+  Future<void> _loadQuotes({bool isInitialLoad = false}) async {
+    if (_isLoading) return;
+
     setState(() {
-      _quotesFuture = _quoteService.getQuotes();
+      _isLoading = true;
+      _error = null;
     });
+
+    try {
+      List<Quote> newQuotes;
+      if (isInitialLoad) {
+        print("Fetching initial fixed quotes...");
+        newQuotes = await _quoteService.getAllQuotes();
+        print("Sorting initial quotes by price...");
+        newQuotes = _quoteService.sortQuotesByPriceDescending(newQuotes);
+        setState(() {
+           _initialLoadComplete = true;
+        });
+         print("Initial fixed quotes fetched and sorted: ${newQuotes.length}");
+      } else {
+         print("Fetching random quotes page: $_currentPageForRandom");
+        newQuotes = await _quoteService.getPaginatedQuotes(
+          pageNumber: _currentPageForRandom,
+        );
+         print("Random quotes fetched: ${newQuotes.length}");
+         _currentPageForRandom++;
+      }
+
+      setState(() {
+        _isLoading = false;
+        _quotes.addAll(newQuotes);
+      });
+    } catch (e) {
+      print("Error during quote fetch: $e");
+      setState(() {
+        _isLoading = false;
+        _error = "Failed to load quotes: ${e.toString()}";
+      });
+      debugPrint("Error loading quotes: $e");
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // --- Cambio de color de fondo ---
+      backgroundColor: Colors.grey[200],
+      // --- Fin cambio de color ---
       appBar: AppBar(
         title: const Text('Stock Quotes'),
         backgroundColor: Colors.blue,
-        actions: [
-          // Botón para recargar los datos
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadQuotes,
-            tooltip: 'Refresh Quotes',
-          ),
-        ],
+        // Puedes ajustar el color del AppBar si lo deseas para que combine
+        // backgroundColor: Colors.blueGrey, // Ejemplo
       ),
-      body: FutureBuilder<List<Quote>>(
-        future: _quotesFuture,
-        builder: (context, snapshot) {
-          // --- Estado de Carga ---
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          // --- Estado de Error ---
-          else if (snapshot.hasError) {
-            print('Error en FutureBuilder: ${snapshot.error}'); // Log para depuración
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, color: Colors.red, size: 60),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 16),
-                    child: Text('Error: ${snapshot.error}'),
+      body: _buildQuoteList(),
+    );
+  }
+
+  Widget _buildQuoteList() {
+    // --- Manejo de Errores y Carga Inicial (sin cambios) ---
+    if (_error != null && _quotes.isEmpty) {
+      return const Center( /* ... */ );
+    }
+    if (_isLoading && _quotes.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (!_isLoading && _error == null && _quotes.isEmpty && _initialLoadComplete) {
+       return const Center(child: Text('No initial quotes found.'));
+    }
+    // --- Fin Manejo Errores y Carga ---
+
+    return ListView.builder(
+      controller: _scrollController,
+      // Ajusta el padding si es necesario con el nuevo fondo
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      itemCount: _quotes.length + (_isLoading && _initialLoadComplete ? 1 : 0),
+      itemBuilder: (context, index) {
+        // Muestra el indicador de carga al final si corresponde
+        if (index == _quotes.length) {
+          return (_isLoading && _initialLoadComplete)
+              ? Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: spacingHeight + 6.0), // Ajusta padding del indicador
+                    child: const CircularProgressIndicator(),
                   ),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: _loadQuotes,
-                    child: const Text('Intentar de nuevo'),
-                  )
-                ],
+                )
+              : const SizedBox.shrink();
+        }
+
+        // --- Construcción de la Card y SizedBox ---
+        final quote = _quotes[index];
+        final Color changeColor = quote.changePercentage >= 0 ? Colors.green : Colors.red;
+        final String formattedPrice = '\$${quote.stockPrice.toStringAsFixed(2)}';
+        final String formattedPercentage = '${quote.changePercentage.toStringAsFixed(1)}%';
+        final dateTime = quote.lastUpdated.toLocal();
+        final String formattedDate =
+            '${dateTime.day.toString().padLeft(2, '0')}/'
+            '${dateTime.month.toString().padLeft(2, '0')}/'
+            '${dateTime.year} '
+            '${dateTime.hour.toString().padLeft(2, '0')}:'
+            '${dateTime.minute.toString().padLeft(2, '0')}';
+
+        // Envuelve la Card en una Column para añadir el SizedBox debajo
+        return Column(
+          children: [
+            Card(
+              elevation: 3,
+              // Quita el margen vertical de la Card si el SizedBox maneja el espacio
+              margin: const EdgeInsets.symmetric(horizontal: 4.0),
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      quote.companyName,
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(formattedPrice, style: const TextStyle(fontSize: 16)),
+                        Text(
+                          formattedPercentage,
+                          style: TextStyle(fontSize: 16, color: changeColor, fontWeight: FontWeight.w500),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Updated: $formattedDate',
+                      style: TextStyle(fontSize: 12, color: Colors.grey[700]), // Ligeramente más oscuro para contraste
+                    ),
+                  ],
+                ),
               ),
-            );
-          }
-          // --- Estado con Datos ---
-          else if (snapshot.hasData) {
-            final quotes = snapshot.data!;
-            if (quotes.isEmpty) {
-              return const Center(child: Text('No hay cotizaciones disponibles.'));
-            }
-
-            // --- Lista de Quotes ---
-            return ListView.builder(
-              itemCount: quotes.length,
-              itemBuilder: (context, index) {
-                final quote = quotes[index];
-                final color = quote.changePercentage >= 0 ? Colors.green : Colors.red;
-                final icon = quote.changePercentage >= 0 ? Icons.arrow_upward : Icons.arrow_downward;
-
-                return ListTile(
-                  leading: Icon(icon, color: color),
-                  title: Text(quote.companyName),
-                  subtitle: Text(
-                    'Actualizado: ${quote.lastUpdated.hour}:${quote.lastUpdated.minute.toString().padLeft(2, '0')}', // Formato simple
-                  ),
-                  trailing: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        '\$${quote.stockPrice.toStringAsFixed(2)}',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      Text(
-                        '${quote.changePercentage.toStringAsFixed(2)}%',
-                        style: TextStyle(color: color),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            );
-          }
-          // --- Estado por defecto (no debería ocurrir con FutureBuilder bien usado) ---
-          else {
-            return const Center(child: Text('Iniciando...'));
-          }
-        },
-      ),
+            ),
+            // --- Añade el SizedBox debajo de la Card ---
+            SizedBox(height: spacingHeight),
+            // --- Fin del SizedBox ---
+          ],
+        );
+        // --- Fin de la construcción ---
+      },
     );
   }
 }

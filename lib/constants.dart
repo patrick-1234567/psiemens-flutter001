@@ -20,4 +20,5 @@ class FinanceConstants {
   static const String loadingMessage = 'Cargando cotizaciones...';
   static const String emptyList = 'No hay cotizaciones';
   static const String errorMessage = 'Error al cargar cotizaciones';
+  static const int pageSize = 10;
 }
