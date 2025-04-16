@@ -4,6 +4,7 @@ import 'package:psiemens/views/task_screen.dart';
 import 'package:psiemens/views/start_screen.dart';
 import 'package:psiemens/main.dart';
 import 'package:psiemens/views/quote_screen.dart'; 
+import 'package:psiemens/views/noticia_screen.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -68,6 +69,16 @@ class WelcomeScreen extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const QuoteScreen()),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.newspaper),
+              title: const Text('Noticias'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const NoticiaScreen()),
                 );
               },
             ),
