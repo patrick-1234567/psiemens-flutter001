@@ -46,9 +46,9 @@ class _NoticiaScreenState extends State<NoticiaScreen> {
     });
 
     try {
-      final newNoticias = await _noticiaService.obtenerNoticiasPaginadas(
-        numeroPagina: currentPage,
-        tamanoPagina: NoticiaConstantes.tamanoPagina,
+      final newNoticias = await _noticiaService.getPaginatedNoticia(
+        pageNumber: currentPage,
+        pageSize: NoticiaConstantes.tamanoPagina,
       );
 
       setState(() {
