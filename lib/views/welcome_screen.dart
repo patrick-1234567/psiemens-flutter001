@@ -6,6 +6,8 @@ import 'package:psiemens/main.dart';
 import 'package:psiemens/views/quote_screen.dart'; 
 import 'package:psiemens/views/noticia_screen.dart';
 
+
+
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
 
@@ -72,8 +74,8 @@ class WelcomeScreen extends StatelessWidget {
                 );
               },
             ),
-            ListTile(
-              leading: const Icon(Icons.newspaper),
+             ListTile(
+              leading: const Icon(Icons.money),
               title: const Text('Noticias'),
               onTap: () {
                 Navigator.push(

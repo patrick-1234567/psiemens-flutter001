@@ -1,3 +1,5 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 class AppConstants {
   static const String titleAppbar = 'Lista de Tareas';
   static const String emptyList = 'No hay tareas';
@@ -29,6 +31,9 @@ class NoticiaConstantes {
   static const String listaVacia = 'No hay noticias disponibles';
   static const String mensajeError = 'Error al cargar noticias';
   static const String formatoFecha = 'dd/MM/yyyy HH:mm';
-  static const int tamanoPagina = 10;
+  static const int tamanoPagina = 7;
   static const double espaciadoAlto = 10;
+  static const String apiKey = "bb6d2d708f0443ef8ed24679229a0e51";
+  static String get crudCrudUrl => dotenv.env['CRUD_CRUD_URL'] ?? '';
+  static const String query = "tecnologia"; // Término de búsqueda por defecto
 }
