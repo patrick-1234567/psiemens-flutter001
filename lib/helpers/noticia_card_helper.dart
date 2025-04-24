@@ -4,7 +4,11 @@ import 'package:psiemens/components/noticias_card.dart';
 
 class NoticiaCardHelper {
   /// Construye un widget NoticiaCard directamente desde una instancia de Noticia
-  static Widget buildNoticiaCard(Noticia noticia) {
+  static Widget buildNoticiaCard({
+    required Noticia noticia,
+    required VoidCallback onEdit, // Callback para editar
+    required VoidCallback onDelete, // Callback para eliminar
+  }) {
     /// Calcula el tiempo transcurrido desde la fecha de publicación
     String calcularTiempoTranscurrido(DateTime publicadaEl) {
       final ahora = DateTime.now();
@@ -27,6 +31,8 @@ class NoticiaCardHelper {
       fuente: noticia.fuente,
       publicadaEl: tiempoTranscurrido,
       imageUrl: noticia.imageUrl,
+      onEdit: onEdit, // Callback para editar
+      onDelete: onDelete, // Callback para eliminar
     );
   }
 }

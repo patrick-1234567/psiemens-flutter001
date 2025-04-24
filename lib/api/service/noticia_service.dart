@@ -35,6 +35,7 @@ class NoticiaService {
     return noticia;
   }
 
+
   Future<void> crearNoticia({
     required String titulo,
     required String descripcion,
@@ -62,4 +63,34 @@ class NoticiaService {
 
     await _repository.eliminarNoticia(id);
   }
+
+  Future<void> editarNoticia({
+    required String id,
+    required String titulo,
+    required String descripcion,
+    required String fuente,
+    required String publicadaEl,
+    required String urlImagen,
+  }) async {
+    if (id.isEmpty) {
+      throw Exception('El ID de la noticia no puede estar vacío.');
+    }
+
+    if (titulo.isEmpty || descripcion.isEmpty || fuente.isEmpty) {
+      throw Exception(
+        'Los campos título, descripción y fuente no pueden estar vacíos.',
+      );
+    }
+
+    final noticia = {
+      'titulo': titulo,
+      'descripcion': descripcion,
+      'fuente': fuente,
+      'publicadaEl': publicadaEl,
+      'urlImagen': urlImagen,
+    };
+
+    await _repository.editarNoticia(id, noticia);
+  }
+  
 }

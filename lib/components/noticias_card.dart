@@ -1,3 +1,4 @@
+/*
 import 'package:flutter/material.dart';
 import 'package:psiemens/components/mybuttonrow.dart';
 
@@ -103,3 +104,81 @@ class NoticiaCard extends StatelessWidget {
     );
   }
 }
+*/
+import 'package:flutter/material.dart';
+
+class NoticiaCard extends StatelessWidget {
+  final String titulo;
+  final String descripcion;
+  final String fuente;
+  final String publicadaEl;
+  final String imageUrl;
+  final VoidCallback onEdit; // Callback para editar
+  final VoidCallback onDelete; // Callback para eliminar
+
+  const NoticiaCard({
+    super.key,
+    required this.titulo,
+    required this.descripcion,
+    required this.fuente,
+    required this.publicadaEl,
+    required this.imageUrl,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10), // Borde redondeado
+      ),
+      child: ListTile(
+        leading:
+            imageUrl.isNotEmpty
+                ? Image.network(
+                  imageUrl,
+                  width: 50,
+                  height: 50,
+                  fit: BoxFit.cover,
+                )
+                : const Icon(
+                  Icons.article,
+                  color: Colors.blue,
+                ), // Icono por defecto
+        title: Text(
+          titulo,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(descripcion),
+            const SizedBox(height: 4),
+            Text('Fuente: $fuente', style: const TextStyle(color: Colors.grey)),
+            Text(
+              'Publicado: $publicadaEl',
+              style: const TextStyle(color: Colors.grey),
+            ),
+          ],
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.edit, color: Colors.green),
+              onPressed: onEdit, // Llama al callback de edición
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete, color: Colors.red),
+              onPressed: onDelete, // Llama al callback de eliminación
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+

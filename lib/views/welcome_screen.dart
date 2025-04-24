@@ -75,7 +75,7 @@ class WelcomeScreen extends StatelessWidget {
               },
             ),
              ListTile(
-              leading: const Icon(Icons.money),
+              leading: const Icon(Icons.newspaper),
               title: const Text('Noticias'),
               onTap: () {
                 Navigator.push(

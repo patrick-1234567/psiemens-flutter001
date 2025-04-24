@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 //backend
 import 'package:psiemens/api/service/noticia_service.dart';
 import 'package:psiemens/components/crear_noticia_screen.dart';
+import 'package:psiemens/components/eliminar_noticia.dart';
+import 'package:psiemens/components/noticia_modal.dart';
 import 'package:psiemens/domain/noticia.dart';
 //component
 import 'package:psiemens/constants.dart';
@@ -68,7 +70,25 @@ class _NoticiaScreenState extends State<NoticiaScreen> {
     }
   }
 
+  void _editarNoticia(Noticia noticia) {
+    NoticiaModal.mostrarModal(
+      context: context,
+      noticia: noticia.toJson(), // Pasa los datos de la noticia al modal
+      onSave: _loadNoticias, // Recarga las noticias después de guardar
+    );
+  }
 
+  void _eliminarNoticia(String noticiaId) {
+    EliminarNoticiaPopup.mostrarPopup(
+      context: context,
+      noticiaId: noticiaId,
+      onNoticiaEliminada: () {
+        setState(() {
+          noticiasList.removeWhere((noticia) => noticia.id == noticiaId);
+        });
+      },
+    );
+  }
 
   @override
   void dispose() {
@@ -102,7 +122,13 @@ class _NoticiaScreenState extends State<NoticiaScreen> {
                       children: [
                         // Tarjeta de noticia
                         NoticiaCardHelper.buildNoticiaCard(
-                          noticia, // URL de la imagen
+                          noticia: noticia,
+                          onEdit:
+                              () => _editarNoticia(noticia), // Editar noticia
+                          onDelete:
+                              () => _eliminarNoticia(
+                                noticia.id,
+                              ), // Eliminar noticia
                         ),
 
                         // Línea divisoria

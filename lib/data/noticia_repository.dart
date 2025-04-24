@@ -37,7 +37,22 @@ class NoticiaRepository {
     }
   }
   // crud
+  /// Edita una noticia en la API de CrudCrud
+Future<void> editarNoticia(String id, Map<String, dynamic> noticia) async {
+  try {
+    final url = '${NoticiaConstantes.crudCrudUrl}/$id'; // Construye la URL con el ID
+    final response = await _dioNew.put(
+      url,
+      data: noticia,
+    );
 
+    if (response.statusCode != 200) {
+      throw Exception('Error al editar la noticia: ${response.statusCode}');
+    }
+  } catch (e) {
+    throw Exception('Error al conectar con la API: $e');
+  }
+}
   /// Crea una nueva noticia en la API de CrudCrud
   Future<void> crearNoticia(Map<String, dynamic> noticia) async {
     try {
@@ -54,6 +69,7 @@ class NoticiaRepository {
     }
   }
 
+  
   //eliminar noticia
   /// Elimina una noticia de la API de CrudCrud
   Future<void> eliminarNoticia(String id) async {
@@ -68,9 +84,6 @@ class NoticiaRepository {
       throw Exception('Error al conectar con la API: $e');
     }
   }
-
-  
-  
 
   /// Devuelve una lista de noticias paginadas
 
