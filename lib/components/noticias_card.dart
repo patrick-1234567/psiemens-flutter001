@@ -113,6 +113,7 @@ class NoticiaCard extends StatelessWidget {
   final String fuente;
   final String publicadaEl;
   final String imageUrl;
+  final String categoriaId;
   final VoidCallback onEdit; // Callback para editar
   final VoidCallback onDelete; // Callback para eliminar
 
@@ -123,6 +124,7 @@ class NoticiaCard extends StatelessWidget {
     required this.fuente,
     required this.publicadaEl,
     required this.imageUrl,
+    required this.categoriaId,
     required this.onEdit,
     required this.onDelete,
   });
@@ -155,12 +157,32 @@ class NoticiaCard extends StatelessWidget {
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(descripcion),
             const SizedBox(height: 4),
-            Text('Fuente: $fuente', style: const TextStyle(color: Colors.grey)),
             Text(
-              'Publicado: $publicadaEl',
-              style: const TextStyle(color: Colors.grey),
+              descripcion,
+              maxLines: 3, // Limitar líneas si la descripción es muy larga
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              fuente, // Muestra solo la fuente aquí
+              style: const TextStyle(
+                color: Colors.grey,
+                fontStyle: FontStyle.italic, // <--- ¡Aquí está el cambio!
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            Text(
+              publicadaEl, // Muestra la fecha/hora en otra línea
+              style: const TextStyle(color: Colors.grey, fontSize: 12), // Tamaño más pequeño para la fecha
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Categoría: $categoriaId', // Muestra el ID de la categoría
+              style: const TextStyle(color: Colors.blueGrey, fontSize: 12),
             ),
           ],
         ),

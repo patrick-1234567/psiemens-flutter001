@@ -42,6 +42,7 @@ class NoticiaService {
     required String fuente,
     required String publicadaEl,
     required String urlImagen,
+    required String categoriaId,
   }) async {
     final noticia = {
       'titulo': titulo,
@@ -49,6 +50,7 @@ class NoticiaService {
       'fuente': fuente,
       'publicadaEl': publicadaEl,
       'urlImagen': urlImagen,
+      'categoriaId': categoriaId,
     };
 
     await _repository.crearNoticia(noticia);
@@ -71,6 +73,7 @@ class NoticiaService {
     required String fuente,
     required String publicadaEl,
     required String urlImagen,
+    required String categoriaId,
   }) async {
     if (id.isEmpty) {
       throw Exception('El ID de la noticia no puede estar vacío.');
@@ -88,6 +91,7 @@ class NoticiaService {
       'fuente': fuente,
       'publicadaEl': publicadaEl,
       'urlImagen': urlImagen,
+      'categoriaId': categoriaId,
     };
 
     await _repository.editarNoticia(id, noticia);

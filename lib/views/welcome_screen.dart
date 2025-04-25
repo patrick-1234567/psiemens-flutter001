@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:psiemens/views/categoria_screen.dart';
 import 'package:psiemens/views/login_screen.dart';
 import 'package:psiemens/views/task_screen.dart';
 import 'package:psiemens/views/start_screen.dart';
@@ -81,6 +82,16 @@ class WelcomeScreen extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const NoticiaScreen()),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.category),
+              title: const Text('Categorias'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => CategoriaScreen()),
                 );
               },
             ),

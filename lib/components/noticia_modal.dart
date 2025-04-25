@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:psiemens/api/service/noticia_service.dart';
+import 'package:psiemens/constants.dart';
 
 class NoticiaModal {
   static Future<void> mostrarModal({
@@ -33,6 +34,8 @@ class NoticiaModal {
             ? DateTime.tryParse(noticia['publicadaEl'] ?? '')
             : null;
 
+    String? categoriaSeleccionada = noticia?['categoriaId'];
+
     Future<void> guardarNoticia() async {
       if (formKey.currentState!.validate()) {
         try {
@@ -47,6 +50,7 @@ class NoticiaModal {
               fuente: fuenteController.text,
               publicadaEl: fechaIso8601 ?? '',
               urlImagen: imagenUrlController.text,
+              categoriaId: categoriaSeleccionada ?? '${CategoriaConstantes.defaultCategoriaId}'
             );
           } else {
             // Editar noticia existente
@@ -57,6 +61,7 @@ class NoticiaModal {
               fuente: fuenteController.text,
               publicadaEl: fechaIso8601 ?? '',
               urlImagen: imagenUrlController.text,
+              categoriaId: categoriaSeleccionada ?? '${CategoriaConstantes.defaultCategoriaId}'
             );
           }
 

@@ -16,7 +16,7 @@ class EliminarNoticiaPopup {
         // Muestra un mensaje de éxito
         // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Noticia eliminada exitosamente')),
+          const SnackBar(content: Text('Noticia eliminada')),
         );
 
         // Llama al callback para actualizar la lista de noticias

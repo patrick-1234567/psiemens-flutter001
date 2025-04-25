@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:psiemens/api/service/noticia_service.dart';
 import 'package:intl/intl.dart'; // Para formatear la fecha
+import 'package:psiemens/domain/categoria.dart';
+import 'package:psiemens/data/categoria_repository.dart';
+import 'package:psiemens/constants.dart';
 
 class CrearNoticiaPopup {
   static Future<void> mostrarPopup(BuildContext context) async {
@@ -15,24 +18,37 @@ class CrearNoticiaPopup {
     final TextEditingController imagenUrlController = TextEditingController();
 
     DateTime? fechaSeleccionada;
+    String? categoriaSeleccionada;
+
+    List<Categoria> categorias = [];
+    try {
+      final categoriaRepository = CategoriaRepository();
+      categorias = await categoriaRepository.getCategorias();
+    } catch (e) {
+      // Manejo de errores al cargar categorías
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al cargar categorías: $e')),
+      );
+    }
 
     Future<void> guardarNoticia() async {
       if (formKey.currentState!.validate()) {
         try {
           // Convierte la fecha seleccionada al formato ISO 8601
           final fechaIso8601 = fechaSeleccionada?.toUtc().toIso8601String();
-
+  
           await noticiaService.crearNoticia(
             titulo: tituloController.text,
             descripcion: descripcionController.text,
             fuente: fuenteController.text,
             publicadaEl: fechaIso8601 ?? '',
             urlImagen: imagenUrlController.text,
+            categoriaId: categoriaSeleccionada ?? CategoriaConstantes.defaultCategoriaId,
           );
 
           // ignore: use_build_context_synchronously
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Noticia creada exitosamente')),
+            const SnackBar(content: Text('Noticia creada')),
           );
 
           // ignore: use_build_context_synchronously
@@ -127,6 +143,26 @@ class CrearNoticiaPopup {
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Por favor ingresa una URL de imagen';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16.0),
+                  DropdownButtonFormField<String>(
+                    value: categoriaSeleccionada,
+                    decoration: const InputDecoration(labelText: 'Categoría'),
+                    items: categorias.map((categoria) {
+                      return DropdownMenuItem<String>(
+                        value: categoria.id,
+                        child: Text(categoria.nombre),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      categoriaSeleccionada = value;
+                    },
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Por favor selecciona una categoría';
                       }
                       return null;
                     },

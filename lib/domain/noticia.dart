@@ -5,6 +5,7 @@ class Noticia {
   final String fuente;
   final DateTime publicadaEl;
   final String imageUrl;
+  final String categoriaId; // ID de la categoría asociada
 
   Noticia({
     required this.id,
@@ -13,6 +14,7 @@ class Noticia {
     required this.fuente,
     required this.publicadaEl,
     required this.imageUrl,
+    required this.categoriaId,
   });
 
   // Método para convertir la instancia en un mapa
@@ -24,10 +26,11 @@ class Noticia {
       'fuente': fuente,
       'publicadaEl': publicadaEl.toIso8601String(),
       'urlImagen': imageUrl,
+      'categoriaId': categoriaId, // Añadido al mapa
     };
   }
 
-  // Método para crear una instancia desde un mapa (opcional)
+  // Método para crear una instancia desde un mapa
   factory Noticia.fromJson(Map<String, dynamic> json) {
     return Noticia(
       id: json['_id'] ?? '',
@@ -36,6 +39,7 @@ class Noticia {
       fuente: json['fuente'] ?? 'Fuente desconocida',
       publicadaEl: DateTime.tryParse(json['publicadaEl'] ?? '') ?? DateTime.now(),
       imageUrl: json['urlImagen'] ?? '',
+      categoriaId: json['categoriaId'] ?? 'sin_categoria', // Valor por defecto
     );
   }
 }

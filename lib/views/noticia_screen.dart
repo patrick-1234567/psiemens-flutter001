@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 //backend
 import 'package:psiemens/api/service/noticia_service.dart';
@@ -7,7 +8,7 @@ import 'package:psiemens/components/noticia_modal.dart';
 import 'package:psiemens/domain/noticia.dart';
 //component
 import 'package:psiemens/constants.dart';
-
+import 'package:psiemens/views/categoria_screen.dart';
 import 'package:psiemens/helpers/noticia_card_helper.dart';
 
 class NoticiaScreen extends StatefulWidget {
@@ -59,16 +60,55 @@ class _NoticiaScreenState extends State<NoticiaScreen> {
         hasMore = newNoticias.length == NoticiaConstantes.tamanoPagina;
         if (hasMore) currentPage++;
       });
-    } catch (e) {
+    } on DioError catch (e) {
       setState(() {
         isLoading = false;
       });
-      ScaffoldMessenger.of(
-        // ignore: use_build_context_synchronously
-        context,
-      ).showSnackBar(const SnackBar(content: Text(NoticiaConstantes.mensajeError)));
+      // Determina el color y mensaje del SnackBar según el código de error
+    Color snackBarColor;
+    String errorMessage;
+
+    switch (e.response?.statusCode) {
+      case 400:
+        snackBarColor = Colors.red;
+        errorMessage = NoticiaConstantes.mensajeError;
+        break;
+      case 401:
+        snackBarColor = Colors.orange;
+        errorMessage = ErrorConstantes.errorUnauthorized;
+        break;
+      case 404:
+        snackBarColor = Colors.grey;
+        errorMessage = ErrorConstantes.errorNotFound;
+        break;
+      case 500:
+        snackBarColor = Colors.red;
+        errorMessage = ErrorConstantes.errorServer;
+        break;
+      default:
+        snackBarColor = Colors.black;
+        errorMessage = 'Error desconocido: ${e.response?.statusCode ?? 'Sin código'}';
     }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(errorMessage),
+        backgroundColor: snackBarColor,
+      ),
+    );
+  } catch (e) {
+    setState(() {
+      isLoading = false;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(NoticiaConstantes.mensajeError),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
+}
 
   void _editarNoticia(Noticia noticia) {
     NoticiaModal.mostrarModal(
@@ -100,7 +140,24 @@ class _NoticiaScreenState extends State<NoticiaScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[200], // Fondo gris claro
-      appBar: AppBar(title: const Text(NoticiaConstantes.tituloApp)),
+      appBar: AppBar(
+        title: const Text(NoticiaConstantes.tituloApp),
+        backgroundColor: Colors.blue,
+        actions: [
+        IconButton(
+          icon: const Icon(Icons.category), // Icono de categoría
+          tooltip: 'Categorías',
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const CategoriaScreen(),
+                ),
+            ); // Navega a categoria_screen.dart
+          },
+        ),
+      ],
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           CrearNoticiaPopup.mostrarPopup(context);
