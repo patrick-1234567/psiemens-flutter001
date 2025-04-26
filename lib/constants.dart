@@ -54,4 +54,5 @@ class CategoriaConstantes {
   static const String errorTimeout = 'Tiempo de espera agotado'; // Mensaje para errores de timeout
   static const String errorNoCategoria = 'Categoría no encontrada'; // Mensaje para errores de categorías
   static const String defaultCategoriaId = 'sin_categoria'; // ID por defecto para noticias sin categoría
+  static const String mensajeError = 'Error al cargar categorias';
 }

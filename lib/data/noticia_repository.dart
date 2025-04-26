@@ -1,158 +1,106 @@
-import 'dart:async';
-import 'package:psiemens/domain/categoria.dart';
+import 'package:flutter/foundation.dart';
+import 'package:psiemens/api/service/noticia_service.dart';
 import 'package:psiemens/domain/noticia.dart';
-import 'package:dio/dio.dart';
 import 'package:psiemens/constants.dart';
+import 'package:psiemens/exceptions/api_exception.dart';
 
 class NoticiaRepository {
-  final Dio _dioNew = Dio(BaseOptions(
-    connectTimeout: const Duration(seconds: CategoriaConstantes.timeoutSeconds), // Tiempo de conexión
-    receiveTimeout: const Duration(seconds:CategoriaConstantes.timeoutSeconds), // Tiempo de recepción
-  ));
-  final List<Noticia> _allNoticias = [];
-  
-  Future<List<Noticia>> getNoticias() async {
-  try {
-    // Realiza la solicitud GET a la API
-    final response = await _dioNew.get(ApiConstantes.noticiasUrl);
+  final NoticiaService _service = NoticiaService();
 
-    // Maneja el código de estado HTTP
-    if (response.statusCode == 200) {
-      final List<dynamic> noticiasJson = response.data;
-      return noticiasJson.map((json) {
-        return Noticia(
-          id: json['_id'] ?? '',
-          titulo: json['titulo'] ?? 'Sin título',
-          descripcion: json['descripcion'] ?? 'Sin descripción',
-          fuente: json['fuente'] ?? 'Fuente desconocida',
-          publicadaEl: DateTime.tryParse(json['publicadaEl'] ?? '') ?? DateTime.now(),
-          imageUrl: json['urlImagen'] ?? '',
-          categoriaId: json['categoriaId'] ?? CategoriaConstantes.defaultCategoriaId,
-        );
-      }).toList();
-    } else {
-      throw Exception('Error desconocido: ${response.statusCode}');
+  /// Obtiene cotizaciones paginadas con validaciones
+  Future<List<Noticia>> obtenerNoticias() async {
+    try {
+      final noticias = await _service.getNoticias();
+      return noticias;
+    } catch (e) {
+      if (e is ApiException) {
+        throw e; // Relanza la excepción para que la maneje la capa superior
+      }
+      debugPrint('Error inesperado al obtener noticias: $e');
+      throw ApiException('Error inesperado al obtener noticias.');
     }
-  } on DioError catch (e) {
-    _handleError(e); // Llama al método centralizado para manejar el error
-  } catch (e) {
-    // Manejo de otros errores
-    throw Exception('Error inesperado: $e');
   }
-  // Agrega un throw al final para manejar cualquier caso no cubierto
-  throw Exception('Error desconocido: No se pudo obtener noticias');
-}
 
 
-  /// Edita una noticia en la API de CrudCrud
-Future<void> editarNoticia(String id, Map<String, dynamic> noticia) async {
-  try {
-    final url = '${ApiConstantes.noticiasUrl}/$id';
-    final response = await _dioNew.put(
-      url,
-      data: noticia,
-    );
-
-    if (response.statusCode != 200) {
-      throw Exception('Error desconocido: ${response.statusCode}');
-    }
-  } on DioError catch (e) {
-    _handleError(e); // Llama a la función centralizada para manejar el error
-  } catch (e) {
-    throw Exception('Error inesperado: $e');
-  }
-}
-
-  /// Crea una nueva noticia en la API de CrudCrud
-  Future<void> crearNoticia(Map<String, dynamic> noticia) async {
-  try {
-    final response = await _dioNew.post(
-      ApiConstantes.noticiasUrl,
-      data: noticia,
-    );
-
-    if (response.statusCode != 201) {
-      throw Exception('Error desconocido: ${response.statusCode}');
-    }
-  } on DioError catch (e) {
-    _handleError(e); // Llama a la función centralizada para manejar el error
-  } catch (e) {
-    throw Exception('Error inesperado: $e');
-  }
-}
-
-  /// Elimina una noticia de la API de CrudCrud
-  Future<void> eliminarNoticia(String id) async {
-  try {
-    final url = '${ApiConstantes.noticiasUrl}/$id';
-    final response = await _dioNew.delete(url);
-
-    if (response.statusCode != 200 && response.statusCode != 204) {
-      throw Exception('Error desconocido: ${response.statusCode}');
-    }
-  } on DioError catch (e) {
-    _handleError(e); // Llama a la función centralizada para manejar el error
-  } catch (e) {
-    throw Exception('Error inesperado: $e');
-  }
-}
-
-  /// Devuelve una lista de noticias paginadas
-  Future<List<Noticia>> getNoticiasPaginadas({
-    required int pageNumber,
-    int pageSize = 5,
+  Future<void> crearNoticia({
+    required String titulo,
+    required String descripcion,
+    required String fuente,
+    required String publicadaEl,
+    required String urlImagen,
+    required String categoriaId,
   }) async {
-    // Calcula los índices de inicio y fin para la página solicitada
-    final startIndex = (pageNumber - 1) * pageSize;
-    final endIndex = startIndex + pageSize;
-
-    // Si el índice de fin está fuera del rango de la lista actual, genera más noticias
-    while (_allNoticias.length < endIndex) {
-      final nuevasNoticias =
-          await getNoticias(); // Llama al método y espera el resultado
-
-      // Verifica si se obtuvieron nuevas noticias
-      if (nuevasNoticias.isEmpty) {
-        break; // Sal del bucle si no hay más noticias
+    final noticia = {
+      'titulo': titulo,
+      'descripcion': descripcion,
+      'fuente': fuente,
+      'publicadaEl': publicadaEl,
+      'urlImagen': urlImagen,
+      'categoriaId': categoriaId,
+    };
+    try {
+      await _service.crearNoticia(noticia);
+    } catch (e) {
+      if (e is ApiException) {
+        throw e;
       }
+      debugPrint('Error inesperado al crear noticia: $e');
+      throw ApiException('Error inesperado al crear noticia.');
+    }
+  }
 
-      // Agrega solo las noticias que no están ya en la lista
-      for (var noticia in nuevasNoticias) {
-        if (!_allNoticias.contains(noticia)) {
-          _allNoticias.add(noticia);
-        }
+  Future<void> eliminarNoticia(String id) async {
+    if (id.isEmpty) {
+      throw Exception(
+        '${NoticiaConstantes.mensajeError} El ID de la noticia no puede estar vacío.',
+      );
+    }
+    try {
+      await _service.eliminarNoticia(id);
+    } catch (e) {
+      if (e is ApiException) {
+        throw e;
       }
+      debugPrint('Error inesperado al eliminar noticia: $e');
+      throw ApiException('Error inesperado al eliminar noticia.');
+    }
+  }
+
+  Future<void> editarNoticia({
+    required String id,
+    required String titulo,
+    required String descripcion,
+    required String fuente,
+    required String publicadaEl,
+    required String urlImagen,
+    required String categoriaId,
+  }) async {
+    if (id.isEmpty) {
+      throw ApiException('El ID de la noticia no puede estar vacío.');
     }
 
-    // Si el índice inicial está fuera del rango, devuelve una lista vacía
-    if (startIndex >= _allNoticias.length) {
-      return [];
+    if (titulo.isEmpty || descripcion.isEmpty || fuente.isEmpty) {
+      throw ApiException(
+        'Los campos título, descripción y fuente no pueden estar vacíos.',
+      );
     }
 
-    // Devuelve la sublista correspondiente a la página solicitada
-    return _allNoticias.sublist(
-      startIndex,
-      endIndex > _allNoticias.length ? _allNoticias.length : endIndex,
-    );
+    final noticia = {
+      'titulo': titulo,
+      'descripcion': descripcion,
+      'fuente': fuente,
+      'publicadaEl': publicadaEl,
+      'urlImagen': urlImagen,
+      'categoriaId': categoriaId,
+    };
+    try {
+      await _service.editarNoticia(id, noticia);
+    } catch (e) {
+      if (e is ApiException) {
+        throw e;
+      }
+      debugPrint('Error inesperado al editar noticia: $e');
+      throw ApiException('Error inesperado al editar noticia.');
+    }
   }
-
-  void _handleError(DioError e) {
-  if (e.type == DioErrorType.connectionTimeout || e.type == DioErrorType.receiveTimeout) {
-    throw Exception(CategoriaConstantes.errorTimeout);
-  }
-
-  final statusCode = e.response?.statusCode;
-  switch (statusCode) {
-    case 400:
-      throw Exception(FinanceConstants.errorMessage);
-    case 401:
-      throw Exception(ErrorConstantes.errorUnauthorized);
-    case 404:
-      throw Exception(ErrorConstantes.errorNotFound);
-    case 500:
-      throw Exception(ErrorConstantes.errorServer);
-    default:
-      throw Exception('Error desconocido: ${statusCode ?? 'Sin código'}');
-  }
-}
 }

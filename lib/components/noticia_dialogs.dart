@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:psiemens/api/service/noticia_service.dart';
+import 'package:psiemens/data/noticia_repository.dart';
 import 'package:psiemens/constants.dart';
+import 'package:psiemens/domain/categoria.dart';
+import 'package:psiemens/api/service/categoria_service.dart';
 
 class NoticiaModal {
   static Future<void> mostrarModal({
@@ -10,7 +12,7 @@ class NoticiaModal {
     required VoidCallback onSave, // Callback para guardar
   }) async {
     final formKey = GlobalKey<FormState>();
-    final NoticiaService noticiaService = NoticiaService();
+    final NoticiaRepository noticiaService = NoticiaRepository();
 
     // Controladores para los campos del formulario
     final TextEditingController tituloController = TextEditingController(
@@ -30,11 +32,20 @@ class NoticiaModal {
     );
 
     DateTime? fechaSeleccionada =
-        noticia != null
-            ? DateTime.tryParse(noticia['publicadaEl'] ?? '')
-            : null;
+        noticia != null ? DateTime.tryParse(noticia['publicadaEl'] ?? '') : null;
 
     String? categoriaSeleccionada = noticia?['categoriaId'];
+
+    List<Categoria> categorias = [];
+    try {
+      final categoriaRepository = CategoriaService();
+      categorias = await categoriaRepository.getCategorias();
+    } catch (e) {
+      // Manejo de errores al cargar categorías
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al cargar categorías: $e')),
+      );
+    }
 
     Future<void> guardarNoticia() async {
       if (formKey.currentState!.validate()) {
@@ -50,7 +61,7 @@ class NoticiaModal {
               fuente: fuenteController.text,
               publicadaEl: fechaIso8601 ?? '',
               urlImagen: imagenUrlController.text,
-              categoriaId: categoriaSeleccionada ?? '${CategoriaConstantes.defaultCategoriaId}'
+              categoriaId: categoriaSeleccionada ?? CategoriaConstantes.defaultCategoriaId,
             );
           } else {
             // Editar noticia existente
@@ -61,7 +72,7 @@ class NoticiaModal {
               fuente: fuenteController.text,
               publicadaEl: fechaIso8601 ?? '',
               urlImagen: imagenUrlController.text,
-              categoriaId: categoriaSeleccionada ?? '${CategoriaConstantes.defaultCategoriaId}'
+              categoriaId: categoriaSeleccionada ?? CategoriaConstantes.defaultCategoriaId,
             );
           }
 
@@ -172,6 +183,23 @@ class NoticiaModal {
                       if (value == null || value.isEmpty) {
                         return 'Por favor ingresa una URL de imagen';
                       }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16.0),
+                  DropdownButtonFormField<String>(
+                    value: categoriaSeleccionada,
+                    decoration: const InputDecoration(labelText: 'Categoría'),
+                    items: categorias.map((categoria) {
+                      return DropdownMenuItem<String>(
+                        value: categoria.id,
+                        child: Text(categoria.nombre),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      categoriaSeleccionada = value;
+                    },
+                    validator: (value) {
                       return null;
                     },
                   ),

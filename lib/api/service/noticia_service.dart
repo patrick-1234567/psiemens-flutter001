@@ -1,100 +1,103 @@
-import 'package:psiemens/data/noticia_repository.dart';
+import 'dart:async';
+import 'package:psiemens/exceptions/api_exception.dart';
+import 'package:psiemens/helpers/error_helper.dart';
 import 'package:psiemens/domain/noticia.dart';
+import 'package:dio/dio.dart';
 import 'package:psiemens/constants.dart';
 
 class NoticiaService {
-  final NoticiaRepository _repository = NoticiaRepository();
+  final Dio _dioNew = Dio(BaseOptions(
+    connectTimeout: const Duration(seconds: CategoriaConstantes.timeoutSeconds), // Tiempo de conexión
+    receiveTimeout: const Duration(seconds:CategoriaConstantes.timeoutSeconds), // Tiempo de recepción
+  ));
+  final List<Noticia> _allNoticias = [];
+  
+  Future<List<Noticia>> getNoticias() async {
+  try {
+    // Realiza la solicitud GET a la API
+    final response = await _dioNew.get(ApiConstantes.noticiasUrl);
 
-  /// Obtiene cotizaciones paginadas con validaciones
-  Future<List<Noticia>> getPaginatedNoticia({
-    required int pageNumber,
-    int pageSize = NoticiaConstantes.tamanoPagina,
-  }) async {
-    if (pageNumber < 1) {
-      throw Exception(NoticiaConstantes.mensajeError);
+    // Maneja el código de estado HTTP
+    if (response.statusCode == 200) {
+      final List<dynamic> noticiasJson = response.data;
+      return noticiasJson.map((json) {
+        return Noticia(
+          id: json['_id'] ?? '',
+          titulo: json['titulo'] ?? 'Sin título',
+          descripcion: json['descripcion'] ?? 'Sin descripción',
+          fuente: json['fuente'] ?? 'Fuente desconocida',
+          publicadaEl: DateTime.tryParse(json['publicadaEl'] ?? '') ?? DateTime.now(),
+          imageUrl: json['urlImagen'] ?? '',
+          categoriaId: json['categoriaId'] ?? CategoriaConstantes.defaultCategoriaId,
+         );
+        }).toList();
+      } else {
+        throw ApiException('Error desconocido', statusCode: response.statusCode);
+      }
+    } on DioError catch (e) {
+      final errorData = ErrorHelper.getErrorMessageAndColor(e.response?.statusCode);
+      throw ApiException(errorData['message'], statusCode: e.response?.statusCode);
+    } catch (e) {
+      throw ApiException('Error inesperado: $e');
     }
-    if (pageSize <= 0) {
-      throw Exception(NoticiaConstantes.mensajeError);
-    }
+  }
 
-    final noticia = await _repository.getNoticiasPaginadas(
-      pageNumber: pageNumber,
-      pageSize: pageSize,
+
+  /// Edita una noticia en la API de CrudCrud
+Future<void> editarNoticia(String id, Map<String, dynamic> noticia) async {
+  try {
+    final url = '${ApiConstantes.noticiasUrl}/$id';
+    final response = await _dioNew.put(
+      url,
+      data: noticia,
     );
 
-    for (final noticia in noticia) {
-      // Formatear la fecha de publicación
-      if (noticia.titulo.isEmpty ||
-          noticia.descripcion.isEmpty ||
-          noticia.fuente.isEmpty) {
-        throw Exception(
-          '${NoticiaConstantes.mensajeError} Los campos título, descripción y fuente no pueden estar vacíos.',
-        );
+    if (response.statusCode != 200) {
+        throw ApiException('Error desconocido', statusCode: response.statusCode);
       }
+    } on DioError catch (e) {
+      final errorData = ErrorHelper.getErrorMessageAndColor(e.response?.statusCode);
+      throw ApiException(errorData['message'], statusCode: e.response?.statusCode);
+    } catch (e) {
+      throw ApiException('Error inesperado: $e');
     }
-    return noticia;
   }
 
+  /// Crea una nueva noticia en la API de CrudCrud
+  Future<void> crearNoticia(Map<String, dynamic> noticia) async {
+  try {
+    final response = await _dioNew.post(
+      ApiConstantes.noticiasUrl,
+      data: noticia,
+    );
 
-  Future<void> crearNoticia({
-    required String titulo,
-    required String descripcion,
-    required String fuente,
-    required String publicadaEl,
-    required String urlImagen,
-    required String categoriaId,
-  }) async {
-    final noticia = {
-      'titulo': titulo,
-      'descripcion': descripcion,
-      'fuente': fuente,
-      'publicadaEl': publicadaEl,
-      'urlImagen': urlImagen,
-      'categoriaId': categoriaId,
-    };
-
-    await _repository.crearNoticia(noticia);
-  }
-
-  Future<void> eliminarNoticia(String id) async {
-    if (id.isEmpty) {
-      throw Exception(
-        '${NoticiaConstantes.mensajeError} El ID de la noticia no puede estar vacío.',
-      );
+    if (response.statusCode != 201) {
+      throw Exception('Error desconocido: ${response.statusCode}');
     }
-
-    await _repository.eliminarNoticia(id);
+  } on DioError catch (e) {
+   ErrorHelper.getErrorMessageAndColor(e.response?.statusCode); // Llama a la función centralizada para manejar el error
+  } catch (e) {
+    throw Exception('Error inesperado: $e');
   }
-
-  Future<void> editarNoticia({
-    required String id,
-    required String titulo,
-    required String descripcion,
-    required String fuente,
-    required String publicadaEl,
-    required String urlImagen,
-    required String categoriaId,
-  }) async {
-    if (id.isEmpty) {
-      throw Exception('El ID de la noticia no puede estar vacío.');
-    }
-
-    if (titulo.isEmpty || descripcion.isEmpty || fuente.isEmpty) {
-      throw Exception(
-        'Los campos título, descripción y fuente no pueden estar vacíos.',
-      );
-    }
-
-    final noticia = {
-      'titulo': titulo,
-      'descripcion': descripcion,
-      'fuente': fuente,
-      'publicadaEl': publicadaEl,
-      'urlImagen': urlImagen,
-      'categoriaId': categoriaId,
-    };
-
-    await _repository.editarNoticia(id, noticia);
-  }
-  
 }
+
+  /// Elimina una noticia de la API de CrudCrud
+  Future<void> eliminarNoticia(String id) async {
+  try {
+    final url = '${ApiConstantes.noticiasUrl}/$id';
+    final response = await _dioNew.delete(url);
+
+    if (response.statusCode != 200 && response.statusCode != 204) {
+        throw ApiException('Error desconocido', statusCode: response.statusCode);
+      }
+    } on DioError catch (e) {
+      final errorData = ErrorHelper.getErrorMessageAndColor(e.response?.statusCode);
+      throw ApiException(errorData['message'], statusCode: e.response?.statusCode);
+    } catch (e) {
+      throw ApiException('Error inesperado: $e');
+    }
+  }
+}
+
+  
+

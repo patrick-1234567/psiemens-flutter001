@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:psiemens/domain/categoria.dart';
-import 'package:psiemens/api/service/categoria_service.dart';
+import 'package:psiemens/data/categoria_repository.dart';
 
 class CategoriaDialogs {
   static void editarCategoria({
     required BuildContext context,
     required Categoria categoria,
-    required CategoriaService categoriaService,
+    required CategoriaRepository categoriaRepository,
     required VoidCallback onSuccess,
   }) {
     final TextEditingController nombreController = TextEditingController(text: categoria.nombre);
@@ -49,7 +49,7 @@ class CategoriaDialogs {
             ElevatedButton(
               onPressed: () async {
                 try {
-                  await categoriaService.actualizarCategoria(
+                  await categoriaRepository.actualizarCategoria(
                     categoria.id!,
                     {
                       'nombre': nombreController.text,
@@ -79,7 +79,7 @@ class CategoriaDialogs {
   static void eliminarCategoria({
     required BuildContext context,
     required Categoria categoria,
-    required CategoriaService categoriaService,
+    required CategoriaRepository categoriaService,
     required VoidCallback onSuccess,
   }) {
     showDialog(
@@ -119,7 +119,7 @@ class CategoriaDialogs {
 
   static void agregarCategoria({
     required BuildContext context,
-    required CategoriaService categoriaService,
+    required CategoriaRepository categoriaService,
     required VoidCallback onSuccess,
   }) {
     final TextEditingController nombreController = TextEditingController();
