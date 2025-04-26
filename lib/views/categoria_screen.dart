@@ -1,9 +1,9 @@
 /// screens/categoria_screen.dart
 import 'package:flutter/material.dart';
 import 'package:psiemens/domain/categoria.dart'; // Asegúrate que la ruta sea correcta
-import 'package:psiemens/api/service/categoria_service.dart'; // Asegúrate que la ruta sea correcta
-import 'package:psiemens/data/categoria_repository.dart';
-import 'package:psiemens/helpers/categoria_dialogs.dart'; // Necesario para instanciar el servicio directamente (si no usas DI)
+import 'package:psiemens/data/categoria_repository.dart'; // Asegúrate que la ruta sea correcta
+import 'package:psiemens/api/service/categoria_service.dart';
+import 'package:psiemens/components/categoria_dialogs.dart'; // Necesario para instanciar el servicio directamente (si no usas DI)
 
 class CategoriaScreen extends StatefulWidget {
   const CategoriaScreen({super.key});
@@ -17,8 +17,8 @@ class _CategoriaScreenState extends State<CategoriaScreen> {
   late Future<List<Categoria>> _categoriasFuture;
   // Asume que obtienes el servicio de alguna manera (Inyección de Dependencias es lo ideal)
   // Ejemplo simple (NO recomendado para producción sin DI):
-  late final CategoriaService _categoriaService =
-      CategoriaService(CategoriaRepository());
+  late final CategoriaRepository _categoriaRepository =
+      CategoriaRepository(CategoriaService());
   // Ejemplo con GetIt (si lo tienes configurado):
   // final CategoriaService _categoriaService = GetIt.instance<CategoriaService>();
 
@@ -31,14 +31,14 @@ class _CategoriaScreenState extends State<CategoriaScreen> {
   /// Carga las categorías usando el servicio.
   void _loadCategorias() {
     // Asigna el Future directamente a la variable de estado
-    _categoriasFuture = _categoriaService.obtenerCategorias();
+    _categoriasFuture = _categoriaRepository.obtenerCategorias();
   }
 
   /// Refresca la lista de categorías.
   void _refreshCategorias() {
     setState(() {
       // Vuelve a llamar al servicio para obtener los datos más recientes
-      _categoriasFuture = _categoriaService.obtenerCategorias();
+      _categoriasFuture = _categoriaRepository.obtenerCategorias();
     });
   }
 
@@ -123,7 +123,7 @@ class _CategoriaScreenState extends State<CategoriaScreen> {
                 CategoriaDialogs.editarCategoria(
                   context: context,
                   categoria: categoria,
-                  categoriaService: _categoriaService,
+                  categoriaRepository: _categoriaRepository,
                   onSuccess: _refreshCategorias,
                 ); // Llama al método para editar
               },
@@ -135,7 +135,7 @@ class _CategoriaScreenState extends State<CategoriaScreen> {
                 CategoriaDialogs.eliminarCategoria(
                   context: context,
                   categoria: categoria,
-                  categoriaService: _categoriaService,
+                  categoriaService: _categoriaRepository,
                   onSuccess: _refreshCategorias,
                 ); // Llama al método para eliminar
               },
@@ -153,7 +153,7 @@ class _CategoriaScreenState extends State<CategoriaScreen> {
       onPressed: () {
         CategoriaDialogs.agregarCategoria(
           context: context,
-          categoriaService: _categoriaService,
+          categoriaService: _categoriaRepository,
           onSuccess: _refreshCategorias,
         ); // Llama al método para agregar una categoría
        }, // Llama al método para agregar una categoría

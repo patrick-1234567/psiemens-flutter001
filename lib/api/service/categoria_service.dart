@@ -1,59 +1,100 @@
-/// services/categoria_service.dart
-import 'package:psiemens/data/categoria_repository.dart'; // Importa tu repositorio
-import 'package:psiemens/domain/categoria.dart'; // Importa tu entidad Categoria
-import 'package:flutter/foundation.dart'; // Para debugPrint
+import 'package:dio/dio.dart';
+import 'package:psiemens/domain/categoria.dart';
+import 'package:psiemens/constants.dart';
 
 class CategoriaService {
-  // Inyecta la dependencia del repositorio
-  final CategoriaRepository _categoriaRepository;
+  final Dio _dio = Dio(BaseOptions(
+    connectTimeout: const Duration(seconds: CategoriaConstantes.timeoutSeconds), // Tiempo de conexión
+    receiveTimeout: const Duration(seconds: CategoriaConstantes.timeoutSeconds), // Tiempo de recepción
+  ));
 
-  // Constructor que recibe la instancia del repositorio
-  CategoriaService(this._categoriaRepository);
+  /// Manejo centralizado de errores
+  void _handleError(DioError e) {
+    if (e.type == DioErrorType.connectionTimeout || e.type == DioErrorType.receiveTimeout) {
+      throw Exception(CategoriaConstantes.errorTimeout);
+    }
 
-  /// Obtiene la lista completa de categorías desde el repositorio.
-  Future<List<Categoria>> obtenerCategorias() async {
-    try {
-      // Llama al método del repositorio para obtener los datos
-      final categorias = await _categoriaRepository.getCategorias();
-      return categorias;
-    } catch (e) {
-      // Puedes añadir lógica de logging o manejo de errores específico del servicio aquí
-      debugPrint('Error en CategoriaService al obtener categorías: $e');
-      // Relanza la excepción para que la capa superior (UI, BLoC) pueda manejarla
-      rethrow;
+    final statusCode = e.response?.statusCode;
+    switch (statusCode) {
+      case 400:
+        throw Exception(CategoriaConstantes.mensajeError);
+      case 401:
+        throw Exception(ErrorConstantes.errorUnauthorized);
+      case 404:
+        throw Exception(ErrorConstantes.errorNotFound);
+      case 500:
+        throw Exception(ErrorConstantes.errorServer);
+      default:
+        throw Exception('Error desconocido: ${statusCode ?? 'Sin código'}');
     }
   }
 
-  Future<void> crearNuevaCategoria(Map<String, dynamic> categoriaData) async {
+  /// Obtiene todas las categorías desde la API
+  Future<List<Categoria>> getCategorias() async {
     try {
-      // Llama al método del repositorio para crear la categoría
-      await _categoriaRepository.crearCategoria(categoriaData);
-      debugPrint('Categoría creada exitosamente.');
+      final response = await _dio.get(ApiConstantes.categoriaUrl);
+
+      if (response.statusCode == 200) {
+        final List<dynamic> categoriasJson = response.data;
+        return categoriasJson.map((json) => Categoria.fromJson(json)).toList();
+      } else {
+        throw Exception('Error desconocido: ${response.statusCode}');
+      }
+    } on DioError catch (e) {
+      _handleError(e); // Llama al método centralizado para manejar el error
     } catch (e) {
-      debugPrint('Error en CategoriaService al crear categoría: $e');
-      rethrow;
+      throw Exception('Error inesperado: $e');
+    }
+    throw Exception('Error desconocido: No se pudo obtener las categorías');
+  }
+
+  /// Crea una nueva categoría en la API
+  Future<void> crearCategoria(Map<String, dynamic> categoria) async {
+    try {
+      final response = await _dio.post(
+        ApiConstantes.categoriaUrl,
+        data: categoria,
+      );
+
+      if (response.statusCode != 201) {
+        throw Exception('Error desconocido: ${response.statusCode}');
+      }
+    } on DioError catch (e) {
+      _handleError(e); // Llama al método centralizado para manejar el error
+    } catch (e) {
+      throw Exception('Error inesperado: $e');
     }
   }
 
-  Future<void> actualizarCategoria(String id, Map<String, dynamic> categoriaData) async {
+  /// Edita una categoría existente en la API
+  Future<void> editarCategoria(String id, Map<String, dynamic> categoria) async {
     try {
-      // Llama al método del repositorio para editar la categoría
-      await _categoriaRepository.editarCategoria(id, categoriaData);
-      debugPrint('Categoría con ID $id actualizada exitosamente.');
+      final url = '${ApiConstantes.categoriaUrl}/$id';
+      final response = await _dio.put(url, data: categoria);
+
+      if (response.statusCode != 200) {
+        throw Exception('Error desconocido: ${response.statusCode}');
+      }
+    } on DioError catch (e) {
+      _handleError(e); // Llama al método centralizado para manejar el error
     } catch (e) {
-      debugPrint('Error en CategoriaService al actualizar categoría $id: $e');
-      rethrow;
+      throw Exception('Error inesperado: $e');
     }
   }
 
-  Future<void> borrarCategoria(String id) async {
+  /// Elimina una categoría de la API
+  Future<void> eliminarCategoria(String id) async {
     try {
-      // Llama al método del repositorio para eliminar la categoría
-      await _categoriaRepository.eliminarCategoria(id);
-      debugPrint('Categoría con ID $id eliminada exitosamente.');
+      final url = '${ApiConstantes.categoriaUrl}/$id';
+      final response = await _dio.delete(url);
+
+      if (response.statusCode != 200 && response.statusCode != 204) {
+        throw Exception('Error desconocido: ${response.statusCode}');
+      }
+    } on DioError catch (e) {
+      _handleError(e); // Llama al método centralizado para manejar el error
     } catch (e) {
-      debugPrint('Error en CategoriaService al eliminar categoría $id: $e');
-      rethrow;
+      throw Exception('Error inesperado: $e');
     }
   }
 }
