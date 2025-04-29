@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:psiemens/views/categoria_screen.dart';
+import 'package:psiemens/views/contador_screen.dart';
 import 'package:psiemens/views/login_screen.dart';
 import 'package:psiemens/views/task_screen.dart';
 import 'package:psiemens/views/start_screen.dart';
-import 'package:psiemens/main.dart';
 import 'package:psiemens/views/quote_screen.dart'; 
 import 'package:psiemens/views/noticia_screen.dart';
-
-
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -51,7 +49,7 @@ class WelcomeScreen extends StatelessWidget {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const MyHomePage(title: 'Contador')),
+                  MaterialPageRoute(builder: (context) => const ContadorScreen()),
                 );
               },
             ),
