@@ -1,8 +1,7 @@
 import 'package:bloc/bloc.dart';
-import 'package:equatable/equatable.dart';
+import 'package:psiemens/bloc/bloc noticias/noticias_event.dart';
+import 'package:psiemens/bloc/bloc noticias/noticias_state.dart';
 
-part 'noticias_event.dart';
-part 'noticias_state.dart';
 
 class NoticiasBloc extends Bloc<NoticiasEvent, NoticiasState> {
   NoticiasBloc() : super(NoticiasInitial()) {
