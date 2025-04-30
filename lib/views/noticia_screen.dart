@@ -72,12 +72,12 @@ class NoticiaScreen extends StatelessWidget {
                   context.read<NoticiasBloc>().add(const FetchNoticias());
                 },
               ),
-              if (state is NoticiasLoaded && state.lastUpdated != null)
+              if (state is NoticiasLoaded)
                 Padding(
                   padding: const EdgeInsets.only(right: 16.0),
                   child: Center(
                     child: Text(
-                      'Última: ${DateFormat('dd/MM/yyyy HH:mm:ss').format(state.lastUpdated!)}',
+                      'Última: ${(DateFormat(NoticiaConstantes.formatoFecha)).format(state.lastUpdated)}',
                       style: const TextStyle(fontSize: 12),
                     ),
                   ),
@@ -98,7 +98,7 @@ class NoticiaScreen extends StatelessWidget {
       final noticias = state.noticiasList;
       if (noticias.isEmpty) {
         return const Center(
-          child: Text('No hay noticias disponibles.'),
+          child: Text(NoticiaConstantes.listaVacia),
         );
       } else {
         return ListView.separated(
@@ -145,6 +145,11 @@ class NoticiaScreen extends StatelessWidget {
                 if (confirmacion == true) {
                   try {
                     context.read<NoticiasBloc>().add(DeleteNoticia(noticia.id));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Noticia eliminada'),
+                      ),
+                    );
                   } catch (e) {
                     if (e is ApiException) {
                       _mostrarError(context, e.statusCode);
