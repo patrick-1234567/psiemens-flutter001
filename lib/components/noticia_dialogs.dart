@@ -40,6 +40,15 @@ class NoticiaModal {
     try {
       final categoriaRepository = CategoriaService();
       categorias = await categoriaRepository.getCategorias();
+      
+      // Verificar si la categoría seleccionada existe en las opciones
+      if (categoriaSeleccionada != null) {
+        bool existeCategoria = categorias.any((c) => c.id == categoriaSeleccionada);
+        if (!existeCategoria) {
+          // Si no existe, establecer como null para que se seleccione la primera
+          categoriaSeleccionada = null;
+        }
+      }
     } catch (e) {
       // Manejo de errores al cargar categorías
       ScaffoldMessenger.of(context).showSnackBar(
@@ -200,8 +209,13 @@ class NoticiaModal {
                       categoriaSeleccionada = value;
                     },
                     validator: (value) {
+                      if (value == null) {
+                        return 'Por favor selecciona una categoría';
+                      }
                       return null;
                     },
+                    // Añadir opción de placeholder cuando no hay selección
+                    hint: const Text('Selecciona una categoría'),
                   ),
                 ],
               ),
