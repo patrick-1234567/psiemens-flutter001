@@ -6,7 +6,6 @@ import 'package:psiemens/data/categoria_repository.dart';
    final sharedPreferences = await SharedPreferences.getInstance();
  
    di.registerSingleton<SharedPreferences>(sharedPreferences);
-   //di.registerSingleton<DbService>(DbService());
  
    di.registerSingleton<CategoriaRepository>(CategoriaRepository());
  
