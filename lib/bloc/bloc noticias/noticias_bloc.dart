@@ -58,7 +58,7 @@ class NoticiasBloc extends Bloc<NoticiasEvent, NoticiasState> {
   ) async {
     emit(NoticiasLoading());
     try {
-      await _noticiaRepository.editarNoticia(
+      await _noticiaRepository.actualizarNoticia(
         id: event.id,
         titulo: event.noticia.titulo,
         descripcion: event.noticia.descripcion,
