@@ -28,9 +28,10 @@ class NoticiasLoaded extends NoticiasState {
 
 class NoticiasError extends NoticiasState {
   final String errorMessage;
+  final int? statusCode;
 
-  const NoticiasError(this.errorMessage);
+  const NoticiasError(this.errorMessage, {this.statusCode});
 
   @override
-  List<Object> get props => [errorMessage];
+  List<Object> get props => [errorMessage, statusCode ?? 0];
 }
