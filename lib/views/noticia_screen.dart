@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 import 'package:psiemens/bloc/bloc%20noticias/noticias_event.dart';
 import 'package:psiemens/bloc/bloc%20noticias/noticias_state.dart';
 import 'package:psiemens/bloc/bloc%20noticias/noticias_bloc.dart';
+import 'package:psiemens/bloc/preferencia/preferencia_bloc.dart';
+import 'package:psiemens/bloc/preferencia/preferencia_event.dart';
 import 'package:psiemens/components/noticia_dialogs.dart';
 import 'package:psiemens/domain/noticia.dart';
 import 'package:psiemens/constants.dart';
@@ -10,6 +12,7 @@ import 'package:psiemens/helpers/noticia_card_helper.dart';
 import 'package:psiemens/exceptions/api_exception.dart';
 import 'package:psiemens/helpers/error_helper.dart';
 import 'package:psiemens/views/category_screen.dart';
+import 'package:psiemens/views/preferencia_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class NoticiaScreen extends StatelessWidget {
@@ -19,7 +22,8 @@ class NoticiaScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(create: (context) => NoticiasBloc()..add(const FetchNoticias()))
+        BlocProvider(create: (context) => NoticiasBloc()..add(const FetchNoticias())),
+        BlocProvider(create: (context) => PreferenciaBloc()..add(const CargarPreferencias()))
       ],
       child: BlocConsumer<NoticiasBloc, NoticiasState>(
       listener: (context, state) {
@@ -28,6 +32,10 @@ class NoticiaScreen extends StatelessWidget {
         }
       },
       builder: (context, state) {
+        // Acceder al estado de preferencias para mostrar información de filtros
+        final preferenciaState = context.watch<PreferenciaBloc>().state;
+        final filtrosActivos = preferenciaState.categoriasSeleccionadas.isNotEmpty;
+        
         return Scaffold(
           backgroundColor: Colors.grey[200],
           appBar: AppBar(
@@ -66,10 +74,40 @@ class NoticiaScreen extends StatelessWidget {
                 },
               ),
               IconButton(
+                icon: Icon(Icons.filter_list, 
+                  color: filtrosActivos ? Colors.amber : null),
+                tooltip: 'Preferencias',
+                onPressed: () {
+                  Navigator.push<List<String>>(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const PreferenciasScreen(),
+                    ),
+                  ).then((categoriasSeleccionadas) {
+                    // Verificar si recibimos categorías
+                    if (categoriasSeleccionadas != null && categoriasSeleccionadas.isNotEmpty) {
+                      // Aplicar filtro con las categorías seleccionadas
+                      context.read<NoticiasBloc>().add(
+                        FilterNoticiasByPreferencias(categoriasSeleccionadas),
+                      );
+                    }
+                  });
+                },
+              ),
+              IconButton(
                 icon: const Icon(Icons.refresh),
                 tooltip: 'Refrescar',
                 onPressed: () {
-                  context.read<NoticiasBloc>().add(const FetchNoticias());
+                  // Al refrescar, aplicar los filtros actuales si existen
+                  final categoriasSeleccionadas = context.read<PreferenciaBloc>().state.categoriasSeleccionadas;
+                  if (categoriasSeleccionadas.isNotEmpty) {
+                    context.read<NoticiasBloc>().add(
+                      FilterNoticiasByPreferencias(categoriasSeleccionadas),
+                    );
+                  } else {
+                    // Si no hay filtros, mostrar todas las noticias
+                    context.read<NoticiasBloc>().add(const FetchNoticias());
+                  }
                 },
               ),
               if (state is NoticiasLoaded)
@@ -84,7 +122,44 @@ class NoticiaScreen extends StatelessWidget {
                 ),
             ],
           ),
-          body: _buildBody(state),
+          body: Column(
+            children: [
+              // Chip para mostrar filtros activos
+              if (filtrosActivos)
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                  color: Colors.grey[300],
+                  child: Row(
+                    children: [
+                      const Icon(Icons.filter_list, size: 18),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Filtrado por ${preferenciaState.categoriasSeleccionadas.length} categorías',
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                      ),
+                      InkWell(
+                        onTap: () {
+                          // Limpiar filtros y mostrar todas las noticias
+                          context.read<PreferenciaBloc>().add(const ReiniciarFiltros());
+                          context.read<NoticiasBloc>().add(const FetchNoticias());
+                        },
+                        child: const Padding(
+                          padding: EdgeInsets.all(4.0),
+                          child: Text('Limpiar filtros', 
+                            style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              Expanded(
+                child: _buildBody(state),
+              ),
+            ],
+          ),
         );
       },
     )
