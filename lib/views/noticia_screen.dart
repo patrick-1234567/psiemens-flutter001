@@ -84,12 +84,16 @@ class NoticiaScreen extends StatelessWidget {
                       builder: (context) => const PreferenciasScreen(),
                     ),
                   ).then((categoriasSeleccionadas) {
-                    // Verificar si recibimos categorías
-                    if (categoriasSeleccionadas != null && categoriasSeleccionadas.isNotEmpty) {
-                      // Aplicar filtro con las categorías seleccionadas
-                      context.read<NoticiasBloc>().add(
-                        FilterNoticiasByPreferencias(categoriasSeleccionadas),
-                      );
+                    if (categoriasSeleccionadas != null) {
+                      if (categoriasSeleccionadas.isNotEmpty) {
+                        // Si hay categorías seleccionadas, aplicar filtro
+                        context.read<NoticiasBloc>().add(
+                          FilterNoticiasByPreferencias(categoriasSeleccionadas),
+                        );
+                      } else {
+                        // Si la lista está vacía, usar el evento FetchNoticias para mostrar todas
+                        context.read<NoticiasBloc>().add(const FetchNoticias());
+                      }
                     }
                   });
                 },
