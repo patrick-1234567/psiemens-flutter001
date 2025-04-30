@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:psiemens/domain/preferencia.dart';
-import 'package:psiemens/bloc/noticias_bloc/noticias_bloc.dart';
-import 'package:psiemens/bloc/preferencia_bloc/preferencia_bloc.dart';
-import 'package:psiemens/helpers/snackbar_helper.dart';
+import '../bloc/preferencia/preferencia_bloc.dart';
+import '../bloc/preferencia/preferencia_event.dart';
+import '../bloc/preferencia/preferencia_state.dart';
+import '../bloc/noticias/noticias_bloc.dart';
+import '../bloc/noticias/noticias_event.dart';
+import '../data/preferencia_repository.dart';
+import '../helpers/snackbar_helper.dart';
 
 class PreferenciasScreen extends StatefulWidget {
   const PreferenciasScreen({super.key});
@@ -13,7 +16,7 @@ class PreferenciasScreen extends StatefulWidget {
 }
 
 class _PreferenciasScreenState extends State<PreferenciasScreen> {
-  late Preferencia _preferenciasTemporales;
+  late PreferenciasState _preferenciasTemporales;
   final List<String> _categoriasDisponibles = const [
     'Tecnología',
     'Deportes',
@@ -27,8 +30,8 @@ class _PreferenciasScreenState extends State<PreferenciasScreen> {
   void initState() {
     super.initState();
     // Inicializar con las preferencias actuales del Bloc
-    final state = context.read<PreferenciaBloc>().state;
-    _preferenciasTemporales = state.preferencias.copyWith();
+    final state = context.read<PreferenciasBloc>().state;
+    _preferenciasTemporales = state.copyWith();
   }
 
   void _toggleCategoria(String categoria) {
@@ -42,49 +45,61 @@ class _PreferenciasScreenState extends State<PreferenciasScreen> {
   }
 
   void _guardarPreferencias() {
-    context.read<PreferenciaBloc>().add(
-          SavePreferencias(_preferenciasTemporales),
+    // Emitir evento para guardar las preferencias
+    context.read<PreferenciasBloc>().add(
+          CambiarCategoria(
+            categoria: _preferenciasTemporales.categoriasSeleccionadas.join(','),
+            seleccionada: true,
+          ),
+        );
+    context.read<PreferenciasBloc>().add(
+          CambiarMostrarFavoritos(
+            mostrarFavoritos: _preferenciasTemporales.mostrarFavoritos,
+          ),
         );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Preferencias'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.save_rounded),
-            onPressed: _guardarPreferencias,
-            tooltip: 'Guardar preferencias',
-          ),
-        ],
-      ),
-      body: BlocConsumer<PreferenciaBloc, PreferenciaState>(
-        listener: (context, state) {
-          if (state is PreferenciaSuccess) {
-            // Filtrar noticias con las nuevas preferencias
-            context.read<NoticiasBloc>().add(
-                  FilterNoticiasByPreferencias(state.preferencias),
-                );
-            
-            // Mostrar feedback y regresar
-            SnackBarHelper.showSuccess(
-                context, 'Preferencias actualizadas ✓');
-            Navigator.pop(context);
-          }
-          
-          if (state is PreferenciaError) {
-            SnackBarHelper.showError(context, state.message);
-          }
-        },
-        builder: (context, state) {
-          if (state is PreferenciaLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          
-          return _buildListaCategorias();
-        },
+    return BlocProvider(
+      create: (context) => PreferenciasBloc(
+        preferenciasRepository: PreferenciaRepository(),
+      )..add(CargarPreferencias()),
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Preferencias'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.save_rounded),
+              onPressed: _guardarPreferencias,
+              tooltip: 'Guardar preferencias',
+            ),
+          ],
+        ),
+        body: BlocConsumer<PreferenciasBloc, PreferenciasState>(
+          listener: (context, state) {
+            if (state is PreferenciasState) {
+              // Filtrar noticias con las nuevas preferencias
+              context.read<NoticiasBloc>().add(
+                    FiltrarNoticiasPorPreferencias(
+                      categorias: state.categoriasSeleccionadas,
+                      mostrarFavoritos: state.mostrarFavoritos,
+                    ),
+                  );
+
+              // Mostrar feedback de éxito
+              SnackBarHelper.showSuccess(context, 'Preferencias guardadas con éxito');
+            } else if (state is PreferenciaError) {
+              SnackBarHelper.showError(context, 'Error al guardar preferencias');
+            }
+          },
+          builder: (context, state) {
+            if (state is PreferenciaLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            return _buildListaCategorias();
+          },
+        ),
       ),
     );
   }

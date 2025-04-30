@@ -1,13 +1,13 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../data/preferencias_repository.dart';
+import '../data/preferencia_repository.dart';
 import 'preferencia_event.dart';
 import 'preferencia_state.dart';
 
 class PreferenciasBloc extends Bloc<PreferenciasEvent, PreferenciasState> {
   //aqui se cambia
-  final PreferenciasRepository _preferenciasRepository;
+  final PreferenciaRepository _preferenciasRepository;
   
-  PreferenciasBloc({required PreferenciasRepository preferenciasRepository}) 
+  PreferenciasBloc({required PreferenciaRepository preferenciasRepository}) 
       : _preferenciasRepository = preferenciasRepository,
         super(const PreferenciasState()) {
     on<CargarPreferencias>(_onCargarPreferencias);
