@@ -1,48 +1,110 @@
 import 'package:bloc/bloc.dart';
-import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart';
+import 'package:psiemens/bloc/categorias/categorias_event.dart';
+import 'package:psiemens/bloc/categorias/categorias_state.dart';
 import 'package:psiemens/data/categoria_repository.dart';
 import 'package:psiemens/domain/categoria.dart';
+import 'package:watch_it/watch_it.dart';
 
-part 'categorias_event.dart';
-part 'categorias_state.dart';
 
-class CategoriasBloc extends Bloc<CategoriasEvent, CategoriasState> {
-  final CategoriaRepository categoriaRepository;
-
-  CategoriasBloc(this.categoriaRepository) : super(CategoriasInitial()) {
-    on<CargarCategoriasEvent>(_onCargarCategorias);
-    on<RefrescarCategoriasEvent>(_onRefrescarCategorias);
-  }
-
-  /// Maneja el evento de cargar categorías
-  Future<void> _onCargarCategorias(
-      CargarCategoriasEvent event, Emitter<CategoriasState> emit) async {
-    emit(CategoriasCargando());
-    try {
-      final categorias = await categoriaRepository.obtenerCategorias();
-      if (categorias.isEmpty) {
-        emit(CategoriasVacias());
-      } else {
-        emit(CategoriasCargadas(categorias));
-      }
-    } catch (e) {
-      emit(CategoriasError('Error al cargar las categorías: $e'));
-    }
-  }
-
-  /// Maneja el evento de refrescar categorías
-  Future<void> _onRefrescarCategorias(
-      RefrescarCategoriasEvent event, Emitter<CategoriasState> emit) async {
-    emit(CategoriasCargando());
-    try {
-      final categorias = await categoriaRepository.obtenerCategorias();
-      if (categorias.isEmpty) {
-        emit(CategoriasVacias());
-      } else {
-        emit(CategoriasCargadas(categorias));
-      }
-    } catch (e) {
-      emit(CategoriasError('Error al refrescar las categorías: $e'));
-    }
-  }
+class CategoriaBloc extends Bloc<CategoriaEvent, CategoriaState> {
+   final CategoriaRepository categoriaRepository = di<CategoriaRepository>();
+ 
+   CategoriaBloc() : super(CategoriaInitial()) {
+     on<CategoriaInitEvent>(_onInit);
+     on<CategoriaCreateEvent>(_onCreateCategoria);
+     on<CategoriaUpdateEvent>(_onUpdateCategoria);
+     on<CategoriaDeleteEvent>(_onDeleteCategoria);
+   }
+ 
+   Future<void> _onInit (CategoriaInitEvent event, Emitter<CategoriaState> emit) async {
+     emit(CategoriaLoading());
+ 
+     try {
+       final categorias = await categoriaRepository.obtenerCategorias();
+       emit(CategoriaLoaded(categorias, DateTime.now()));
+     } catch (e) {
+       emit(CategoriaError('Failed to load categories: ${e.toString()}'));
+     }
+   }
+   
+   Future<void> _onCreateCategoria(CategoriaCreateEvent event, Emitter<CategoriaState> emit) async {
+     emit(CategoriaCreating());
+     
+     try {
+       // Crear el mapa de datos de la categoria
+       final categoriaData = {
+         'nombre': event.nombre,
+         'descripcion': event.descripcion,
+         'imagenUrl': event.imagenUrl,
+       };
+       
+       // Llamar al repositorio para crear la categoría
+       await categoriaRepository.crearNuevaCategoria(categoriaData);
+       
+       // Crear instancia de Categoria (sin ID ya que es generado por el backend)
+       final newCategoria = Categoria(
+         nombre: event.nombre,
+         descripcion: event.descripcion,
+         imagenUrl: event.imagenUrl,
+       );
+       
+       emit(CategoriaCreated(newCategoria));
+       
+       // Recargar la lista después de crear
+       add(CategoriaInitEvent());
+     } catch (e) {
+       debugPrint('Error creando categoría: $e');
+       emit(CategoriaError('Error al crear categoría: ${e.toString()}'));
+     }
+   }
+   
+   Future<void> _onUpdateCategoria(CategoriaUpdateEvent event, Emitter<CategoriaState> emit) async {
+     emit(CategoriaUpdating());
+     
+     try {
+       // Crear el mapa de datos de la categoria
+       final categoriaData = {
+         'nombre': event.nombre,
+         'descripcion': event.descripcion,
+         'imagenUrl': event.imagenUrl,
+       };
+       
+       // Llamar al repositorio para actualizar la categoría
+       await categoriaRepository.actualizarCategoria(event.id, categoriaData);
+       
+       // Crear instancia de Categoria actualizada
+       final updatedCategoria = Categoria(
+         id: event.id,
+         nombre: event.nombre,
+         descripcion: event.descripcion,
+         imagenUrl: event.imagenUrl,
+       );
+       
+       emit(CategoriaUpdated(updatedCategoria));
+       
+       // Recargar la lista después de actualizar
+       add(CategoriaInitEvent());
+     } catch (e) {
+       debugPrint('Error actualizando categoría: $e');
+       emit(CategoriaError('Error al actualizar categoría: ${e.toString()}'));
+     }
+   }
+   
+   Future<void> _onDeleteCategoria(CategoriaDeleteEvent event, Emitter<CategoriaState> emit) async {
+     emit(CategoriaDeleting());
+     
+     try {
+       // Llamar al repositorio para eliminar la categoría
+       await categoriaRepository.borrarCategoria(event.id);
+       
+       emit(CategoriaDeleted(event.id));
+       
+       // Recargar la lista después de eliminar
+       add(CategoriaInitEvent());
+     } catch (e) {
+       debugPrint('Error eliminando categoría: $e');
+       emit(CategoriaError('Error al eliminar categoría: ${e.toString()}'));
+     }
+   }
 }

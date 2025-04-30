@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart'; // Importa flutter_bloc
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:psiemens/di/locator.dart';
 
 import 'package:psiemens/views/login_screen.dart';
 import 'package:psiemens/bloc/contador/contador_bloc.dart'; // Importa el BLoC del contador
@@ -8,6 +9,7 @@ import 'package:psiemens/bloc/contador/contador_bloc.dart'; // Importa el BLoC d
 Future<void> main() async {
   // Carga las variables de entorno
   await dotenv.load(fileName: ".env");
+  await initLocator();
   runApp(const MyApp());
 }
 

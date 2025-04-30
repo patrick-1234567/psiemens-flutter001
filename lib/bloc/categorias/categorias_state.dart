@@ -1,37 +1,67 @@
-part of 'categorias_bloc.dart';
-
-sealed class CategoriasState extends Equatable {
-  const CategoriasState();
-
+import 'package:equatable/equatable.dart';
+import 'package:psiemens/domain/categoria.dart';
+ 
+abstract class CategoriaState extends Equatable {
+  @override
+  List<Object?> get props => [];
+}
+ 
+class CategoriaInitial extends CategoriaState {
   @override
   List<Object> get props => [];
 }
-
-/// Estado inicial de las categorías
-final class CategoriasInitial extends CategoriasState {}
-
-/// Estado cuando las categorías están cargándose
-final class CategoriasCargando extends CategoriasState {}
-
-/// Estado cuando las categorías se cargaron correctamente
-final class CategoriasCargadas extends CategoriasState {
+ 
+class CategoriaError extends CategoriaState {
+  final String message;
+ 
+  CategoriaError(this.message);
+ 
+  @override
+  List<Object> get props => [message];
+}
+ 
+class CategoriaLoading extends CategoriaState {}
+ 
+class CategoriaLoaded extends CategoriaState {
   final List<Categoria> categorias;
+  final DateTime timestamp;
 
-  const CategoriasCargadas(this.categorias);
+  CategoriaLoaded(this.categorias, this.timestamp);
 
   @override
-  List<Object> get props => [categorias];
+  List<Object> get props => [categorias, timestamp];
 }
 
-/// Estado cuando no hay categorías disponibles
-final class CategoriasVacias extends CategoriasState {}
+// Estados para operaciones específicas
+class CategoriaCreating extends CategoriaState {}
 
-/// Estado cuando ocurre un error al cargar las categorías
-final class CategoriasError extends CategoriasState {
-  final String mensaje;
-
-  const CategoriasError(this.mensaje);
-
+class CategoriaCreated extends CategoriaState {
+  final Categoria categoria;
+  
+  CategoriaCreated(this.categoria);
+  
   @override
-  List<Object> get props => [mensaje];
+  List<Object> get props => [categoria];
+}
+
+class CategoriaUpdating extends CategoriaState {}
+
+class CategoriaUpdated extends CategoriaState {
+  final Categoria categoria;
+  
+  CategoriaUpdated(this.categoria);
+  
+  @override
+  List<Object> get props => [categoria];
+}
+
+class CategoriaDeleting extends CategoriaState {}
+
+class CategoriaDeleted extends CategoriaState {
+  final String id;
+  
+  CategoriaDeleted(this.id);
+  
+  @override
+  List<Object> get props => [id];
 }
