@@ -2,13 +2,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:psiemens/bloc/preferencia/preferencia_event.dart';
 import 'package:psiemens/bloc/preferencia/preferencia_state.dart';
 import 'package:psiemens/data/preferencia_repository.dart';
+import 'package:watch_it/watch_it.dart';
 
 class PreferenciaBloc extends Bloc<PreferenciaEvent, PreferenciaState> {
-  final PreferenciaRepository _preferenciasRepository;
+  final PreferenciaRepository _preferenciasRepository = di<PreferenciaRepository>(); // Obtenemos el repositorio del locator
   
-  PreferenciaBloc.PreferenciaBloc({required PreferenciaRepository preferenciasRepository}) 
-      : _preferenciasRepository = preferenciasRepository,
-        super(const PreferenciaState()) {
+  PreferenciaBloc() : super(const PreferenciaState()) {
     on<CargarPreferencias>(_onCargarPreferencias);
     on<CambiarCategoria>(_onCambiarCategoria);
     on<CambiarMostrarFavoritos>(_onCambiarMostrarFavoritos);
