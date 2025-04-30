@@ -65,7 +65,7 @@ class NoticiaModal {
             );
           } else {
             // Editar noticia existente
-            await noticiaService.editarNoticia(
+            await noticiaService.actualizarNoticia(
               id: noticia['_id'],
               titulo: tituloController.text,
               descripcion: descripcionController.text,
