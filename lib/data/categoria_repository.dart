@@ -24,7 +24,7 @@ class CategoriaRepository {
     }
   }
 
-  Future<void> crearNuevaCategoria(Map<String, dynamic> categoriaData) async {
+  Future<void> crearCategoria(Map<String, dynamic> categoriaData) async {
     try {
       // Llama al método del repositorio para crear la categoría
       await _categoriaService.crearCategoria(categoriaData);
@@ -46,7 +46,7 @@ class CategoriaRepository {
     }
   }
 
-  Future<void> borrarCategoria(String id) async {
+  Future<void> eliminarCategoria(String id) async {
     try {
       // Llama al método del repositorio para eliminar la categoría
       await _categoriaService.eliminarCategoria(id);
