@@ -8,6 +8,7 @@ import 'package:psiemens/views/categoria_screen.dart';
 import 'package:psiemens/helpers/noticia_card_helper.dart';
 import 'package:psiemens/exceptions/api_exception.dart';
 import 'package:psiemens/helpers/error_helper.dart';
+import 'package:psiemens/views/category_screen.dart';
 
 class NoticiaScreen extends StatefulWidget {
   const NoticiaScreen({super.key});
@@ -97,7 +98,7 @@ class _NoticiaScreenState extends State<NoticiaScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const CategoriaScreen(),
+                  builder: (context) => const CategoryScreen(),
                 ),
               );
             },
