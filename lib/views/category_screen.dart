@@ -8,12 +8,14 @@ import 'package:intl/intl.dart';
 
 class CategoryScreen extends StatelessWidget {
   const CategoryScreen({super.key});
-  
+
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(create: (context) => CategoriaBloc()..add(CategoriaInitEvent()))
+        BlocProvider(
+          create: (context) => CategoriaBloc()..add(CategoriaInitEvent()),
+        ),
       ],
       child: _CategoryScreenContent(),
     );
@@ -86,8 +88,10 @@ class _CategoryScreenContent extends StatelessWidget {
           }
         },
         builder: (context, state) {
-          if (state is CategoriaLoading || state is CategoriaCreating || 
-              state is CategoriaUpdating || state is CategoriaDeleting) {
+          if (state is CategoriaLoading ||
+              state is CategoriaCreating ||
+              state is CategoriaUpdating ||
+              state is CategoriaDeleting) {
             return const Center(child: CircularProgressIndicator());
           } else if (state is CategoriaLoaded) {
             final categorias = state.categorias;
@@ -96,18 +100,24 @@ class _CategoryScreenContent extends StatelessWidget {
                 child: Text('No hay categorías disponibles.'),
               );
             }
-            
+
             return ListView.builder(
               itemCount: categorias.length,
               itemBuilder: (context, index) {
                 final categoria = categorias[index];
                 return Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 8.0,
+                    vertical: 4.0,
+                  ),
                   child: ListTile(
                     leading: _buildCategoryImage(categoria.imagenUrl),
                     title: Text(
                       categoria.nombre,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                     subtitle: Text(
                       categoria.descripcion ?? 'Sin descripción',
@@ -124,7 +134,8 @@ class _CategoryScreenContent extends StatelessWidget {
                         IconButton(
                           icon: const Icon(Icons.delete, color: Colors.red),
                           tooltip: 'Eliminar categoría',
-                          onPressed: () => _showDeleteDialog(context, categoria),
+                          onPressed:
+                              () => _showDeleteDialog(context, categoria),
                         ),
                       ],
                     ),
@@ -133,9 +144,7 @@ class _CategoryScreenContent extends StatelessWidget {
               },
             );
           }
-          return const Center(
-            child: Text('Cargando categorías...'),
-          );
+          return const Center(child: Text('Cargando categorías...'));
         },
       ),
       floatingActionButton: FloatingActionButton(
@@ -164,13 +173,13 @@ class _CategoryScreenContent extends StatelessWidget {
       },
     );
   }
-  
+
   void _showAddDialog(BuildContext context) {
     final categoriaBloc = context.read<CategoriaBloc>();
     final TextEditingController nombreController = TextEditingController();
     final TextEditingController descripcionController = TextEditingController();
     final TextEditingController imagenUrlController = TextEditingController();
-    
+
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
@@ -193,7 +202,9 @@ class _CategoryScreenContent extends StatelessWidget {
                   const SizedBox(height: 16.0),
                   TextFormField(
                     controller: imagenUrlController,
-                    decoration: const InputDecoration(labelText: 'URL de la imagen'),
+                    decoration: const InputDecoration(
+                      labelText: 'URL de la imagen',
+                    ),
                   ),
                 ],
               ),
@@ -212,7 +223,7 @@ class _CategoryScreenContent extends StatelessWidget {
                   );
                   return;
                 }
-                
+
                 // Enviar evento para crear categoría
                 categoriaBloc.add(
                   CategoriaCreateEvent(
@@ -221,7 +232,7 @@ class _CategoryScreenContent extends StatelessWidget {
                     imagenUrl: imagenUrlController.text,
                   ),
                 );
-                
+
                 Navigator.pop(dialogContext);
               },
               child: const Text('Guardar'),
@@ -231,13 +242,19 @@ class _CategoryScreenContent extends StatelessWidget {
       },
     );
   }
-  
+
   void _showEditDialog(BuildContext context, Categoria categoria) {
     final categoriaBloc = context.read<CategoriaBloc>();
-    final TextEditingController nombreController = TextEditingController(text: categoria.nombre);
-    final TextEditingController descripcionController = TextEditingController(text: categoria.descripcion);
-    final TextEditingController imagenUrlController = TextEditingController(text: categoria.imagenUrl);
-    
+    final TextEditingController nombreController = TextEditingController(
+      text: categoria.nombre,
+    );
+    final TextEditingController descripcionController = TextEditingController(
+      text: categoria.descripcion,
+    );
+    final TextEditingController imagenUrlController = TextEditingController(
+      text: categoria.imagenUrl,
+    );
+
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
@@ -260,7 +277,9 @@ class _CategoryScreenContent extends StatelessWidget {
                   const SizedBox(height: 16.0),
                   TextFormField(
                     controller: imagenUrlController,
-                    decoration: const InputDecoration(labelText: 'URL de la imagen'),
+                    decoration: const InputDecoration(
+                      labelText: 'URL de la imagen',
+                    ),
                   ),
                 ],
               ),
@@ -279,7 +298,7 @@ class _CategoryScreenContent extends StatelessWidget {
                   );
                   return;
                 }
-                
+
                 // Enviar evento para actualizar categoría
                 if (categoria.id != null) {
                   categoriaBloc.add(
@@ -291,7 +310,7 @@ class _CategoryScreenContent extends StatelessWidget {
                     ),
                   );
                 }
-                
+
                 Navigator.pop(dialogContext);
               },
               child: const Text('Actualizar'),
@@ -301,16 +320,18 @@ class _CategoryScreenContent extends StatelessWidget {
       },
     );
   }
-  
+
   void _showDeleteDialog(BuildContext context, Categoria categoria) {
     final categoriaBloc = context.read<CategoriaBloc>();
-    
+
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: const Text('Eliminar Categoría'),
-          content: Text('¿Estás seguro de que deseas eliminar la categoría "${categoria.nombre}"?'),
+          content: Text(
+            '¿Estás seguro de que deseas eliminar la categoría "${categoria.nombre}"?',
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
@@ -320,11 +341,9 @@ class _CategoryScreenContent extends StatelessWidget {
               onPressed: () {
                 // Enviar evento para eliminar categoría
                 if (categoria.id != null) {
-                  categoriaBloc.add(
-                    CategoriaDeleteEvent(id: categoria.id!),
-                  );
+                  categoriaBloc.add(CategoriaDeleteEvent(id: categoria.id!));
                 }
-                
+
                 Navigator.pop(dialogContext);
               },
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
