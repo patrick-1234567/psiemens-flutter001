@@ -41,6 +41,7 @@ class ApiConstantes{
   static String get crudCrudUrl => dotenv.env['CRUD_CRUD_URL'] ?? '';
   static String noticiasUrl = crudCrudUrl + "/noticias"; // URL de la API de noticias
   static String categoriaUrl = crudCrudUrl + "/categorias"; // URL de la API de categorías
+  static String preferenciaUrl = crudCrudUrl + "/preferencias"; // URL de la API de preferencias
 }
 
 class ErrorConstantes {
