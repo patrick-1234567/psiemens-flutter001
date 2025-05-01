@@ -11,6 +11,7 @@ class PreferenciaBloc extends Bloc<PreferenciaEvent, PreferenciaState> {
     on<CargarPreferencias>(_onCargarPreferencias);
     on<CambiarCategoria>(_onCambiarCategoria);
     on<CambiarMostrarFavoritos>(_onCambiarMostrarFavoritos);
+    on<SavePreferencias>(_onSavePreferencias);
     on<BuscarPorPalabraClave>(_onBuscarPorPalabraClave);
     on<FiltrarPorFecha>(_onFiltrarPorFecha);
     on<CambiarOrdenamiento>(_onCambiarOrdenamiento);
@@ -123,6 +124,26 @@ class PreferenciaBloc extends Bloc<PreferenciaEvent, PreferenciaState> {
       const estadoInicial = PreferenciaState();
       emit(estadoInicial);
     } catch (_) {
+      // Manejar errores si es necesario
+    }
+  }
+
+  Future<void> _onSavePreferencias(
+    SavePreferencias event,
+    Emitter<PreferenciaState> emit,
+  ) async {
+    try {
+      // Guardamos las categorías en el repositorio
+      // (esto puede requerir implementación adicional en el repositorio)
+      for (final categoriaId in event.categoriasSeleccionadas) {
+        await _preferenciasRepository.agregarCategoriaFiltro(categoriaId);
+      }
+      
+      // Emitimos el estado actualizado
+      emit(state.copyWith(
+        categoriasSeleccionadas: event.categoriasSeleccionadas,
+      ));
+    } catch (e) {
       // Manejar errores si es necesario
     }
   }

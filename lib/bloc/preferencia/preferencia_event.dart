@@ -71,3 +71,14 @@ import 'package:equatable/equatable.dart';
  class ReiniciarFiltros extends PreferenciaEvent {
    const ReiniciarFiltros();
  }
+
+ class SavePreferencias extends PreferenciaEvent {
+  final List<String> categoriasSeleccionadas;
+  
+  const SavePreferencias({
+    required this.categoriasSeleccionadas,
+  });
+  
+  @override
+  List<Object> get props => [categoriasSeleccionadas];
+}
