@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart'; // Importa flutter_bloc
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:psiemens/bloc/preferencia/preferencia_bloc.dart';
+import 'package:psiemens/bloc/preferencia/preferencia_event.dart';
 import 'package:psiemens/di/locator.dart';
 
 import 'package:psiemens/views/login_screen.dart';
@@ -18,8 +20,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => ContadorBloc(), // Proporciona el BLoC del contador
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (context) => ContadorBloc()),
+        BlocProvider(create: (context) => PreferenciaBloc()..add(const CargarPreferencias())),
+      ],
       child: MaterialApp(
         title: 'Flutter Demo',
         theme: ThemeData(

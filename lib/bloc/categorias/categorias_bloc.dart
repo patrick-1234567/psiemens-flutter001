@@ -40,7 +40,7 @@ class CategoriaBloc extends Bloc<CategoriaEvent, CategoriaState> {
        };
        
        // Llamar al repositorio para crear la categoría
-       await categoriaRepository.crearNuevaCategoria(categoriaData);
+       await categoriaRepository.crearCategoria(categoriaData);
        
        // Crear instancia de Categoria (sin ID ya que es generado por el backend)
        final newCategoria = Categoria(
@@ -96,7 +96,7 @@ class CategoriaBloc extends Bloc<CategoriaEvent, CategoriaState> {
      
      try {
        // Llamar al repositorio para eliminar la categoría
-       await categoriaRepository.borrarCategoria(event.id);
+       await categoriaRepository.eliminarCategoria(event.id);
        
        emit(CategoriaDeleted(event.id));
        
