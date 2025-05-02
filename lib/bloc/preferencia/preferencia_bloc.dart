@@ -4,9 +4,11 @@ import 'package:psiemens/bloc/preferencia/preferencia_state.dart';
 import 'package:psiemens/data/preferencia_repository.dart';
 import 'package:watch_it/watch_it.dart';
 
+
 class PreferenciaBloc extends Bloc<PreferenciaEvent, PreferenciaState> {
-  final PreferenciaRepository _preferenciasRepository = di<PreferenciaRepository>(); // Obtenemos el repositorio del locator
-  
+  final PreferenciaRepository _preferenciasRepository =
+      di<PreferenciaRepository>();
+
   PreferenciaBloc() : super(const PreferenciaState()) {
     on<CargarPreferencias>(_onCargarPreferencias);
     on<CambiarCategoria>(_onCambiarCategoria);
@@ -16,115 +18,141 @@ class PreferenciaBloc extends Bloc<PreferenciaEvent, PreferenciaState> {
     on<FiltrarPorFecha>(_onFiltrarPorFecha);
     on<CambiarOrdenamiento>(_onCambiarOrdenamiento);
     on<ReiniciarFiltros>(_onReiniciarFiltros);
+    on<PreferenciaError>(_onPreferenciaError); // Handler dedicado para errores
+  }
+  void _onPreferenciaError(
+    PreferenciaError event,
+    Emitter<PreferenciaState> emit, // Usamos el emitter del handler
+  ) {
+    emit(state.copyWith(error: event.message));
   }
 
+  /*Future<void> _onCargarPreferencias(
+    CargarPreferencias event,
+    Emitter<PreferenciaState> emit,
+  ) async {
+    try {
+      final categorias =
+          await _preferenciasRepository.obtenerCategoriasSeleccionadas();
+      emit(state.copyWith(categoriasSeleccionadas: categorias));
+    } catch (e) {
+      add(PreferenciaError('Error al cargar preferencias: ${e.toString()}'));
+    }
+  }*/
   Future<void> _onCargarPreferencias(
     CargarPreferencias event,
     Emitter<PreferenciaState> emit,
   ) async {
     try {
-      // Obtener solo las categorías seleccionadas del repositorio existente
       final categoriasSeleccionadas = await _preferenciasRepository.obtenerCategoriasSeleccionadas();
-      
-      // Como el repositorio original solo almacena categorías, el resto de valores serían por defecto
-      emit(PreferenciaState(
+      emit(state.copyWith(
         categoriasSeleccionadas: categoriasSeleccionadas,
-        // Valores por defecto para el resto de propiedades
-        mostrarFavoritos: false,
-        palabraClave: '',
-        fechaDesde: null,
-        fechaHasta: null,
-        ordenarPor: 'fecha',
-        ascendente: false,
+        error: null,
       ));
-    } catch (_) {
-      // Si hay error, mantener estado actual
+    } catch (e) {
+      emit(state.copyWith(error: 'Error al cargar preferencias: ${e.toString()}'));
     }
   }
 
-  void _onCambiarCategoria(
+  Future<void> _onCambiarCategoria(
     CambiarCategoria event,
     Emitter<PreferenciaState> emit,
   ) async {
     try {
       if (event.seleccionada) {
-        // Agregar categoría usando el método del repositorio
         await _preferenciasRepository.agregarCategoriaFiltro(event.categoria);
       } else {
-        // Eliminar categoría usando el método del repositorio
         await _preferenciasRepository.eliminarCategoriaFiltro(event.categoria);
       }
-      
-      // Obtener la lista actualizada de categorías
-      final categoriasActualizadas = await _preferenciasRepository.obtenerCategoriasSeleccionadas();
-      
-      // Actualizar el estado con las categorías actualizadas
-      final nuevoEstado = state.copyWith(categoriasSeleccionadas: categoriasActualizadas);
-      emit(nuevoEstado);
-    } catch (_) {
-      // Manejar errores si es necesario
+
+      final categoriasActualizadas =
+          await _preferenciasRepository.obtenerCategoriasSeleccionadas();
+      emit(
+        state.copyWith(
+          categoriasSeleccionadas: categoriasActualizadas,
+          error: null,
+        ),
+      );
+    } catch (e) {
+      emit(
+        state.copyWith(error: 'Error al modificar categoría: ${e.toString()}'),
+      );
     }
   }
 
-  void _onCambiarMostrarFavoritos(
+  Future<void> _onCambiarMostrarFavoritos(
     CambiarMostrarFavoritos event,
     Emitter<PreferenciaState> emit,
-  ) {
-    // Como el repositorio original no maneja esta preferencia,
-    // solo actualizamos el estado en memoria
-    final nuevoEstado = state.copyWith(mostrarFavoritos: event.mostrarFavoritos);
-    emit(nuevoEstado);
+  ) async {
+    try {
+      emit(
+        state.copyWith(mostrarFavoritos: event.mostrarFavoritos, error: null),
+      );
+    } catch (e) {
+      emit(
+        state.copyWith(error: 'Error al actualizar favoritos: ${e.toString()}'),
+      );
+    }
   }
 
-  void _onBuscarPorPalabraClave(
+  Future<void> _onBuscarPorPalabraClave(
     BuscarPorPalabraClave event,
     Emitter<PreferenciaState> emit,
-  ) {
-    // Como el repositorio original no maneja esta preferencia,
-    // solo actualizamos el estado en memoria
-    final nuevoEstado = state.copyWith(palabraClave: event.palabraClave);
-    emit(nuevoEstado);
+  ) async {
+    try {
+      emit(state.copyWith(palabraClave: event.palabraClave, error: null));
+    } catch (e) {
+      emit(state.copyWith(error: 'Error al buscar: ${e.toString()}'));
+    }
   }
 
-  void _onFiltrarPorFecha(
+  Future<void> _onFiltrarPorFecha(
     FiltrarPorFecha event,
     Emitter<PreferenciaState> emit,
-  ) {
-    // Como el repositorio original no maneja esta preferencia,
-    // solo actualizamos el estado en memoria
-    final nuevoEstado = state.copyWith(
-      fechaDesde: event.fechaDesde,
-      fechaHasta: event.fechaHasta,
-    );
-    emit(nuevoEstado);
+  ) async {
+    try {
+      emit(
+        state.copyWith(
+          fechaDesde: event.fechaDesde,
+          fechaHasta: event.fechaHasta,
+          error: null,
+        ),
+      );
+    } catch (e) {
+      emit(
+        state.copyWith(error: 'Error al filtrar por fecha: ${e.toString()}'),
+      );
+    }
   }
 
-  void _onCambiarOrdenamiento(
+  Future<void> _onCambiarOrdenamiento(
     CambiarOrdenamiento event,
     Emitter<PreferenciaState> emit,
-  ) {
-    // Como el repositorio original no maneja esta preferencia,
-    // solo actualizamos el estado en memoria
-    final nuevoEstado = state.copyWith(
-      ordenarPor: event.ordenarPor,
-      ascendente: event.ascendente,
-    );
-    emit(nuevoEstado);
+  ) async {
+    try {
+      emit(
+        state.copyWith(
+          ordenarPor: event.ordenarPor,
+          ascendente: event.ascendente,
+          error: null,
+        ),
+      );
+    } catch (e) {
+      emit(state.copyWith(error: 'Error al cambiar orden: ${e.toString()}'));
+    }
   }
 
-  void _onReiniciarFiltros(
+  Future<void> _onReiniciarFiltros(
     ReiniciarFiltros event,
     Emitter<PreferenciaState> emit,
   ) async {
     try {
-      // Limpiar las categorías seleccionadas usando el método del repositorio
       await _preferenciasRepository.limpiarFiltrosCategorias();
-      
-      // Emitir un estado inicial
-      const estadoInicial = PreferenciaState();
-      emit(estadoInicial);
-    } catch (_) {
-      // Manejar errores si es necesario
+      emit(const PreferenciaState().copyWith(error: null));
+    } catch (e) {
+      emit(
+        state.copyWith(error: 'Error al reiniciar filtros: ${e.toString()}'),
+      );
     }
   }
 
@@ -133,18 +161,24 @@ class PreferenciaBloc extends Bloc<PreferenciaEvent, PreferenciaState> {
     Emitter<PreferenciaState> emit,
   ) async {
     try {
-      // Guardamos las categorías en el repositorio
-      // (esto puede requerir implementación adicional en el repositorio)
-      for (final categoriaId in event.categoriasSeleccionadas) {
-        await _preferenciasRepository.agregarCategoriaFiltro(categoriaId);
+      await _preferenciasRepository.limpiarFiltrosCategorias();
+      for (final categoria in event.categoriasSeleccionadas) {
+        await _preferenciasRepository.agregarCategoriaFiltro(categoria);
       }
-      
-      // Emitimos el estado actualizado
-      emit(state.copyWith(
-        categoriasSeleccionadas: event.categoriasSeleccionadas,
-      ));
+
+      final categoriasActualizadas =
+          await _preferenciasRepository.obtenerCategoriasSeleccionadas();
+      emit(
+        state.copyWith(
+          categoriasSeleccionadas: categoriasActualizadas,
+          error: null,
+        ),
+      );
     } catch (e) {
-      // Manejar errores si es necesario
+      emit(
+        state.copyWith(error: 'Error al guardar preferencias: ${e.toString()}'),
+      );
     }
   }
+
 }

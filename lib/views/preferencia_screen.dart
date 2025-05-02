@@ -112,7 +112,7 @@ class PreferenciasScreen extends StatelessWidget {
             style: Theme.of(context).textTheme.bodyLarge,
           ),
           subtitle: Text(
-            categoria.descripcion ?? '',
+            categoria.descripcion,
             style: Theme.of(context).textTheme.bodySmall,
           ),
           value: isSelected,
