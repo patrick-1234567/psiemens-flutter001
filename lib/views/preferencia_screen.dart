@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:psiemens/bloc/categorias/categorias_bloc.dart';
@@ -10,10 +11,12 @@ import 'package:psiemens/domain/categoria.dart';
 import 'package:psiemens/helpers/snackbar_helper.dart';
 
 class PreferenciasScreen extends StatelessWidget {
+
   const PreferenciasScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+
     return MultiBlocProvider(
       providers: [
         BlocProvider(
@@ -38,37 +41,40 @@ class PreferenciasScreen extends StatelessWidget {
           builder: (context, categoriaState) {
             if (categoriaState is CategoriaLoading) {
               return const Center(child: CircularProgressIndicator());
+            } else if (categoriaState is CategoriaError) {
+              return _buildErrorWidget(
+                context,
+                'Error al cargar categorías: ${categoriaState.message}',
+                () => context.read<CategoriaBloc>().add(CategoriaInitEvent())
+              );
             } else if (categoriaState is CategoriaLoaded) {
               return BlocBuilder<PreferenciaBloc, PreferenciaState>(
                 builder: (context, preferenciasState) {
+                  if (preferenciasState is PreferenciaError) {
+                    return _buildErrorWidget(
+                      context,
+                      'Error de preferencias: ${preferenciasState.error}',
+                      () => context.read<PreferenciaBloc>().add(const CargarPreferencias())
+                    );
+                  }
+
                   return _buildListaCategorias(
-                    context, 
+                    context,
                     preferenciasState,
                     categoriaState.categorias,
                   );
                 },
               );
-            } else if (categoriaState is CategoriaError) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text('Error: ${categoriaState.message}'),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () => context.read<CategoriaBloc>().add(CategoriaInitEvent()),
-                      child: const Text('Reintentar'),
-                    ),
-                  ],
-                ),
-              );
             } else {
-              return const Center(child: Text('No se pudieron cargar las categorías'));
+              return const Center(child: Text('Estado desconocido'));
             }
           },
         ),
         bottomNavigationBar: BlocBuilder<PreferenciaBloc, PreferenciaState>(
           builder: (context, state) {
+            // Determinar si el botón debe estar habilitado
+            final bool isEnabled = state is! PreferenciaError;
+
             return BottomAppBar(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -76,11 +82,15 @@ class PreferenciasScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Categorías seleccionadas: ${state.categoriasSeleccionadas.length}',
-                      style: Theme.of(context).textTheme.bodyMedium,
+                      state is PreferenciaError
+                        ? 'Error al cargar preferencias'
+                        : 'Categorías seleccionadas: ${state.categoriasSeleccionadas.length}',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: state is PreferenciaError ? Colors.red : null,
+                      ),
                     ),
                     ElevatedButton(
-                      onPressed: () => _aplicarFiltros(context, state),
+                      onPressed: isEnabled ? () => _aplicarFiltros(context, state) : null,
                       child: const Text('Aplicar filtros'),
                     ),
                   ],
@@ -94,7 +104,7 @@ class PreferenciasScreen extends StatelessWidget {
   }
 
   Widget _buildListaCategorias(
-    BuildContext context, 
+    BuildContext context,
     PreferenciaState state,
     List<Categoria> categorias,
   ) {
@@ -105,14 +115,14 @@ class PreferenciasScreen extends StatelessWidget {
       itemBuilder: (context, index) {
         final categoria = categorias[index];
         final isSelected = state.categoriasSeleccionadas.contains(categoria.id);
-        
+
         return CheckboxListTile(
           title: Text(
             categoria.nombre,
             style: Theme.of(context).textTheme.bodyLarge,
           ),
           subtitle: Text(
-            categoria.descripcion,
+            categoria.descripcion ?? '',
             style: Theme.of(context).textTheme.bodySmall,
           ),
           value: isSelected,
@@ -134,16 +144,47 @@ class PreferenciasScreen extends StatelessWidget {
   }
 
   void _aplicarFiltros(BuildContext context, PreferenciaState state) {
-    // Siempre devolvemos las categorías seleccionadas, incluso si la lista está vacía
-    // Una lista vacía indicará que deben mostrarse todas las noticias
+    // Verificar que no sea un estado de error
+    if (state is PreferenciaError) {
+      SnackBarHelper.showError(context, 'No se pueden aplicar los filtros debido a un error');
+      return;
+    }
+
+    // Continuar con el flujo normal
+    context.read<PreferenciaBloc>().add(
+      SavePreferencias(categoriasSeleccionadas: state.categoriasSeleccionadas),
+    );
+
     SnackBarHelper.showSuccess(
-      context, 
-      state.categoriasSeleccionadas.isEmpty 
-        ? 'Mostrando todas las noticias' 
+      context,
+      state.categoriasSeleccionadas.isEmpty
+        ? 'Mostrando todas las noticias'
         : 'Filtros aplicados correctamente'
     );
-    
-    // Devuelve la lista de categorías (vacía o con elementos)
+
     Navigator.pop(context, state.categoriasSeleccionadas);
+  }
+
+  Widget _buildErrorWidget(BuildContext context, String message, VoidCallback onRetry) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.error_outline, size: 48, color: Colors.red),
+          const SizedBox(height: 16),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 16),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh),
+            label: const Text('Reintentar'),
+          ),
+        ],
+      ),
+    );
   }
 }

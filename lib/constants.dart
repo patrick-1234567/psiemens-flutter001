@@ -44,6 +44,7 @@ class ApiConstantes{
   static String preferenciaUrl = crudCrudUrl + "/preferencias"; // URL de la API de preferencias
 }
 
+
 class ErrorConstantes {
   static const String errorServer = 'Error del servidor';
   static const String errorNotFound = 'Noticias no encontradas.';
