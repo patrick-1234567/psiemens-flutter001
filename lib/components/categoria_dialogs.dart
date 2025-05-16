@@ -96,7 +96,7 @@ class CategoriaDialogs {
             ElevatedButton(
               onPressed: () async {
                 try {
-                  await categoriaService.borrarCategoria(categoria.id!);
+                  await categoriaService.eliminarCategoria(categoria.id!);
                   Navigator.pop(context);
                   onSuccess(); // Llama al callback para refrescar la lista
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -162,7 +162,7 @@ class CategoriaDialogs {
             ElevatedButton(
               onPressed: () async {
                 try {
-                  await categoriaService.crearNuevaCategoria({
+                  await categoriaService.crearCategoria({
                     'nombre': nombreController.text,
                     'descripcion': descripcionController.text,
                     'imagenUrl': imagenUrlController.text,

@@ -21,7 +21,6 @@ class NoticiaRepository {
     }
   }
 
-
   Future<void> crearNoticia({
     required String titulo,
     required String descripcion,
@@ -66,7 +65,7 @@ class NoticiaRepository {
     }
   }
 
-  Future<void> editarNoticia({
+  Future<void> actualizarNoticia({
     required String id,
     required String titulo,
     required String descripcion,

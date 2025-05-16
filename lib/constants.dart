@@ -1,4 +1,4 @@
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:psiemens/core/api_config.dart';
 
 class AppConstants {
   static const String titleAppbar = 'Lista de Tareas';
@@ -38,9 +38,13 @@ class NoticiaConstantes {
 }
 
 class ApiConstantes{
-  static String get crudCrudUrl => dotenv.env['CRUD_CRUD_URL'] ?? '';
-  static String noticiasUrl = crudCrudUrl + "/noticias"; // URL de la API de noticias
-  static String categoriaUrl = crudCrudUrl + "/categorias"; // URL de la API de categorías
+  static final String newsurl = ApiConfig.beeceptorBaseUrl;
+  static final String noticiasUrl = '$newsurl/noticias';
+  static final String categoriasUrl = '$newsurl/categorias';
+  static final String preferenciasUrl = '$newsurl/preferencias';
+  static final String comentariosUrl = '$newsurl/comentarios';
+  static final String reportesUrl = '$newsurl/reportes';
+  static final String loginUrl = '$newsurl/login';
 }
 
 class ErrorConstantes {
