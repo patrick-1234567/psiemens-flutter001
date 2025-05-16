@@ -1,101 +1,51 @@
-import 'dart:async';
-import 'package:psiemens/exceptions/api_exception.dart';
-import 'package:psiemens/helpers/error_helper.dart';
+import 'package:psiemens/api/service/base_service.dart';
 import 'package:psiemens/domain/noticia.dart';
-import 'package:dio/dio.dart';
 import 'package:psiemens/constants.dart';
 
+/// Servicio para gestionar las operaciones relacionadas con noticias
+/// Utiliza BaseService para las operaciones HTTP
 class NoticiaService {
-  final Dio _dioNew = Dio(BaseOptions(
-    connectTimeout: const Duration(seconds: CategoriaConstantes.timeoutSeconds), // Tiempo de conexión
-    receiveTimeout: const Duration(seconds:CategoriaConstantes.timeoutSeconds), // Tiempo de recepción
-  ));
-  final List<Noticia> _allNoticias = [];
+  final BaseService _baseService;
   
+  /// Constructor que inicializa el BaseService
+  NoticiaService({BaseService? baseService}) 
+      : _baseService = baseService ?? BaseService();
+  
+  /// Obtiene todas las noticias desde la API
   Future<List<Noticia>> getNoticias() async {
-  try {
-    // Realiza la solicitud GET a la API
-    final response = await _dioNew.get(ApiConstantes.noticiasUrl);
-
-    // Maneja el código de estado HTTP
-    if (response.statusCode == 200) {
-      final List<dynamic> noticiasJson = response.data;
-      return noticiasJson.map((json) {
-        return Noticia(
-          id: json['_id'] ?? '',
-          titulo: json['titulo'] ?? 'Sin título',
-          descripcion: json['descripcion'] ?? 'Sin descripción',
-          fuente: json['fuente'] ?? 'Fuente desconocida',
-          publicadaEl: DateTime.tryParse(json['publicadaEl'] ?? '') ?? DateTime.now(),
-          imageUrl: json['urlImagen'] ?? '',
-          categoriaId: json['categoriaId'] ?? CategoriaConstantes.defaultCategoriaId,
-         );
-        }).toList();
-      } else {
-        throw ApiException('Error desconocido', statusCode: response.statusCode);
-      }
-    } on DioError catch (e) {
-      final errorData = ErrorHelper.getErrorMessageAndColor(e.response?.statusCode);
-      throw ApiException(errorData['message'], statusCode: e.response?.statusCode);
-    } catch (e) {
-      throw ApiException('Error inesperado: $e');
-    }
+    // Utiliza el método get del BaseService
+    final data = await _baseService.get('noticias');
+    
+    // Convierte los datos JSON a objetos Noticia
+    return (data as List).map((json) {
+      return Noticia(
+        id: json['_id'] ?? '',
+        titulo: json['titulo'] ?? 'Sin título',
+        descripcion: json['descripcion'] ?? 'Sin descripción',
+        fuente: json['fuente'] ?? 'Fuente desconocida',
+        publicadaEl: DateTime.tryParse(json['publicadaEl'] ?? '') ?? DateTime.now(),
+        imageUrl: json['urlImagen'] ?? '',
+        categoriaId: json['categoriaId'] ?? CategoriaConstantes.defaultCategoriaId,
+      );
+    }).toList();
   }
 
-
-  /// Edita una noticia en la API de CrudCrud
-Future<void> editarNoticia(String id, Map<String, dynamic> noticia) async {
-  try {
-    final url = '${ApiConstantes.noticiasUrl}/$id';
-    final response = await _dioNew.put(
-      url,
-      data: noticia,
-    );
-
-    if (response.statusCode != 200) {
-        throw ApiException('Error desconocido', statusCode: response.statusCode);
-      }
-    } on DioError catch (e) {
-      final errorData = ErrorHelper.getErrorMessageAndColor(e.response?.statusCode);
-      throw ApiException(errorData['message'], statusCode: e.response?.statusCode);
-    } catch (e) {
-      throw ApiException('Error inesperado: $e');
-    }
+  /// Edita una noticia existente en la API
+  Future<void> editarNoticia(String id, Map<String, dynamic> noticia) async {
+    // Utiliza el método put del BaseService
+    await _baseService.put('noticias', id, data: noticia);
   }
 
-  /// Crea una nueva noticia en la API de CrudCrud
+  /// Crea una nueva noticia en la API
   Future<void> crearNoticia(Map<String, dynamic> noticia) async {
-  try {
-    final response = await _dioNew.post(
-      ApiConstantes.noticiasUrl,
-      data: noticia,
-    );
-
-    if (response.statusCode != 201) {
-      throw Exception('Error desconocido: ${response.statusCode}');
-    }
-  } on DioError catch (e) {
-   ErrorHelper.getErrorMessageAndColor(e.response?.statusCode); // Llama a la función centralizada para manejar el error
-  } catch (e) {
-    throw Exception('Error inesperado: $e');
+    // Utiliza el método post del BaseService
+    await _baseService.post('noticias', data: noticia);
   }
-}
 
-  /// Elimina una noticia de la API de CrudCrud
+  /// Elimina una noticia de la API
   Future<void> eliminarNoticia(String id) async {
-  try {
-    final url = '${ApiConstantes.noticiasUrl}/$id';
-    final response = await _dioNew.delete(url);
-
-    if (response.statusCode != 200 && response.statusCode != 204) {
-        throw ApiException('Error desconocido', statusCode: response.statusCode);
-      }
-    } on DioError catch (e) {
-      final errorData = ErrorHelper.getErrorMessageAndColor(e.response?.statusCode);
-      throw ApiException(errorData['message'], statusCode: e.response?.statusCode);
-    } catch (e) {
-      throw ApiException('Error inesperado: $e');
-    }
+    // Utiliza el método delete del BaseService
+    await _baseService.delete('noticias', id);
   }
 }
 

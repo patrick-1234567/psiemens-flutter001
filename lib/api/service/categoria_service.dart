@@ -1,100 +1,40 @@
-import 'package:dio/dio.dart';
-import 'package:psiemens/domain/categoria.dart';
+import 'package:psiemens/api/service/base_service.dart';
 import 'package:psiemens/constants.dart';
+import 'package:psiemens/domain/categoria.dart';
 
+/// Servicio para gestionar las operaciones relacionadas con categorías
+/// Utiliza BaseService para las operaciones HTTP
 class CategoriaService {
-  final Dio _dio = Dio(BaseOptions(
-    connectTimeout: const Duration(seconds: CategoriaConstantes.timeoutSeconds), // Tiempo de conexión
-    receiveTimeout: const Duration(seconds: CategoriaConstantes.timeoutSeconds), // Tiempo de recepción
-  ));
-
-  /// Manejo centralizado de errores
-  void _handleError(DioError e) {
-    if (e.type == DioErrorType.connectionTimeout || e.type == DioErrorType.receiveTimeout) {
-      throw Exception(CategoriaConstantes.errorTimeout);
-    }
-
-    final statusCode = e.response?.statusCode;
-    switch (statusCode) {
-      case 400:
-        throw Exception(CategoriaConstantes.mensajeError);
-      case 401:
-        throw Exception(ErrorConstantes.errorUnauthorized);
-      case 404:
-        throw Exception(ErrorConstantes.errorNotFound);
-      case 500:
-        throw Exception(ErrorConstantes.errorServer);
-      default:
-        throw Exception('Error desconocido: ${statusCode ?? 'Sin código'}');
-    }
-  }
+  final BaseService _baseService;
+  
+  /// Constructor que inicializa el BaseService
+  CategoriaService({BaseService? baseService}) 
+      : _baseService = baseService ?? BaseService();
 
   /// Obtiene todas las categorías desde la API
   Future<List<Categoria>> getCategorias() async {
-    try {
-      final response = await _dio.get(ApiConstantes.categoriaUrl);
-
-      if (response.statusCode == 200) {
-        final List<dynamic> categoriasJson = response.data;
-        return categoriasJson.map((json) => Categoria.fromJson(json)).toList();
-      } else {
-        throw Exception('Error desconocido: ${response.statusCode}');
-      }
-    } on DioError catch (e) {
-      _handleError(e); // Llama al método centralizado para manejar el error
-    } catch (e) {
-      throw Exception('Error inesperado: $e');
-    }
-    throw Exception('Error desconocido: No se pudo obtener las categorías');
+    // Utiliza el método get del BaseService
+    final data = await _baseService.get('categorias');
+    
+    // Convierte los datos JSON a objetos Categoria
+    return (data as List).map((json) => Categoria.fromJson(json)).toList();
   }
 
   /// Crea una nueva categoría en la API
   Future<void> crearCategoria(Map<String, dynamic> categoria) async {
-    try {
-      final response = await _dio.post(
-        ApiConstantes.categoriaUrl,
-        data: categoria,
-      );
-
-      if (response.statusCode != 201) {
-        throw Exception('Error desconocido: ${response.statusCode}');
-      }
-    } on DioError catch (e) {
-      _handleError(e); // Llama al método centralizado para manejar el error
-    } catch (e) {
-      throw Exception('Error inesperado: $e');
-    }
+    // Utiliza el método post del BaseService
+    await _baseService.post('categorias', data: categoria);
   }
 
   /// Edita una categoría existente en la API
   Future<void> editarCategoria(String id, Map<String, dynamic> categoria) async {
-    try {
-      final url = '${ApiConstantes.categoriaUrl}/$id';
-      final response = await _dio.put(url, data: categoria);
-
-      if (response.statusCode != 200) {
-        throw Exception('Error desconocido: ${response.statusCode}');
-      }
-    } on DioError catch (e) {
-      _handleError(e); // Llama al método centralizado para manejar el error
-    } catch (e) {
-      throw Exception('Error inesperado: $e');
-    }
+    // Utiliza el método put del BaseService
+    await _baseService.put('categorias', id, data: categoria);
   }
 
   /// Elimina una categoría de la API
   Future<void> eliminarCategoria(String id) async {
-    try {
-      final url = '${ApiConstantes.categoriaUrl}/$id';
-      final response = await _dio.delete(url);
-
-      if (response.statusCode != 200 && response.statusCode != 204) {
-        throw Exception('Error desconocido: ${response.statusCode}');
-      }
-    } on DioError catch (e) {
-      _handleError(e); // Llama al método centralizado para manejar el error
-    } catch (e) {
-      throw Exception('Error inesperado: $e');
-    }
+    // Utiliza el método delete del BaseService
+    await _baseService.delete('categorias', id);
   }
 }

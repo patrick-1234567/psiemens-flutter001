@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:psiemens/bloc/bloc%20noticias/noticias_bloc.dart';
+import 'package:psiemens/bloc/bloc%20noticias/noticias_event.dart';
 import 'package:psiemens/bloc/categorias/categorias_bloc.dart';
 import 'package:psiemens/bloc/categorias/categorias_event.dart';
 import 'package:psiemens/bloc/categorias/categorias_state.dart';
@@ -16,11 +18,12 @@ class PreferenciasScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(
-          create: (context) => PreferenciaBloc()..add(const CargarPreferencias()),
+        BlocProvider<PreferenciaBloc>.value(
+          value: BlocProvider.of<PreferenciaBloc>(context),
         ),
-        BlocProvider(
-          create: (context) => CategoriaBloc()..add(CategoriaInitEvent()),
+        // Agregamos el NoticiasBloc existente para que sea accesible
+        BlocProvider<NoticiasBloc>.value(
+          value: BlocProvider.of<NoticiasBloc>(context, listen: false),
         ),
       ],
       child: Scaffold(
@@ -104,7 +107,8 @@ class PreferenciasScreen extends StatelessWidget {
       separatorBuilder: (context, index) => const Divider(height: 1),
       itemBuilder: (context, index) {
         final categoria = categorias[index];
-        final isSelected = state.categoriasSeleccionadas.contains(categoria.id);
+        final String categoriaId = categoria.id ?? 'categoria_${index}';
+        final isSelected = state.categoriasSeleccionadas.contains(categoriaId);
         
         return CheckboxListTile(
           title: Text(
@@ -116,7 +120,7 @@ class PreferenciasScreen extends StatelessWidget {
             style: Theme.of(context).textTheme.bodySmall,
           ),
           value: isSelected,
-          onChanged: (_) => _toggleCategoria(context, categoria.id!, isSelected),
+          onChanged: (_) => _toggleCategoria(context, categoriaId, isSelected),
           controlAffinity: ListTileControlAffinity.leading,
           activeColor: Theme.of(context).colorScheme.primary,
         );
@@ -134,16 +138,20 @@ class PreferenciasScreen extends StatelessWidget {
   }
 
   void _aplicarFiltros(BuildContext context, PreferenciaState state) {
-    // Siempre devolvemos las categorías seleccionadas, incluso si la lista está vacía
-    // Una lista vacía indicará que deben mostrarse todas las noticias
-    SnackBarHelper.showSuccess(
-      context, 
-      state.categoriasSeleccionadas.isEmpty 
-        ? 'Mostrando todas las noticias' 
-        : 'Filtros aplicados correctamente'
-    );
-    
-    // Devuelve la lista de categorías (vacía o con elementos)
-    Navigator.pop(context, state.categoriasSeleccionadas);
-  }
+  // 1. Notificar al NoticiasBloc para que filtre las noticias
+  context.read<NoticiasBloc>().add(
+    FilterNoticiasByPreferencias(state.categoriasSeleccionadas),
+  );
+  
+  // 2. Mostrar mensaje de éxito
+  SnackBarHelper.showSuccess(
+    context, 
+    state.categoriasSeleccionadas.isEmpty 
+      ? 'Mostrando todas las noticias' 
+      : 'Filtros aplicados correctamente'
+  );
+  
+  // 3. Navegar de vuelta con las categorías seleccionadas
+  Navigator.pop(context, state.categoriasSeleccionadas);
+}
 }
