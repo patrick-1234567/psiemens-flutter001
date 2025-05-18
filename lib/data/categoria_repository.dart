@@ -1,4 +1,4 @@
-/// services/categoria_service.dart
+// services/categoria_service.dart
 import 'package:psiemens/api/service/categoria_service.dart'; // Importa tu repositorio
 import 'package:psiemens/domain/categoria.dart'; // Importa tu entidad Categoria
 import 'package:flutter/foundation.dart'; // Para debugPrint
@@ -19,7 +19,6 @@ class CategoriaRepository {
     } catch (e) {
       // Puedes añadir lógica de logging o manejo de errores específico del servicio aquí
       debugPrint('Error en CategoriaService al obtener categorías: $e');
-      // Relanza la excepción para que la capa superior (UI, BLoC) pueda manejarla
       rethrow;
     }
   }

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:psiemens/views/categoria_screen.dart';
 import 'package:psiemens/views/category_screen.dart';
 import 'package:psiemens/views/contador_screen.dart';
 import 'package:psiemens/views/login_screen.dart';
@@ -40,7 +39,7 @@ class WelcomeScreen extends StatelessWidget {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => TasksScreen()),
+                  MaterialPageRoute(builder: (context) => const TaskScreen()),
                 );
               },
             ),

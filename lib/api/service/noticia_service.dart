@@ -1,53 +1,131 @@
-import 'package:psiemens/api/service/base_service.dart';
+import 'dart:async';
+import 'package:psiemens/exceptions/api_exception.dart';
 import 'package:psiemens/domain/noticia.dart';
-import 'package:psiemens/constants.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
+import 'package:psiemens/api/service/base_service.dart';
 
-/// Servicio para gestionar las operaciones relacionadas con noticias
-/// Utiliza BaseService para las operaciones HTTP
-class NoticiaService {
-  final BaseService _baseService;
-  
-  /// Constructor que inicializa el BaseService
-  NoticiaService({BaseService? baseService}) 
-      : _baseService = baseService ?? BaseService();
-  
-  /// Obtiene todas las noticias desde la API
+class NoticiaService extends BaseService {
+  NoticiaService() : super();
+
+  /// Obtiene todas las noticias de la API
   Future<List<Noticia>> getNoticias() async {
-    // Utiliza el método get del BaseService
-    final data = await _baseService.get('noticias');
-    
-    // Convierte los datos JSON a objetos Noticia
-    return (data as List).map((json) {
-      return Noticia(
-        id: json['_id'] ?? '',
-        titulo: json['titulo'] ?? 'Sin título',
-        descripcion: json['descripcion'] ?? 'Sin descripción',
-        fuente: json['fuente'] ?? 'Fuente desconocida',
-        publicadaEl: DateTime.tryParse(json['publicadaEl'] ?? '') ?? DateTime.now(),
-        imageUrl: json['urlImagen'] ?? '',
-        categoriaId: json['categoriaId'] ?? CategoriaConstantes.defaultCategoriaId,
-      );
-    }).toList();
+    try {
+
+      final data = await get('/noticias', requireAuthToken: false);
+
+      
+      // Verificamos que la respuesta sea una lista
+      if (data is List) {
+        final List<dynamic> noticiasJson = data;
+        debugPrint('📊 Procesando ${noticiasJson.length} noticias');
+        
+        return noticiasJson.map((json) {
+          try {
+            return Noticia.fromJson(json);
+          } catch (e) {
+            debugPrint('❌ Error al deserializar noticia: $e');
+            debugPrint('Datos problemáticos: $json');
+            // Retornar null y luego filtrar los nulos
+            return null;
+          }
+        }).where((noticia) => noticia != null).cast<Noticia>().toList();
+      } else {
+        debugPrint('❌ La respuesta no es una lista: $data');
+        throw ApiException('Formato de respuesta inválido');
+      }
+    } catch (e) {
+      if (e is ApiException) {
+        rethrow;
+      }
+      debugPrint('❌ Error inesperado: ${e.toString()}');
+      throw ApiException('Error inesperado: $e');
+    }
   }
 
-  /// Edita una noticia existente en la API
-  Future<void> editarNoticia(String id, Map<String, dynamic> noticia) async {
-    // Utiliza el método put del BaseService
-    await _baseService.put('noticias', id, data: noticia);
+  /// Edita una noticia en la API
+  Future<void> editarNoticia(String id, Noticia noticia) async {
+    try {
+      // Validar que el ID no sea nulo o vacío
+      if (id.isEmpty) {
+        throw ApiException('ID de noticia inválido', statusCode: 400);
+      }
+      
+      debugPrint('🔄 Editando noticia con ID: $id');
+      
+      // Convertir el objeto Noticia a JSON utilizando el método generado
+      Map<String, dynamic> noticiaJson = noticia.toJson();
+      debugPrint('📤 Datos a enviar: $noticiaJson');
+    
+      await put(
+        '/noticias/$id',
+        data: noticiaJson,
+        requireAuthToken: true,
+      );
+      
+      debugPrint('✅ Noticia editada correctamente');
+    } on DioException catch (e) {
+      debugPrint('❌ DioException en editarNoticia: ${e.toString()}');
+      handleError(e);
+    } catch (e) {
+      if (e is ApiException) {
+        rethrow;
+      }
+      debugPrint('❌ Error inesperado en editarNoticia: ${e.toString()}');
+      throw ApiException('Error inesperado: $e');
+    }
   }
 
   /// Crea una nueva noticia en la API
-  Future<void> crearNoticia(Map<String, dynamic> noticia) async {
-    // Utiliza el método post del BaseService
-    await _baseService.post('noticias', data: noticia);
+  Future<void> crearNoticia(Noticia noticia) async {
+    try {
+      debugPrint('➕ Creando nueva noticia');
+      
+      // Convertir el objeto Noticia a JSON utilizando el método generado
+      Map<String, dynamic> noticiaJson = noticia.toJson();
+      debugPrint('📤 Datos a enviar: $noticiaJson');
+      
+      await post(
+        '/noticias',
+        data: noticiaJson,
+        requireAuthToken: true,
+      );
+      
+      debugPrint('✅ Noticia creada con éxito');
+    } on DioException catch (e) {
+      debugPrint('❌ DioException en crearNoticia: ${e.toString()}');
+      handleError(e);
+    } catch (e) {
+      if (e is ApiException) {
+        rethrow;
+      }
+      debugPrint('❌ Error inesperado en crearNoticia: ${e.toString()}');
+      throw ApiException('Error inesperado: $e');
+    }
   }
 
   /// Elimina una noticia de la API
   Future<void> eliminarNoticia(String id) async {
-    // Utiliza el método delete del BaseService
-    await _baseService.delete('noticias', id);
+    try {
+      // Validar que el ID no sea nulo o vacío
+      if (id.isEmpty) {
+        throw ApiException('ID de noticia inválido', statusCode: 400);
+      }
+      
+      debugPrint('🗑️ Eliminando noticia con ID: $id');
+      
+      await delete('/noticias/$id', requireAuthToken: true);
+
+      debugPrint('✅ Noticia eliminada correctamente');
+    } on DioException catch (e) {
+      debugPrint('❌ DioException en eliminarNoticia: ${e.toString()}');
+      handleError(e);
+    } catch (e) {
+      if (e is ApiException) {
+        rethrow;
+      }
+      debugPrint('❌ Error inesperado en eliminarNoticia: ${e.toString()}');
+      throw ApiException('Error inesperado: $e');
+    }
   }
 }
-
-  
-

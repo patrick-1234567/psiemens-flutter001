@@ -1,35 +1,30 @@
 import 'package:flutter/material.dart';
 
-class CustomCard extends StatelessWidget {
-  final Widget child;
-  final EdgeInsetsGeometry margin;
-  final BorderRadiusGeometry borderRadius;
-  final Color backgroundColor;
+class BaseCard extends StatelessWidget {
+  final Widget leading;
+  final String title;
+  final Widget subtitle;
+  final Widget trailing;
 
-  const CustomCard({
-    super.key,
-    required this.child,
-    this.margin = const EdgeInsets.all(8.0),
-    this.borderRadius = const BorderRadius.all(Radius.circular(10)),
-    this.backgroundColor = Colors.white,
+  const BaseCard({
+    super.key, // Usa super parameter para 'key'
+    required this.leading,
+    required this.title,
+    required this.subtitle,
+    required this.trailing,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: margin,
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: borderRadius,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 6,
-            offset: const Offset(0, 3),
-          ),
-        ],
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: ListTile(
+        leading: leading,
+        title: Text(title),
+        subtitle: subtitle,
+        trailing: trailing,
       ),
-      child: child,
     );
   }
 }

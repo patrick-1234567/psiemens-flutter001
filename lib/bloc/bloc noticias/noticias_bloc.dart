@@ -1,8 +1,9 @@
-import 'package:bloc/bloc.dart';
+import 'package:psiemens/exceptions/api_exception.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:psiemens/bloc/bloc noticias/noticias_event.dart';
 import 'package:psiemens/bloc/bloc noticias/noticias_state.dart';
 import 'package:psiemens/data/noticia_repository.dart';
-import 'package:psiemens/di/locator.dart';
 import 'package:watch_it/watch_it.dart';
 
 class NoticiasBloc extends Bloc<NoticiasEvent, NoticiasState> {
@@ -25,7 +26,9 @@ class NoticiasBloc extends Bloc<NoticiasEvent, NoticiasState> {
       final noticias = await _noticiaRepository.obtenerNoticias();
       emit(NoticiasLoaded(noticias, DateTime.now()));
     } catch (e) {
-      emit(NoticiasError('Error al cargar noticias: ${e.toString()}'));
+      final int? statusCode = e is ApiException ? e.statusCode : null;
+      debugPrint('parada1${e.toString()}');
+      emit(NoticiasError('Error al cargar noticias: ${e.toString()}', statusCode: statusCode));
     }
   }
 
@@ -39,16 +42,17 @@ class NoticiasBloc extends Bloc<NoticiasEvent, NoticiasState> {
         titulo: event.noticia.titulo,
         descripcion: event.noticia.descripcion,
         fuente: event.noticia.fuente,
-        publicadaEl: event.noticia.publicadaEl.toIso8601String(),
-        urlImagen: event.noticia.imageUrl,
-        categoriaId: event.noticia.categoriaId,
+        publicadaEl: event.noticia.publicadaEl,
+        urlImagen: event.noticia.urlImagen,
+        categoriaId: event.noticia.categoriaId ?? '',
       );
 
       // Refrescar la lista de noticias después de agregar
       final noticias = await _noticiaRepository.obtenerNoticias();
       emit(NoticiasLoaded(noticias, DateTime.now()));
     } catch (e) {
-      emit(NoticiasError('Error al agregar noticia: ${e.toString()}'));
+      final int? statusCode = e is ApiException ? e.statusCode : null;
+      emit(NoticiasError('Error al agregar noticia: ${e.toString()}',statusCode: statusCode));
     }
   }
 
@@ -63,16 +67,17 @@ class NoticiasBloc extends Bloc<NoticiasEvent, NoticiasState> {
         titulo: event.noticia.titulo,
         descripcion: event.noticia.descripcion,
         fuente: event.noticia.fuente,
-        publicadaEl: event.noticia.publicadaEl.toIso8601String(),
-        urlImagen: event.noticia.imageUrl,
-        categoriaId: event.noticia.categoriaId,
+        publicadaEl: event.noticia.publicadaEl,
+        urlImagen: event.noticia.urlImagen,
+        categoriaId: event.noticia.categoriaId ?? '',
       );
 
       // Refrescar la lista de noticias después de actualizar
       final noticias = await _noticiaRepository.obtenerNoticias();
       emit(NoticiasLoaded(noticias, DateTime.now()));
     } catch (e) {
-      emit(NoticiasError('Error al actualizar noticia: ${e.toString()}'));
+      final int? statusCode = e is ApiException ? e.statusCode : null;
+      emit(NoticiasError('Error al actualizar noticia: ${e.toString()}',statusCode: statusCode));
     }
   }
 
@@ -88,10 +93,11 @@ class NoticiasBloc extends Bloc<NoticiasEvent, NoticiasState> {
       final noticias = await _noticiaRepository.obtenerNoticias();
       emit(NoticiasLoaded(noticias, DateTime.now()));
     } catch (e) {
-      emit(NoticiasError('Error al eliminar noticia: ${e.toString()}'));
+      final int? statusCode = e is ApiException ? e.statusCode : null;
+      emit(NoticiasError('Error al eliminar noticia: ${e.toString()}',statusCode: statusCode));
     }
   }
-
+  
   Future<void> _onFilterNoticiasByPreferencias(
     FilterNoticiasByPreferencias event,
     Emitter<NoticiasState> emit,
@@ -109,7 +115,8 @@ class NoticiasBloc extends Bloc<NoticiasEvent, NoticiasState> {
 
       emit(NoticiasLoaded(filteredNoticias, DateTime.now()));
     } catch (e) {
-      emit(NoticiasError('Error al filtrar noticias: ${e.toString()}'));
+      final int? statusCode = e is ApiException ? e.statusCode : null;
+      emit(NoticiasError('Error al filtrar noticias: ${e.toString()}',statusCode: statusCode));
     }
   }
 }
