@@ -1,103 +1,166 @@
 import 'dart:async';
 import 'package:psiemens/exceptions/api_exception.dart';
-import 'package:psiemens/helpers/error_helper.dart';
 import 'package:psiemens/domain/noticia.dart';
 import 'package:dio/dio.dart';
-import 'package:psiemens/constants.dart';
+import 'package:flutter/foundation.dart';
+import 'package:psiemens/api/service/base_service.dart';
 
-class NoticiaService {
-  final Dio _dioNew = Dio(BaseOptions(
-    connectTimeout: const Duration(seconds: CategoriaConstantes.timeoutSeconds), // Tiempo de conexión
-    receiveTimeout: const Duration(seconds:CategoriaConstantes.timeoutSeconds), // Tiempo de recepción
-  ));
-  final List<Noticia> _allNoticias = [];
-  
+class NoticiaService extends BaseService {
+  NoticiaService() : super();
+
+  /// Obtiene todas las noticias de la API
   Future<List<Noticia>> getNoticias() async {
-  try {
-    // Realiza la solicitud GET a la API
-    final response = await _dioNew.get(ApiConstantes.noticiasUrl);
-
-    // Maneja el código de estado HTTP
-    if (response.statusCode == 200) {
-      final List<dynamic> noticiasJson = response.data;
-      return noticiasJson.map((json) {
-        return Noticia(
-          id: json['_id'] ?? '',
-          titulo: json['titulo'] ?? 'Sin título',
-          descripcion: json['descripcion'] ?? 'Sin descripción',
-          fuente: json['fuente'] ?? 'Fuente desconocida',
-          publicadaEl: DateTime.tryParse(json['publicadaEl'] ?? '') ?? DateTime.now(),
-          imageUrl: json['urlImagen'] ?? '',
-          categoriaId: json['categoriaId'] ?? CategoriaConstantes.defaultCategoriaId,
-         );
-        }).toList();
+    try {
+      final data = await get('/noticias', requireAuthToken: false);
+      
+      // Verificamos que la respuesta sea una lista
+      if (data is List) {
+        final List<dynamic> noticiasJson = data;
+        debugPrint('📊 Procesando ${noticiasJson.length} noticias');
+        
+        return noticiasJson.map((json) {
+          try {
+            // Usar el método seguro para deserializar
+            return Noticia.fromMapSafe(json);
+          } catch (e) {
+            debugPrint('❌ Error al deserializar noticia: $e');
+            debugPrint('Datos problemáticos: $json');
+            // Retornar null y luego filtrar los nulos
+            return null;
+          }
+        }).where((noticia) => noticia != null).cast<Noticia>().toList();
       } else {
-        throw ApiException('Error desconocido', statusCode: response.statusCode);
+        debugPrint('❌ La respuesta no es una lista: $data');
+        throw ApiException('Formato de respuesta inválido');
       }
-    } on DioError catch (e) {
-      final errorData = ErrorHelper.getErrorMessageAndColor(e.response?.statusCode);
-      throw ApiException(errorData['message'], statusCode: e.response?.statusCode);
     } catch (e) {
+      if (e is ApiException) {
+        rethrow;
+      }
+      debugPrint('❌ Error inesperado: ${e.toString()}');
       throw ApiException('Error inesperado: $e');
     }
   }
 
-
-  /// Edita una noticia en la API de CrudCrud
-Future<void> editarNoticia(String id, Map<String, dynamic> noticia) async {
-  try {
-    final url = '${ApiConstantes.noticiasUrl}/$id';
-    final response = await _dioNew.put(
-      url,
-      data: noticia,
-    );
-
-    if (response.statusCode != 200) {
-        throw ApiException('Error desconocido', statusCode: response.statusCode);
+  /// Edita una noticia en la API
+  Future<void> editarNoticia(String id, Noticia noticia) async {
+    try {
+      // Validar que el ID no sea nulo o vacío
+      if (id.isEmpty) {
+        throw ApiException('ID de noticia inválido', statusCode: 400);
       }
-    } on DioError catch (e) {
-      final errorData = ErrorHelper.getErrorMessageAndColor(e.response?.statusCode);
-      throw ApiException(errorData['message'], statusCode: e.response?.statusCode);
+      
+      debugPrint('🔄 Editando noticia con ID: $id');
+      
+      // Usar el método toMap() manual que definimos en la clase Noticia
+      Map<String, dynamic> noticiaJson = noticia.toMap();
+      debugPrint('📤 Datos a enviar: $noticiaJson');
+    
+      await put(
+        '/noticias/$id',
+        data: noticiaJson,
+        requireAuthToken: true,
+      );
+      
+      debugPrint('✅ Noticia editada correctamente');
+    } on DioException catch (e) {
+      debugPrint('❌ DioException en editarNoticia: ${e.toString()}');
+      handleError(e);
     } catch (e) {
+      if (e is ApiException) {
+        rethrow;
+      }
+      debugPrint('❌ Error inesperado en editarNoticia: ${e.toString()}');
       throw ApiException('Error inesperado: $e');
     }
   }
 
-  /// Crea una nueva noticia en la API de CrudCrud
-  Future<void> crearNoticia(Map<String, dynamic> noticia) async {
-  try {
-    final response = await _dioNew.post(
-      ApiConstantes.noticiasUrl,
-      data: noticia,
-    );
-
-    if (response.statusCode != 201) {
-      throw Exception('Error desconocido: ${response.statusCode}');
+  /// Crea una nueva noticia en la API
+  Future<void> crearNoticia(Noticia noticia) async {
+    try {
+      debugPrint('➕ Creando nueva noticia');
+      
+      // Usar el método toMap() manual que definimos en la clase Noticia
+      Map<String, dynamic> noticiaJson = noticia.toMap();
+      debugPrint('📤 Datos a enviar: $noticiaJson');
+      
+      await post(
+        '/noticias',
+        data: noticiaJson,
+        requireAuthToken: true,
+      );
+      
+      debugPrint('✅ Noticia creada con éxito');
+    } on DioException catch (e) {
+      debugPrint('❌ DioException en crearNoticia: ${e.toString()}');
+      handleError(e);
+    } catch (e) {
+      if (e is ApiException) {
+        rethrow;
+      }
+      debugPrint('❌ Error inesperado en crearNoticia: ${e.toString()}');
+      throw ApiException('Error inesperado: $e');
     }
-  } on DioError catch (e) {
-   ErrorHelper.getErrorMessageAndColor(e.response?.statusCode); // Llama a la función centralizada para manejar el error
-  } catch (e) {
-    throw Exception('Error inesperado: $e');
   }
-}
 
-  /// Elimina una noticia de la API de CrudCrud
+  /// Elimina una noticia de la API
   Future<void> eliminarNoticia(String id) async {
-  try {
-    final url = '${ApiConstantes.noticiasUrl}/$id';
-    final response = await _dioNew.delete(url);
-
-    if (response.statusCode != 200 && response.statusCode != 204) {
-        throw ApiException('Error desconocido', statusCode: response.statusCode);
+    try {
+      // Validar que el ID no sea nulo o vacío
+      if (id.isEmpty) {
+        throw ApiException('ID de noticia inválido', statusCode: 400);
       }
-    } on DioError catch (e) {
-      final errorData = ErrorHelper.getErrorMessageAndColor(e.response?.statusCode);
-      throw ApiException(errorData['message'], statusCode: e.response?.statusCode);
+      
+      debugPrint('🗑️ Eliminando noticia con ID: $id');
+      
+      await delete('/noticias/$id', requireAuthToken: true);
+
+      debugPrint('✅ Noticia eliminada correctamente');
+    } on DioException catch (e) {
+      debugPrint('❌ DioException en eliminarNoticia: ${e.toString()}');
+      handleError(e);
     } catch (e) {
+      if (e is ApiException) {
+        rethrow;
+      }
+      debugPrint('❌ Error inesperado en eliminarNoticia: ${e.toString()}');
+      throw ApiException('Error inesperado: $e');
+    }
+  }
+  
+  /// Obtiene una noticia por su ID
+  Future<Noticia?> getNoticiaPorId(String id) async {
+    try {
+      // Validar que el ID no sea nulo o vacío
+      if (id.isEmpty) {
+        throw ApiException('ID de noticia inválido', statusCode: 400);
+      }
+      
+      final data = await get('/noticias/$id', requireAuthToken: false);
+      
+      if (data is Map<String, dynamic>) {
+        try {
+          // Usar el método seguro para deserializar
+          return Noticia.fromMapSafe(data);
+        } catch (e) {
+          debugPrint('❌ Error al deserializar noticia: $e');
+          debugPrint('Datos problemáticos: $data');
+          return null;
+        }
+      } else {
+        debugPrint('❌ La respuesta no es un objeto: $data');
+        throw ApiException('Formato de respuesta inválido');
+      }
+    } on DioException catch (e) {
+      debugPrint('❌ DioException en getNoticiaPorId: ${e.toString()}');
+      handleError(e);
+      return null;
+    } catch (e) {
+      if (e is ApiException) {
+        rethrow;
+      }
+      debugPrint('❌ Error inesperado en getNoticiaPorId: ${e.toString()}');
       throw ApiException('Error inesperado: $e');
     }
   }
 }
-
-  
-

@@ -1,5 +1,4 @@
 import 'package:equatable/equatable.dart';
-import 'package:psiemens/domain/categoria.dart';
 
 abstract class CategoriaEvent extends Equatable {
    @override

@@ -1,15 +1,17 @@
+
 class Task {
-  final String title;
-  final String type;
-  final DateTime deadline;
-  final String description;
-  List<String> steps;
-  
+  final String titulo;
+  final String tipo;
+  final String descripcion; 
+  final DateTime fechaLimite; 
+  List<String> pasos; 
+
+
   Task({
-    required this.title,
-    this.type = 'normal',
-    required this.deadline,
-    this.description = '',
-    this.steps = const [],
-    });
+    required this.titulo,
+    required this.tipo,
+    required this.descripcion,
+    required this.fechaLimite,
+    required this.pasos
+  });
 }

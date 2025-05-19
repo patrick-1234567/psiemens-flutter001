@@ -1,4 +1,4 @@
-/// services/categoria_service.dart
+// services/categoria_service.dart
 import 'package:psiemens/api/service/categoria_service.dart'; // Importa tu repositorio
 import 'package:psiemens/domain/categoria.dart'; // Importa tu entidad Categoria
 import 'package:flutter/foundation.dart'; // Para debugPrint
@@ -19,12 +19,11 @@ class CategoriaRepository {
     } catch (e) {
       // Puedes añadir lógica de logging o manejo de errores específico del servicio aquí
       debugPrint('Error en CategoriaService al obtener categorías: $e');
-      // Relanza la excepción para que la capa superior (UI, BLoC) pueda manejarla
       rethrow;
     }
   }
 
-  Future<void> crearNuevaCategoria(Map<String, dynamic> categoriaData) async {
+  Future<void> crearCategoria(Map<String, dynamic> categoriaData) async {
     try {
       // Llama al método del repositorio para crear la categoría
       await _categoriaService.crearCategoria(categoriaData);
@@ -46,7 +45,7 @@ class CategoriaRepository {
     }
   }
 
-  Future<void> borrarCategoria(String id) async {
+  Future<void> eliminarCategoria(String id) async {
     try {
       // Llama al método del repositorio para eliminar la categoría
       await _categoriaService.eliminarCategoria(id);
