@@ -1,9 +1,6 @@
 import 'package:psiemens/bloc/comentarios/comentario_bloc.dart';
 import 'package:psiemens/bloc/comentarios/comentario_event.dart';
-import 'package:psiemens/bloc/reportes/reportes_bloc.dart';
-import 'package:psiemens/bloc/reportes/reportes_event.dart';
-import 'package:psiemens/bloc/reportes/reportes_state.dart';
-import 'package:psiemens/domain/reporte.dart';
+import 'package:psiemens/components/reporte_dialog.dart';
 import 'package:psiemens/helpers/categoria_helper.dart';
 import 'package:psiemens/views/comentarios/comentarios_screen.dart';
 import 'package:flutter/material.dart';
@@ -23,7 +20,6 @@ import 'package:psiemens/views/category_screen.dart';
 import 'package:psiemens/views/preferencia_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:psiemens/helpers/snackbar_helper.dart';
-import 'package:watch_it/watch_it.dart';
 class NoticiaScreen extends StatelessWidget {
   const NoticiaScreen({super.key});
 
@@ -338,7 +334,7 @@ class NoticiaScreen extends StatelessWidget {
   Future<void> _editarNoticia(BuildContext context, Noticia noticia) async {
     await NoticiaModal.mostrarModal(
       context: context,
-      noticia: noticia.toJson(),
+      noticia: noticia.toMap(),
       onSave: (oldNoticia, noticiaActualizada) {
         // Crear una nueva instancia de Noticia con los datos actualizados
         final noticiaModel = Noticia(
@@ -385,126 +381,10 @@ class NoticiaScreen extends StatelessWidget {
 
   /// Muestra un diálogo para reportar una noticia
   Future<void> _mostrarDialogoReporte(
-    BuildContext context,
-    String noticiaId,
-  ) async {
-    MotivoReporte motivoSeleccionado = MotivoReporte.otro;
-
-    // Obtener una instancia fresca del ReporteBloc
-    final reporteBloc = di<ReporteBloc>();
-
-    await showDialog(
-      context: context,
-      barrierDismissible: false, // Evitar cierre al tocar fuera del diálogo
-      builder: (BuildContext context) {
-        return BlocProvider.value(
-          value: reporteBloc,
-          child: BlocConsumer<ReporteBloc, ReporteState>(
-            listener: (context, state) {
-              if (state is ReporteCreated) {
-                SnackBarHelper.showSuccess(
-                  context,
-                  'Reporte enviado correctamente',
-                );
-                Navigator.of(
-                  context,
-                ).pop(); // Cerrar el diálogo cuando el reporte se ha creado
-              } else if (state is ReporteError) {
-                SnackBarHelper.showClientError(
-                  context,
-                  'Error al enviar el reporte: ${state.message}',
-                );
-              }
-            },
-            builder: (context, state) {
-              return AlertDialog(
-                title: const Text('Reportar Noticia'),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text('Por favor, seleccione el motivo del reporte:'),
-                    const SizedBox(height: 16),
-                    StatefulBuilder(
-                      builder: (context, setState) {
-                        return DropdownButton<MotivoReporte>(
-                          value: motivoSeleccionado,
-                          isExpanded: true,
-                          items:
-                              MotivoReporte.values.map((MotivoReporte motivo) {
-                                String motivoText;
-                                switch (motivo) {
-                                  case MotivoReporte.noticiaInapropiada:
-                                    motivoText = 'Noticia Inapropiada';
-                                    break;
-                                  case MotivoReporte.informacionFalsa:
-                                    motivoText = 'Información Falsa';
-                                    break;
-                                  case MotivoReporte.otro:
-                                    motivoText = 'Otro';
-                                    break;
-                                }
-                                return DropdownMenuItem<MotivoReporte>(
-                                  value: motivo,
-                                  child: Text(motivoText),
-                                );
-                              }).toList(),
-                          onChanged: (MotivoReporte? valor) {
-                            if (valor != null) {
-                              setState(() {
-                                motivoSeleccionado = valor;
-                              });
-                            }
-                          },
-                        );
-                      },
-                    ),
-                    if (state is ReporteLoading)
-                      const Padding(
-                        padding: EdgeInsets.only(top: 16.0),
-                        child: Center(child: CircularProgressIndicator()),
-                      ),
-                  ],
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Cancelar'),
-                  ),
-                  ElevatedButton(
-                    onPressed:
-                        state is ReporteLoading
-                            ? null // Deshabilitar el botón si está cargando
-                            : () {
-                              // Reiniciar el estado del bloc si hubo un error previo
-                              if (state is ReporteError) {
-                                context.read<ReporteBloc>().add(
-                                  ReporteInitEvent(),
-                                );
-                              }
-
-                              // Enviar el reporte utilizando el bloc con un delay
-                              // para asegurar que la UI se actualice
-                              Future.delayed(
-                                const Duration(milliseconds: 100),
-                                () {
-                                  if(!context.mounted) return;
-                                  context.read<ReporteBloc>().add(
-                                    ReporteCreateEvent(
-                                      noticiaId: noticiaId,
-                                      motivo: motivoSeleccionado,
-                                    ),
-                                  );
-                                },
-                              );
-                            },
-                    child: const Text('Enviar Reporte'),
-                  ),
-                ],
-              );
-            },
-          ),
-        );
-      },
-    );
-  }
+  BuildContext context,
+  String noticiaId,
+) async {
+  // Usar el componente de diálogo de reportes
+  await ReporteDialog.mostrarDialogoReporte(context, noticiaId);
+}
 }

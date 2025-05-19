@@ -26,6 +26,7 @@ class CommentCard extends StatelessWidget {
     return Card(
       elevation: 2,
       margin: const EdgeInsets.symmetric(vertical: 4),
+      color: const Color(0xFFE3F2FD),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -82,6 +83,7 @@ class CommentCard extends StatelessWidget {
                       icon: const Icon(Icons.reply, size: 24),
                       label: const Text('Responder'),
                       style: TextButton.styleFrom(
+                        foregroundColor: Colors.blue,
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),

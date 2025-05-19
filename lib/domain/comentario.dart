@@ -1,20 +1,23 @@
-import 'package:json_annotation/json_annotation.dart';
+import 'package:dart_mappable/dart_mappable.dart';
+import 'package:flutter/material.dart';
 
-part 'comentario.g.dart';
+part 'comentario.mapper.dart';
 
-@JsonSerializable()
-class Comentario {
-  @JsonKey(includeToJson: false)
+@MappableClass()
+class Comentario with ComentarioMappable {
+  @MappableField()
   final String? id; // Cambiado a nullable
-  final String noticiaId;//
-  final String texto;//
-  final String fecha;//
-  final String autor;//
-  final int likes;//
-  final int dislikes;//
+  final String noticiaId; //
+  final String texto; //
+  final String fecha; //
+  final String autor; //
+  final int likes; //
+  final int dislikes; //
+
   final List<Comentario>? subcomentarios;
-  @JsonKey(defaultValue: false)
-  final bool isSubComentario; // Ahora es required con valor por defecto
+  // isSubComentario es requerido con valor por defecto
+  final bool isSubComentario; // Nuevo campo para indicar si es subcomentario
+
   final String? idSubComentario; // idNoticia es opcional
 
   Comentario({
@@ -30,8 +33,69 @@ class Comentario {
     this.idSubComentario, // idSubComentario es opcional
   });
 
-  factory Comentario.fromJson(Map<String, dynamic> json) =>
-      _$ComentarioFromJson(json);
+  // Método factory para mapear manualmente en caso de problemas
+  static Comentario fromMapSafe(Map<String, dynamic> map) {
+    // Procesar los subcomentarios de forma segura
+    List<Comentario>? subcomentariosList;
+    if (map['subcomentarios'] != null) {
+      try {
+        if (map['subcomentarios'] is List) {
+          final List<dynamic> subList = map['subcomentarios'];
+          subcomentariosList = subList.map<Comentario>((item) {
+            // Manejar tanto mapas como strings
+            if (item is Map<String, dynamic>) {
+              return ComentarioMapper.fromMap(item);
+            } else if (item is String) {
+              // Intentar parsear la string como JSON
+              try {
+                final Map<String, dynamic> parsed = 
+                    Map<String, dynamic>.from(
+                        ComentarioMapper.fromJson(item).toMap());
+                return ComentarioMapper.fromMap(parsed);
+              } catch (e) {
+                debugPrint('Error al procesar subcomentario string: $e');
+                // Devolver un comentario vacío en caso de error
+                return Comentario(
+                  noticiaId: map['noticiaId'] ?? '',
+                  texto: 'Error en comentario',
+                  fecha: DateTime.now().toIso8601String(),
+                  autor: 'Sistema',
+                  likes: 0,
+                  dislikes: 0,
+                  isSubComentario: true,
+                );
+              }
+            } else {
+              // Devolver un comentario vacío
+              return Comentario(
+                noticiaId: map['noticiaId'] ?? '',
+                texto: 'Formato de comentario inválido',
+                fecha: DateTime.now().toIso8601String(),
+                autor: 'Sistema',
+                likes: 0,
+                dislikes: 0,
+                isSubComentario: true,
+              );
+            }
+          }).toList();
+        }
+      } catch (e) {
+        debugPrint('❌ Error al procesar subcomentarios: $e');
+        subcomentariosList = [];
+      }
+    }
 
-  Map<String, dynamic> toJson() => _$ComentarioToJson(this);
+    return Comentario(
+      id: map['id'] as String?,
+      noticiaId: map['noticiaId'] as String? ?? '',
+      texto: map['texto'] as String? ?? '',
+      fecha: map['fecha'] as String? ?? DateTime.now().toIso8601String(),
+      autor: map['autor'] as String? ?? 'Desconocido',
+      likes: map['likes'] as int? ?? 0,
+      dislikes: map['dislikes'] as int? ?? 0,
+      subcomentarios: subcomentariosList,
+      isSubComentario: map['isSubComentario'] as bool? ?? false,
+      idSubComentario: map['idSubComentario'] as String?,
+    );
+  }
 }

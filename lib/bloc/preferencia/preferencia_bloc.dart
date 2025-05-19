@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:psiemens/exceptions/api_exception.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:psiemens/bloc/preferencia/preferencia_event.dart';
@@ -74,7 +75,7 @@ class PreferenciaBloc extends Bloc<PreferenciaEvent, PreferenciaState> {
       } catch (e) {
         // Si falla la persistencia, no interrumpir la experiencia del usuario
         // pero registrar el error para depuración
-        print('Error al persistir cambio de categoría: $e');
+        debugPrint('Error al persistir cambio de categoría: $e');
 
         // Opcionalmente, podrías emitir un estado de "sincronización pendiente"
         // para indicar que los cambios locales no se han guardado aún

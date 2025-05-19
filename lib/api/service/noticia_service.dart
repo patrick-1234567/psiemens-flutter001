@@ -11,9 +11,7 @@ class NoticiaService extends BaseService {
   /// Obtiene todas las noticias de la API
   Future<List<Noticia>> getNoticias() async {
     try {
-
       final data = await get('/noticias', requireAuthToken: false);
-
       
       // Verificamos que la respuesta sea una lista
       if (data is List) {
@@ -22,7 +20,8 @@ class NoticiaService extends BaseService {
         
         return noticiasJson.map((json) {
           try {
-            return Noticia.fromJson(json);
+            // Usar el método seguro para deserializar
+            return Noticia.fromMapSafe(json);
           } catch (e) {
             debugPrint('❌ Error al deserializar noticia: $e');
             debugPrint('Datos problemáticos: $json');
@@ -53,8 +52,8 @@ class NoticiaService extends BaseService {
       
       debugPrint('🔄 Editando noticia con ID: $id');
       
-      // Convertir el objeto Noticia a JSON utilizando el método generado
-      Map<String, dynamic> noticiaJson = noticia.toJson();
+      // Usar el método toMap() manual que definimos en la clase Noticia
+      Map<String, dynamic> noticiaJson = noticia.toMap();
       debugPrint('📤 Datos a enviar: $noticiaJson');
     
       await put(
@@ -81,8 +80,8 @@ class NoticiaService extends BaseService {
     try {
       debugPrint('➕ Creando nueva noticia');
       
-      // Convertir el objeto Noticia a JSON utilizando el método generado
-      Map<String, dynamic> noticiaJson = noticia.toJson();
+      // Usar el método toMap() manual que definimos en la clase Noticia
+      Map<String, dynamic> noticiaJson = noticia.toMap();
       debugPrint('📤 Datos a enviar: $noticiaJson');
       
       await post(
@@ -125,6 +124,42 @@ class NoticiaService extends BaseService {
         rethrow;
       }
       debugPrint('❌ Error inesperado en eliminarNoticia: ${e.toString()}');
+      throw ApiException('Error inesperado: $e');
+    }
+  }
+  
+  /// Obtiene una noticia por su ID
+  Future<Noticia?> getNoticiaPorId(String id) async {
+    try {
+      // Validar que el ID no sea nulo o vacío
+      if (id.isEmpty) {
+        throw ApiException('ID de noticia inválido', statusCode: 400);
+      }
+      
+      final data = await get('/noticias/$id', requireAuthToken: false);
+      
+      if (data is Map<String, dynamic>) {
+        try {
+          // Usar el método seguro para deserializar
+          return Noticia.fromMapSafe(data);
+        } catch (e) {
+          debugPrint('❌ Error al deserializar noticia: $e');
+          debugPrint('Datos problemáticos: $data');
+          return null;
+        }
+      } else {
+        debugPrint('❌ La respuesta no es un objeto: $data');
+        throw ApiException('Formato de respuesta inválido');
+      }
+    } on DioException catch (e) {
+      debugPrint('❌ DioException en getNoticiaPorId: ${e.toString()}');
+      handleError(e);
+      return null;
+    } catch (e) {
+      if (e is ApiException) {
+        rethrow;
+      }
+      debugPrint('❌ Error inesperado en getNoticiaPorId: ${e.toString()}');
       throw ApiException('Error inesperado: $e');
     }
   }

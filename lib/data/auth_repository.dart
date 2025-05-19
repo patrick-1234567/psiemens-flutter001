@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:psiemens/api/service/auth_service.dart';
 import 'package:psiemens/helpers/secure_storage_service.dart';
 import 'package:psiemens/domain/login_response.dart';
@@ -23,7 +24,7 @@ class AuthRepository {
       await _secureStorage.saveUserEmail(email);
       return true;
     } catch (e) {
-      print('Login error: $e');
+      debugPrint('Login error: $e');
       return false;
     }
   }

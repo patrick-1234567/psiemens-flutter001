@@ -25,7 +25,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ),      body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthAuthenticated) {
-            print('cambiando a la pantalla de bienvenida');
+            debugPrint('cambiando a la pantalla de bienvenida');
             // Navegar a la pantalla de bienvenida cuando el usuario está autenticado
             Navigator.pushReplacement(
               context,

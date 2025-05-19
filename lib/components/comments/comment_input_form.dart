@@ -22,6 +22,9 @@ class CommentInputForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Color borderColor = const Color(0xFF90CAF9); // Azul claro
+    final Color focusedBorderColor = const Color(0xFF1976D2);
+
     return Column(
       children: [
         const Divider(),
@@ -33,7 +36,19 @@ class CommentInputForm extends StatelessWidget {
             hintText: respondingToId == null 
                 ? 'Escribe tu comentario' 
                 : 'Escribe tu respuesta...',
-            border: const OutlineInputBorder(),
+            border: OutlineInputBorder(
+              borderSide: BorderSide(color: borderColor), // Borde azul claro normal
+              borderRadius: BorderRadius.circular(8),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderSide: BorderSide(color: borderColor), // Borde azul claro cuando está habilitado
+              borderRadius: BorderRadius.circular(8),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderSide: BorderSide(color: focusedBorderColor, width: 2), // Borde azul medio cuando tiene foco
+              borderRadius: BorderRadius.circular(8),
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           ),
           maxLines: 2,
         ),
@@ -45,6 +60,7 @@ class CommentInputForm extends StatelessWidget {
               ? 'Publicar comentario' 
               : 'Enviar respuesta'),
           style: ElevatedButton.styleFrom(
+            foregroundColor: Colors.blue,
             padding: const EdgeInsets.only(left: 15,right: 15,top: 10, bottom: 10),
           ),
         ),

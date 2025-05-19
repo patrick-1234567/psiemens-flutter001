@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/material.dart';
 import 'package:psiemens/constants.dart';
 import 'package:psiemens/data/quote_repository.dart'; // Import the repository
 import 'package:psiemens/domain/quote.dart';
@@ -16,13 +17,13 @@ class QuoteService {
     for (final quote in quotes) {
       // Ensure changePercentage is within the valid range (-100 to 100)
       if (quote.changePercentage > 100 || quote.changePercentage < -100) {
-        print(
+        debugPrint(
           'Warning: Invalid changePercentage found for ${quote.companyName}: ${quote.changePercentage}. Expected between -100 and 100.',
         );
       }
       // Ensure stock price is positive
       if (quote.stockPrice <= 0) {
-         print(
+         debugPrint(
           'Warning: Non-positive stockPrice found for ${quote.companyName}: ${quote.stockPrice}. Expected > 0.',
         );
       }
@@ -72,7 +73,7 @@ class QuoteService {
 
   /// Gets the total count of quotes. (Meaning might be limited with random generation)
   Future<int> getTotalQuoteCount() async {
-    print("Warning: getTotalQuoteCount may not be meaningful with random generation.");
+    debugPrint("Warning: getTotalQuoteCount may not be meaningful with random generation.");
     return 0; // Returning 0 as total count is not well-defined here
   }
 

@@ -50,6 +50,7 @@ class CommentSearchBar extends StatelessWidget {
         ElevatedButton(
           onPressed: onSearch,
           style: ElevatedButton.styleFrom(
+            foregroundColor: Colors.blue,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           ),
           child: const Text('Buscar'),
