@@ -1,98 +1,203 @@
+
+import 'package:psiemens/helpers/common_widgets_helper.dart';
 import 'package:flutter/material.dart';
-import 'package:psiemens/views/sports_card_screen.dart';
 import 'package:psiemens/domain/task.dart';
 import 'package:psiemens/constants.dart';
-import 'package:psiemens/components/card.dart'; // Importa el CustomCard
-import 'package:psiemens/helpers/common_widgets_helper.dart'; // Importa CommonWidgetsHelper
+import 'package:psiemens/views/task_detail_screen.dart';
 
 class TaskCardHelper {
-  static Widget buildTaskCard(BuildContext context, Task task, List<Task> tasks, VoidCallback onEdit) {
-    return GestureDetector(
-      onTap: () {
-        // Navega directamente a la pantalla de las Sport Cards al tocar la tarjeta
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => SportsCardSwipeScreen(
-              tasks: tasks,
-              initialIndex: tasks.indexOf(task),
+static Widget buildTaskCard(
+  BuildContext context,
+  List<Task> tasks,
+  int indice, {
+  Function(BuildContext, int)? onEdit,
+}) {
+  final task = tasks[indice];
+
+  return GestureDetector(
+    onTap: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => TaskDetailScreen(tasks: tasks, initialIndex: indice),
+        ),
+      );
+    },
+    child: Container(
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          const BoxShadow(
+            color: Colors.black12,
+            blurRadius: 6,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Imagen
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+            child: Image.network(
+              'https://picsum.photos/200/300?random=$indice',
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: 150,
             ),
           ),
-        );
-      },
-      child: CustomCard(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        borderRadius: CommonWidgetsHelper.buildRoundedBorder().borderRadius!,
-        backgroundColor: Colors.white,
-        child: ListTile(
-          leading: Icon(
-            task.type == 'urgente' ? Icons.warning : Icons.task,
-            color: task.type == 'urgente' ? Colors.red : Colors.blue,
-          ),
-          title: CommonWidgetsHelper.buildBoldTitle(task.title),
-          subtitle: CommonWidgetsHelper.buildInfoLines(
-            '${AppConstants.taskTypeLabel}${task.type}', // Muestra el tipo
-            task.steps.isNotEmpty ? '${AppConstants.pasoTitulo}${task.steps.first}' : 'Sin pasos',
-          ),
-          trailing: IconButton(
-            icon: const Icon(Icons.edit, color: Colors.blue),
-            onPressed: onEdit, // Llama al callback de edición
-          ),
-        ),
-      ),
-    );
-  }
 
-  static Widget buildSportsCard(Task task, int index) {
-  return Card(
-    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-    elevation: 8, // Sombra del Card
-    shape: RoundedRectangleBorder(
-      borderRadius: CommonWidgetsHelper.buildRoundedBorder().borderRadius!, // Usando buildRoundedBorder
-    ),
-    child: Padding(
-      padding: const EdgeInsets.all(16.0), // Padding interno de 16 píxeles
-      child: Center( // Centra todo el contenido
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center, // Asegura que el contenido esté centrado
-          children: [
-            // Imagen centrada
-            Center(
-              child: ClipRRect(
-                borderRadius: CommonWidgetsHelper.buildRoundedBorder().borderRadius!, // Usando buildRoundedBorder
-                child: Image.network(
-                  'https://picsum.photos/200/300?random=$index',
-                  height: 300, // Altura fija
-                  width: 200,  // Ancho fijo
-                  fit: BoxFit.cover,
+          // Título y tipo
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Text(
+                    task.titulo,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
+                Row(
+                  children: [
+                    Text(
+                      '${AppConstants.tipoTarea}: ${task.tipo}',
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(
+                      task.tipo.toLowerCase() == 'urgente' ? Icons.warning : Icons.task,
+                      color: task.tipo.toLowerCase() == 'urgente' ? Colors.red : Colors.blue,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          // Descripción
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Text(
+              'Descripción: ${task.descripcion}',
+              style: const TextStyle(fontSize: 16),
+            ),
+          ),
+
+          // Pasos
+          if (task.pasos.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    AppConstants.pasoTitulo,
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    task.pasos[0],
+                    style: const TextStyle(fontStyle: FontStyle.italic),
+                  ),
+                ],
               ),
             ),
-            CommonWidgetsHelper.buildSpacing(), // Espaciado
 
-            // Título
-            CommonWidgetsHelper.buildBoldTitle(task.title),
-
-            CommonWidgetsHelper.buildSpacing(), // Espaciado
-
-            // Pasos
-            CommonWidgetsHelper.buildInfoLines(
-              task.steps.isNotEmpty ? '- ${task.steps[0]}' : 'Sin pasos',
-              task.steps.length > 1 ? '- ${task.steps[1]}' : null,
-              task.steps.length > 2 ? '- ${task.steps[2]}' : null,
+          // Fecha límite
+           Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+           child: Text(
+             '${AppConstants.fechaLimite} ${task.fechaLimite.day.toString().padLeft(2, '0')}/${task.fechaLimite.month.toString().padLeft(2, '0')}/${task.fechaLimite.year}',
+              style: const TextStyle(fontSize: 16),
             ),
+           ),
 
-            CommonWidgetsHelper.buildSpacing(), // Espaciado
-
-            // Fecha límite
-            CommonWidgetsHelper.buildBoldFooter(
-              '${AppConstants.fechaLimite}${task.deadline.day}/${task.deadline.month}/${task.deadline.year}',
+          // Botón de edición
+          if (onEdit != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Row(
+                children: [
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.edit),
+                    onPressed: () => onEdit(context, indice),
+                  ),
+                ],
+              ),
             ),
-          ],
-        ),
+        ],
       ),
     ),
   );
 }
+
+
+  static Widget construirTarjetaDeportiva(BuildContext context, Task task, int indice) {
+  final helper = CommonWidgetsHelper();
+
+  return Center( // Modificación 3.1
+      child: Card(
+        margin: const EdgeInsets.all(50), // Margen externo
+        color: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        elevation: 8, // Sombra del Card
+        child: Container(
+          padding: const EdgeInsets.all(16), // Padding interno
+          decoration: helper.buildRoundedBorder(), // Borde redondeado
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.network(
+                  'https://picsum.photos/200/300?random=$indice',
+                  height: 180,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              helper.buildSpacing(), // Espaciado
+
+              // Título
+              helper.buildBoldTitle(task.titulo),
+              helper.buildSpacing(), // Espaciado
+
+              // Pasos
+              helper.buildInfoLines(
+                task.pasos.isNotEmpty ? task.pasos[0] : 'Sin pasos',
+                line2: task.pasos.length > 1 ? task.pasos[1] : null,
+                line3: task.pasos.length > 2 ? task.pasos[2] : null,
+              ),
+              helper.buildSpacing(), // Espaciado
+
+              // Fecha límite
+              helper.buildBoldFooter(
+                'Fecha límite: ${_formatearFecha(task.fechaLimite)}',
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
 }
 
+}
+
+String _formatearFecha(DateTime? fecha) {
+    if (fecha == null) return 'Sin fecha';
+    return '${fecha.day.toString().padLeft(2, '0')}/${fecha.month.toString().padLeft(2, '0')}/${fecha.year}';
+  }
+
+  

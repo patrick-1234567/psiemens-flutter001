@@ -1,33 +1,39 @@
-// category.dart
-class Categoria {
-  final String? id; // ID asignado por la API (opcional, para operaciones CRUD)
-  final String nombre; // Nombre de la categoría (por ejemplo, "Inteligencia Artificial")
-  final String descripcion; // Descripción breve (por ejemplo, "Noticias sobre IA")
-  final String imagenUrl; // URL de la imagen representativa de la categoría
+import 'package:dart_mappable/dart_mappable.dart';
 
-  Categoria({
-    this.id, // Puede ser null al crear una categoría, se asigna al guardarla
+part 'categoria.mapper.dart';
+
+@MappableClass()
+class Categoria with CategoriaMappable {
+  @MappableField()
+  final String? id;
+  final String nombre;
+  final String descripcion;
+  final String? imagenUrl;
+
+  const Categoria({
+    this.id,
     required this.nombre,
     required this.descripcion,
-    required this.imagenUrl,
+    this.imagenUrl,
   });
 
-  // Método para convertir un JSON de la API a un objeto Categoria
-  factory Categoria.fromJson(Map<String, dynamic> json) {
+  // Factory method para crear desde un mapa de forma segura
+  static Categoria fromMapSafe(Map<String, dynamic> map) {
     return Categoria(
-      id: json['_id'] as String?, // El ID lo asigna CrudCrud
-      nombre: json['nombre'] as String,
-      descripcion: json['descripcion'] as String,
-      imagenUrl: json['imagenUrl'] as String,
+      id: map['id'] as String?,
+      nombre: map['nombre'] as String? ?? 'Sin nombre',
+      descripcion: map['descripcion'] as String? ?? 'Sin descripción',
+      imagenUrl: map['imagenUrl'] as String?,
     );
   }
 
-  // Método para convertir el objeto Categoria a JSON para enviar a la API
-  Map<String, dynamic> toJson() {
-    return {
-      'nombre': nombre,
-      'descripcion': descripcion,
-      'imagenUrl': imagenUrl,
-    };
-  }
+  // Factory method para crear desde json usando el mapper
+  factory Categoria.fromJson(Map<String, dynamic> json) => 
+      CategoriaMapper.fromMap(json);
+
+  // Método para crear una instancia vacía
+  factory Categoria.empty() => const Categoria(
+    nombre: '',
+    descripcion: '',
+  );
 }

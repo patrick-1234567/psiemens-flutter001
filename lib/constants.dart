@@ -1,4 +1,4 @@
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:psiemens/core/api_config.dart';
 
 class AppConstants {
   static const String titleAppbar = 'Lista de Tareas';
@@ -7,6 +7,15 @@ class AppConstants {
   static const String pasoTitulo = "Pasos para completar: ";
   static const String fechaLimite = 'Fecha límite: '; // Nueva constante
   static const String tareaEliminada = 'Tarea eliminada'; // Nueva constante
+  static const String agregarTarea = 'Agregar tarea'; 
+  static const String tituloTarea = 'Título';
+  static const String editarTarea = 'Editar Tarea';
+  static const String descripcionTarea = 'Descripcion';
+  static const String fechaTarea = 'Fecha';
+  static const String cancelar = 'Cancelar';
+  static const String guardar = 'Guardar';
+  static const String camposVacios = 'Por favor, completa todos los campos obligatorios.';
+  static const String tipoTarea = 'Tipo';
 }
 
 class GameConstants {
@@ -31,16 +40,36 @@ class NoticiaConstantes {
   static const String listaVacia = 'No hay noticias disponibles';
   static const String mensajeError = 'Error al cargar noticias';
   static const String formatoFecha = 'dd/MM/yyyy HH:mm';
+  static const String publicadaEl = 'Publicado el';
   static const int tamanoPagina = 7;
   static const double espaciadoAlto = 10;
-  static const String apiKey = "bb6d2d708f0443ef8ed24679229a0e51";
-  static const String query = "tecnologia"; // Término de búsqueda por defecto
 }
 
-class ApiConstantes{
-  static String get crudCrudUrl => dotenv.env['CRUD_CRUD_URL'] ?? '';
-  static String noticiasUrl = crudCrudUrl + "/noticias"; // URL de la API de noticias
-  static String categoriaUrl = crudCrudUrl + "/categorias"; // URL de la API de categorías
+class ApiConstantes {
+   static final String newsurl = ApiConfig.beeceptorBaseUrl;
+  static final String noticiasUrl = '$newsurl/noticias';
+  static final String categoriasUrl = '$newsurl/categorias';
+  static final String preferenciasUrl = '$newsurl/preferencias';
+  static final String comentariosUrl = '$newsurl/comentarios';
+  static final String reportesUrl = '$newsurl/reportes';
+  static final String loginUrl = '$newsurl/login';
+
+  static const int timeoutSeconds = 10; 
+  static const String errorTimeout = 'Tiempo de espera agotado'; 
+  static const String errorNoCategory = 'Categoría no encontrada'; 
+  static const String defaultcategoriaId = 'sin_categoria'; 
+  static const String listasVacia = 'No hay categorias disponibles';
+  static const String mensajeCargando = 'Cargando categorias...';
+  static const String categorysuccessCreated = 'Categoría creada con éxito';
+  static const String categorysuccessUpdated = 'Categoría actualizada con éxito';
+  static const String categorysuccessDeleted = 'Categoría eliminada con éxito';
+  static const String newssuccessCreated = 'Noticia creada con éxito';
+  static const String newssuccessUpdated = 'Noticia actualizada con éxito';
+  static const String newssuccessDeleted = 'Noticia eliminada con éxito';
+  static const String errorUnauthorized = 'No autorizado'; 
+  static const String errorNotFound = 'Noticias no encontradas';
+  static const String errorServer = 'Error del servidor';
+  static const String errorNoInternet = 'Por favor, verifica tu conexión a internet.';
 }
 
 class ErrorConstantes {

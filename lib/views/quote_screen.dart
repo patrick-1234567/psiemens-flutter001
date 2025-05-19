@@ -62,20 +62,20 @@ class _QuoteScreenState extends State<QuoteScreen> {
     try {
       List<Quote> newQuotes;
       if (isInitialLoad) {
-        print("Fetching initial fixed quotes...");
+        debugPrint("Fetching initial fixed quotes...");
         newQuotes = await _quoteService.getAllQuotes();
-        print("Sorting initial quotes by price...");
+        debugPrint("Sorting initial quotes by price...");
         newQuotes = _quoteService.sortQuotesByPriceDescending(newQuotes);
         setState(() {
            _initialLoadComplete = true;
         });
-         print("Initial fixed quotes fetched and sorted: ${newQuotes.length}");
+         debugPrint("Initial fixed quotes fetched and sorted: ${newQuotes.length}");
       } else {
-         print("Fetching random quotes page: $_currentPageForRandom");
+         debugPrint("Fetching random quotes page: $_currentPageForRandom");
         newQuotes = await _quoteService.getPaginatedQuotes(
           pageNumber: _currentPageForRandom,
         );
-         print("Random quotes fetched: ${newQuotes.length}");
+         debugPrint("Random quotes fetched: ${newQuotes.length}");
          _currentPageForRandom++;
       }
 
@@ -84,7 +84,7 @@ class _QuoteScreenState extends State<QuoteScreen> {
         _quotes.addAll(newQuotes);
       });
     } catch (e) {
-      print("Error during quote fetch: $e");
+      debugPrint("Error during quote fetch: $e");
       setState(() {
         _isLoading = false;
         _error = "Failed to load quotes: ${e.toString()}";

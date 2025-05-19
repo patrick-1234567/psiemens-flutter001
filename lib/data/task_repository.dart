@@ -1,87 +1,64 @@
 import 'package:psiemens/domain/task.dart';
-
+import 'package:psiemens/data/api_repository.dart'; 
+import 'dart:math';
+import 'dart:async';
 class TaskRepository {
-  final List<Task> _tasks = [
-    Task(
-      title: 'Tarea 1',
-      type: "urgente",
-      deadline: DateTime(2025, 4, 10),
-      description: 'Descripción de la tarea 1',
-    ),
-    Task(
-      title: 'Tarea 2',
-      deadline: DateTime.now().add(const Duration(days: 2)),
-      description: 'Descripción de la tarea 2',
-    ),
-    Task(
-      title: 'Tarea 3',
-      type: "urgente",
-      deadline: DateTime.now().add(const Duration(days: 3)),
-      description: 'Descripción de la tarea 3',
-    ),
-    Task(
-      title: 'Tarea 4',
-      deadline: DateTime.now().add(const Duration(days: 4)),
-      description: 'Descripción de la tarea 4',
-    ),
-    Task(
-      title: 'Tarea 5',
-      type: "urgente",
-      deadline: DateTime.now().add(const Duration(days: 5)),
-      description: 'Descripción de la tarea 5',
-    ),
-    Task(
-      title: 'Tarea 6',
-      deadline: DateTime.now().add(const Duration(days: 10)),
-      description: 'Descripción de la tarea 6',
-    ),
-    Task(
-      title: 'Tarea 7',
-      type: "urgente",
-      deadline: DateTime.now().add(const Duration(days: 14)),
-      description: 'Descripción de la tarea 7',
-    ),
-  ];
-
-  // Obtener todas las tareas
+  final ApiRepository apiRepository = ApiRepository(); 
+  final Random random = Random();
   Future<List<Task>> getTasks() async {
-    await Future.delayed(const Duration(seconds: 2)); // Simula un retraso de 2 segundos
-    return _tasks;
+    await Future.delayed(const Duration(seconds: 2));
+    return [
+      Task(
+        titulo: 'Tarea 1',
+        tipo: 'urgente',
+        descripcion: 'Descripción de la tarea 1',
+        fechaLimite: DateTime(2025, 4, 10), //Modificacion 1.3
+        pasos: [],
+      ),
+      Task(
+        titulo: 'Tarea 2',
+        tipo: 'normal',
+        descripcion: 'Descripción de la tarea 2',
+        fechaLimite: DateTime.now().add(Duration(days: random.nextInt(5) + 1)),
+        pasos: [],
+      ),
+      Task(
+        titulo: 'Tarea 3',
+        tipo: 'urgente',
+        descripcion: 'Descripción de la tarea 3',
+        fechaLimite: DateTime.now().add(Duration(days: random.nextInt(5) + 1)),
+        pasos: [],
+      ),
+      Task(
+        titulo: 'Tarea 4',
+        tipo: 'normal',
+        descripcion: 'Descripción de la tarea 4',
+        fechaLimite: DateTime.now().add(Duration(days: random.nextInt(5) + 1)),
+        pasos: [],
+      ),
+      Task(
+        titulo: 'Tarea 5',
+        tipo: 'urgente',
+        descripcion: 'Descripción de la tarea 5',
+        fechaLimite: DateTime.now().add(Duration(days: random.nextInt(5) + 1)),
+        pasos: [],
+      ),
+    ];
   }
 
-  // Simula un retraso al agregar una nueva tarea
-  Future<void> addTask(Task task) async {
-    await Future.delayed(const Duration(seconds: 1)); // Simula un retraso de 1 segundo
-    _tasks.add(task);
+ Future<List<Task>>getMoreTasks({int offset = 0, int limit = 5}) async {
+    await Future.delayed(const Duration(seconds: 2));// Simula la obtención de más tareas
+    return List.generate(limit, (index) {
+      final taskNumber = offset + index + 1;
+      final fechaLimite = DateTime.now().add(Duration(days: random.nextInt(5) + 1));
+      final numeroDePasos = random.nextInt(5) + 3;
+      return Task(
+        titulo: 'Tarea $taskNumber',
+        tipo: taskNumber % 2 == 0 ? 'normal' : 'urgente',
+        descripcion: 'Descripción de la tarea $taskNumber',
+        fechaLimite: fechaLimite,
+        pasos: apiRepository.obtenerPasos('Tarea $taskNumber', fechaLimite, numeroDePasos), 
+      );
+    });
   }
-
-  // Simula un retraso al actualizar una tarea existente
-  Future<void> updateTask(int index, Task updatedTask) async {
-    await Future.delayed(const Duration(seconds: 1)); // Simula un retraso de 1 segundo
-    if (index >= 0 && index < _tasks.length) {
-      _tasks[index] = updatedTask;
-    }
-  }
-
-  // Simula un retraso al eliminar una tarea
-  Future<void> deleteTask(int index) async {
-    await Future.delayed(const Duration(seconds: 1)); // Simula un retraso de 1 segundo
-    if (index >= 0 && index < _tasks.length) {
-      _tasks.removeAt(index);
-    }
-  }
-  Future<List<Task>> loadMoreTasks(int count, int startIndex) async {
-  await Future.delayed(const Duration(seconds: 2)); // Simula un retraso
-  return List.generate(
-    count,
-    (index) => Task(
-      title: 'Tarea ${startIndex + index + 1}',
-      type: index % 2 == 0 ? 'normal' : 'urgente',
-      deadline: DateTime.now().add(const Duration(days: 1)),
-      description: 'Descripción de la tarea ${startIndex + index + 1}',
-    ),
-  );
-}
-
-
 }

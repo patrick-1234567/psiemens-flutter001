@@ -1,87 +1,121 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:psiemens/bloc/auth/auth_bloc.dart';
+import 'package:psiemens/bloc/auth/auth_event.dart';
+import 'package:psiemens/bloc/auth/auth_state.dart';
 import 'package:psiemens/views/welcome_screen.dart';
 
 class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
   @override
-  _LoginScreenState createState() => _LoginScreenState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController usernameController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-
-  String? usernameError;
-  String? passwordError;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Login'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Campo de usuario
-              TextFormField(
-                controller: usernameController,
-                decoration: InputDecoration(
-                  labelText: 'Usuario',
-                  errorText: usernameError, // Muestra el mensaje de error
-                ),
+      ),      body: BlocConsumer<AuthBloc, AuthState>(
+        listener: (context, state) {
+          if (state is AuthAuthenticated) {
+            debugPrint('cambiando a la pantalla de bienvenida');
+            // Navegar a la pantalla de bienvenida cuando el usuario está autenticado
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const WelcomeScreen()
               ),
-              const SizedBox(height: 16),
-
-              // Campo de contraseña
-              TextFormField(
-                controller: passwordController,
-                decoration: InputDecoration(
-                  labelText: 'Contraseña',
-                  errorText: passwordError, // Muestra el mensaje de error
-                ),
-                obscureText: true,
+            );
+          } else if (state is AuthFailure) {
+            // Mostrar mensaje de error en caso de fallo
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.error),
+                backgroundColor: Colors.red,
               ),
-              const SizedBox(height: 16),
-
-              // Botón de inicio de sesión
-              ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    usernameError = usernameController.text.isEmpty
-                        ? 'Por favor, ingresa tu usuario'
-                        : null;
-                    passwordError = passwordController.text.isEmpty
-                        ? 'Por favor, ingresa tu contraseña'
-                        : null;
-
-                    if (usernameError == null && passwordError == null) {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const WelcomeScreen(),
-                        ),
-                      );
-                    }
-                  });
-                },
-                style: ElevatedButton.styleFrom(
-                  foregroundColor: Colors.blue, // Cambia el color del texto
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12), // Ajusta el tamaño del botón
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
+            );
+          }
+        },
+        builder: (context, state) {
+          return Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Campo de Usuario
+                  TextFormField(
+                    controller: _usernameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Usuario',
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Por favor, ingresa tu usuario';
+                      }
+                      return null;
+                    },
                   ),
-                ),
-                child: const Text('Iniciar Sesión'),
+                  const SizedBox(height: 16),
+
+                  TextFormField(
+                    controller: _passwordController,
+                    decoration: const InputDecoration(
+                      labelText: 'Contraseña',
+                      border: OutlineInputBorder(),
+                    ),
+                    obscureText: true,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Por favor, ingresa tu contraseña';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  // Botón de Iniciar Sesión con estado de carga
+                  state is AuthLoading
+                      ? const CircularProgressIndicator()
+                      : ElevatedButton(
+                          onPressed: () {
+                            // Validar el formulario
+                            if (_formKey.currentState?.validate() ?? false) {
+                              final username = _usernameController.text.trim();
+                              final password = _passwordController.text.trim();
+
+                              // Dispara el evento de login al BLoC
+                              context.read<AuthBloc>().add(
+                                    AuthLoginRequested(
+                                      email: username,
+                                      password: password,
+                                    ),
+                                  );
+                            }
+                          },
+                          child: const Text('Iniciar Sesión'),
+                        ),
+                ],
               ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 }

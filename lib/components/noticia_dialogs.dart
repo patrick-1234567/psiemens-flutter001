@@ -4,12 +4,10 @@ import 'package:psiemens/data/noticia_repository.dart';
 import 'package:psiemens/constants.dart';
 import 'package:psiemens/domain/categoria.dart';
 import 'package:psiemens/api/service/categoria_service.dart';
-
-class NoticiaModal {
-  static Future<void> mostrarModal({
+class NoticiaModal {  static Future<void> mostrarModal({
     required BuildContext context,
     Map<String, dynamic>? noticia, // Datos de la noticia para editar
-    required VoidCallback onSave, // Callback para guardar
+    required Function(Map<String, dynamic>? noticia, Map<String, dynamic> noticiaActualizada) onSave, // Callback para guardar con noticia actualizada
   }) async {
     final formKey = GlobalKey<FormState>();
     final NoticiaRepository noticiaService = NoticiaRepository();
@@ -40,8 +38,20 @@ class NoticiaModal {
     try {
       final categoriaRepository = CategoriaService();
       categorias = await categoriaRepository.getCategorias();
+      // Añadir la opción "Sin categoría" al inicio de la lista
+      categorias.insert(0, const Categoria(id: '', nombre: 'Sin categoría', descripcion: 'Sin categoría'));
+
+      // Verificar si la categoría seleccionada existe en las opciones
+      if (categoriaSeleccionada != null) {
+        bool existeCategoria = categorias.any((c) => c.id == categoriaSeleccionada);
+        if (!existeCategoria) {
+          // Si no existe, establecer como null para que se seleccione la primera
+          categoriaSeleccionada = null;
+        }
+      }
     } catch (e) {
       // Manejo de errores al cargar categorías
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error al cargar categorías: $e')),
       );
@@ -51,7 +61,6 @@ class NoticiaModal {
       if (formKey.currentState!.validate()) {
         try {
           // Convierte la fecha seleccionada al formato ISO 8601
-          final fechaIso8601 = fechaSeleccionada?.toUtc().toIso8601String();
 
           if (noticia == null) {
             // Crear nueva noticia
@@ -59,38 +68,40 @@ class NoticiaModal {
               titulo: tituloController.text,
               descripcion: descripcionController.text,
               fuente: fuenteController.text,
-              publicadaEl: fechaIso8601 ?? '',
+              publicadaEl: fechaSeleccionada ?? DateTime.now(),
               urlImagen: imagenUrlController.text,
               categoriaId: categoriaSeleccionada ?? CategoriaConstantes.defaultCategoriaId,
             );
           } else {
             // Editar noticia existente
-            await noticiaService.editarNoticia(
-              id: noticia['_id'],
+            await noticiaService.actualizarNoticia(
+              id: noticia['id'],
               titulo: tituloController.text,
               descripcion: descripcionController.text,
               fuente: fuenteController.text,
-              publicadaEl: fechaIso8601 ?? '',
+               publicadaEl: fechaSeleccionada ?? DateTime.now(),
               urlImagen: imagenUrlController.text,
               categoriaId: categoriaSeleccionada ?? CategoriaConstantes.defaultCategoriaId,
             );
           }
 
           // Muestra un mensaje de éxito
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                noticia == null
-                    ? 'Noticia creada exitosamente'
-                    : 'Noticia editada exitosamente',
-              ),
-            ),
-          );
-
+             // Crea un map con los datos actualizados de la noticia
+          final noticiaActualizada = {
+            'id': noticia?['id'],
+            'titulo': tituloController.text,
+            'descripcion': descripcionController.text,
+            'fuente': fuenteController.text,
+            'publicadaEl': (fechaSeleccionada ?? DateTime.now()).toIso8601String(),
+            'urlImagen': imagenUrlController.text,
+            'categoriaId': categoriaSeleccionada ?? CategoriaConstantes.defaultCategoriaId,
+          };
+          
           // Llama al callback para actualizar la lista de noticias
-          onSave();
+          onSave(noticia, noticiaActualizada);
 
           // Cierra el modal
+          if (!context.mounted) return;
           Navigator.pop(context);
         } catch (e) {
           // Muestra un mensaje de error
@@ -100,7 +111,7 @@ class NoticiaModal {
         }
       }
     }
-
+     if (!context.mounted) return;
     await showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -149,7 +160,7 @@ class NoticiaModal {
                     controller: fechaController,
                     readOnly: true,
                     decoration: const InputDecoration(
-                      labelText: 'Fecha de publicación (YYYY-MM-DD)',
+                      labelText: 'Fecha de publicación',
                       hintText: 'Seleccionar Fecha',
                     ),
                     onTap: () async {
@@ -162,7 +173,7 @@ class NoticiaModal {
                       if (nuevaFecha != null) {
                         fechaSeleccionada = nuevaFecha;
                         fechaController.text = DateFormat(
-                          'yyyy-MM-dd',
+                          'dd-MM-yyyy',
                         ).format(nuevaFecha); // Formatea la fecha
                       }
                     },
@@ -187,6 +198,7 @@ class NoticiaModal {
                     },
                   ),
                   const SizedBox(height: 16.0),
+                  
                   DropdownButtonFormField<String>(
                     value: categoriaSeleccionada,
                     decoration: const InputDecoration(labelText: 'Categoría'),
@@ -200,8 +212,13 @@ class NoticiaModal {
                       categoriaSeleccionada = value;
                     },
                     validator: (value) {
+                      if (value == null) {
+                        return 'Por favor selecciona una categoría';
+                      }
                       return null;
                     },
+                    // Añadir opción de placeholder cuando no hay selección
+                    hint: const Text('Selecciona una categoría'),
                   ),
                 ],
               ),
