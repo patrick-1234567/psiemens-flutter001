@@ -1,58 +1,51 @@
-// services/categoria_service.dart
-import 'package:psiemens/api/service/categoria_service.dart'; // Importa tu repositorio
-import 'package:psiemens/domain/categoria.dart'; // Importa tu entidad Categoria
-import 'package:flutter/foundation.dart'; // Para debugPrint
+import 'package:psiemens/api/service/categoria_service.dart';
+import 'package:psiemens/domain/categoria.dart';
+import 'package:psiemens/data/base_repository.dart';
+import 'package:flutter/foundation.dart';
 
-class CategoriaRepository {
-  // Inyecta la dependencia del repositorio
+class CategoriaRepository extends BaseRepository<Categoria> {
+  // Servicio para acceder a los datos de categorías
   final CategoriaService _categoriaService = CategoriaService();
+  
+  @override
+  CategoriaService get service => _categoriaService;
 
-  // Constructor que recibe la instancia del repositorio
-  CategoriaRepository();
-
-  /// Obtiene la lista completa de categorías desde el repositorio.
+  /// Obtiene la lista completa de categorías con caché y manejo de errores.
   Future<List<Categoria>> obtenerCategorias() async {
-    try {
-      // Llama al método del repositorio para obtener los datos
-      final categorias = await _categoriaService.getCategorias();
-      return categorias;
-    } catch (e) {
-      // Puedes añadir lógica de logging o manejo de errores específico del servicio aquí
-      debugPrint('Error en CategoriaService al obtener categorías: $e');
-      rethrow;
-    }
+    return obtenerDatos(
+      fetchFunction: () => _categoriaService.getCategorias(),
+      cacheKey: 'categorias',
+    );
   }
 
+  /// Crea una nueva categoría
   Future<void> crearCategoria(Map<String, dynamic> categoriaData) async {
-    try {
-      // Llama al método del repositorio para crear la categoría
-      await _categoriaService.crearCategoria(categoriaData);
-      debugPrint('Categoría creada exitosamente.');
-    } catch (e) {
-      debugPrint('Error en CategoriaService al crear categoría: $e');
-      rethrow;
-    }
+    await ejecutarOperacion(
+      operation: () => _categoriaService.crearCategoria(categoriaData),
+      errorMessage: 'Error al crear categoría.',
+    );
+    debugPrint('Categoría creada exitosamente.');
   }
 
+  /// Actualiza una categoría existente
   Future<void> actualizarCategoria(String id, Map<String, dynamic> categoriaData) async {
-    try {
-      // Llama al método del repositorio para editar la categoría
-      await _categoriaService.editarCategoria(id, categoriaData);
-      debugPrint('Categoría con ID $id actualizada exitosamente.');
-    } catch (e) {
-      debugPrint('Error en CategoriaService al actualizar categoría $id: $e');
-      rethrow;
-    }
+    validarNoVacio(id, 'ID de la categoría');
+    
+    await ejecutarOperacion(
+      operation: () => _categoriaService.editarCategoria(id, categoriaData),
+      errorMessage: 'Error al actualizar categoría.',
+    );
+    debugPrint('Categoría con ID $id actualizada exitosamente.');
   }
 
+  /// Elimina una categoría
   Future<void> eliminarCategoria(String id) async {
-    try {
-      // Llama al método del repositorio para eliminar la categoría
-      await _categoriaService.eliminarCategoria(id);
-      debugPrint('Categoría con ID $id eliminada exitosamente.');
-    } catch (e) {
-      debugPrint('Error en CategoriaService al eliminar categoría $id: $e');
-      rethrow;
-    }
+    validarNoVacio(id, 'ID de la categoría');
+    
+    await ejecutarOperacion(
+      operation: () => _categoriaService.eliminarCategoria(id),
+      errorMessage: 'Error al eliminar categoría.',
+    );
+    debugPrint('Categoría con ID $id eliminada exitosamente.');
   }
 }

@@ -1,26 +1,22 @@
-import 'package:flutter/foundation.dart';
 import 'package:psiemens/api/service/noticia_service.dart';
 import 'package:psiemens/domain/noticia.dart';
-import 'package:psiemens/constants.dart';
-import 'package:psiemens/exceptions/api_exception.dart';
+import 'package:psiemens/data/base_repository.dart';
 
-class NoticiaRepository {
+class NoticiaRepository extends BaseRepository<Noticia> {
   final NoticiaService _service = NoticiaService();
+  
+  @override
+  NoticiaService get service => _service;
 
-  /// Obtiene cotizaciones paginadas con validaciones
+  /// Obtiene noticias con caché y manejo de errores
   Future<List<Noticia>> obtenerNoticias() async {
-    try {
-      final noticias = await _service.getNoticias();
-      return noticias;
-    } catch (e) {
-      if (e is ApiException) {
-        rethrow; // Relanza la excepción para que la maneje la capa superior
-      }
-      debugPrint('Error inesperado al obtener noticias: $e');
-      throw ApiException('Error inesperado al obtener noticias.');
-    }
+    return obtenerDatos(
+      fetchFunction: () => _service.getNoticias(),
+      cacheKey: 'noticias',
+    );
   }
 
+  /// Crea una nueva noticia
   Future<void> crearNoticia({
     required String titulo,
     required String descripcion,
@@ -29,6 +25,11 @@ class NoticiaRepository {
     required String urlImagen,
     required String categoriaId,
   }) async {
+    // Validar campos requeridos
+    validarNoVacio(titulo, 'título');
+    validarNoVacio(descripcion, 'descripción');
+    validarNoVacio(fuente, 'fuente');
+    
     final noticia = Noticia(
       titulo: titulo,
       descripcion: descripcion,
@@ -37,32 +38,20 @@ class NoticiaRepository {
       urlImagen: urlImagen,
       categoriaId: categoriaId,
     );
-    try {
-      await _service.crearNoticia(noticia);
-    } catch (e) {
-      if (e is ApiException) {
-        rethrow;
-      }
-      debugPrint('Error inesperado al crear noticia: $e');
-      throw ApiException('Error inesperado al crear noticia.');
-    }
+    
+    await ejecutarOperacion(
+      operation: () => _service.crearNoticia(noticia),
+      errorMessage: 'Error inesperado al crear noticia.',
+    );
   }
 
-  Future<void> eliminarNoticia(String id) async {
-    if (id.isEmpty) {
-      throw Exception(
-        '${NoticiaConstantes.mensajeError} El ID de la noticia no puede estar vacío.',
-      );
-    }
-    try {
-      await _service.eliminarNoticia(id);
-    } catch (e) {
-      if (e is ApiException) {
-        rethrow;
-      }
-      debugPrint('Error inesperado al eliminar noticia: $e');
-      throw ApiException('Error inesperado al eliminar noticia.');
-    }
+    Future<void> eliminarNoticia(String id) async {
+    validarNoVacio(id, 'ID de la noticia');
+    
+    await ejecutarOperacion(
+      operation: () => _service.eliminarNoticia(id),
+      errorMessage: 'Error inesperado al eliminar noticia.',
+    );
   }
 
   Future<void> actualizarNoticia({
@@ -74,11 +63,12 @@ class NoticiaRepository {
     required String urlImagen,
     required String categoriaId,
   }) async {
-    if (titulo.isEmpty || descripcion.isEmpty || fuente.isEmpty) {
-      throw ApiException(
-        'Los campos título, descripción y fuente no pueden estar vacíos.',
-      );
-    }
+    // Validar campos requeridos
+    validarNoVacio(id, 'ID de la noticia');
+    validarNoVacio(titulo, 'título');
+    validarNoVacio(descripcion, 'descripción');
+    validarNoVacio(fuente, 'fuente');
+    
     final noticia = Noticia(
       titulo: titulo,
       descripcion: descripcion,
@@ -87,14 +77,10 @@ class NoticiaRepository {
       urlImagen: urlImagen,
       categoriaId: categoriaId,
     );
-    try {
-      await _service.editarNoticia(id, noticia);
-    } catch (e) {
-      if (e is ApiException) {
-        rethrow;
-      }
-      debugPrint('Error inesperado al editar noticia: $e');
-      throw ApiException('Error inesperado al editar noticia.');
-    }
+    
+    await ejecutarOperacion(
+      operation: () => _service.editarNoticia(id, noticia),
+      errorMessage: 'Error inesperado al editar noticia.',
+    );
   }
 }

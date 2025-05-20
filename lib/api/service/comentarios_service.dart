@@ -68,13 +68,13 @@ class ComentariosService extends BaseService {
       throw ApiException('Error inesperado: $e');
     }
   }
-
   /// Agrega un comentario nuevo a una noticia existente
   Future<void> agregarComentario(
     String noticiaId,
     String texto,
     String autor,
     String fecha,
+    {String? userId}
   ) async {
     await _verificarNoticiaExiste(noticiaId);
 
@@ -86,6 +86,7 @@ class ComentariosService extends BaseService {
       autor: autor.isNotEmpty ? autor : 'Usuario Anónimo',
       likes: 0,
       dislikes: 0,
+      userId: userId, // Agregar el ID de usuario
       subcomentarios: [],
       isSubComentario: false,
     );
@@ -249,13 +250,13 @@ class ComentariosService extends BaseService {
       throw ApiException('Error inesperado: $e');
     }
   }
-
   /// Agrega un subcomentario a un comentario existente
   /// Los subcomentarios no pueden tener a su vez subcomentarios
   Future<Map<String, dynamic>> agregarSubcomentario({
     required String comentarioId, // ID del comentario principal
     required String texto,
     required String autor,
+    String? userId,
   }) async {
     try {
       final subcomentarioId =
