@@ -37,6 +37,9 @@ class ComentarioMapper extends ClassMapperBase<Comentario> {
   static int _$dislikes(Comentario v) => v.dislikes;
   static const Field<Comentario, int> _f$dislikes =
       Field('dislikes', _$dislikes);
+  static String? _$userId(Comentario v) => v.userId;
+  static const Field<Comentario, String> _f$userId =
+      Field('userId', _$userId, opt: true);
   static List<Comentario>? _$subcomentarios(Comentario v) => v.subcomentarios;
   static const Field<Comentario, List<Comentario>> _f$subcomentarios =
       Field('subcomentarios', _$subcomentarios, opt: true);
@@ -56,6 +59,7 @@ class ComentarioMapper extends ClassMapperBase<Comentario> {
     #autor: _f$autor,
     #likes: _f$likes,
     #dislikes: _f$dislikes,
+    #userId: _f$userId,
     #subcomentarios: _f$subcomentarios,
     #isSubComentario: _f$isSubComentario,
     #idSubComentario: _f$idSubComentario,
@@ -70,6 +74,7 @@ class ComentarioMapper extends ClassMapperBase<Comentario> {
         autor: data.dec(_f$autor),
         likes: data.dec(_f$likes),
         dislikes: data.dec(_f$dislikes),
+        userId: data.dec(_f$userId),
         subcomentarios: data.dec(_f$subcomentarios),
         isSubComentario: data.dec(_f$isSubComentario),
         idSubComentario: data.dec(_f$idSubComentario));
@@ -137,6 +142,7 @@ abstract class ComentarioCopyWith<$R, $In extends Comentario, $Out>
       String? autor,
       int? likes,
       int? dislikes,
+      String? userId,
       List<Comentario>? subcomentarios,
       bool? isSubComentario,
       String? idSubComentario});
@@ -166,6 +172,7 @@ class _ComentarioCopyWithImpl<$R, $Out>
           String? autor,
           int? likes,
           int? dislikes,
+          Object? userId = $none,
           Object? subcomentarios = $none,
           bool? isSubComentario,
           Object? idSubComentario = $none}) =>
@@ -177,6 +184,7 @@ class _ComentarioCopyWithImpl<$R, $Out>
         if (autor != null) #autor: autor,
         if (likes != null) #likes: likes,
         if (dislikes != null) #dislikes: dislikes,
+        if (userId != $none) #userId: userId,
         if (subcomentarios != $none) #subcomentarios: subcomentarios,
         if (isSubComentario != null) #isSubComentario: isSubComentario,
         if (idSubComentario != $none) #idSubComentario: idSubComentario
@@ -190,6 +198,7 @@ class _ComentarioCopyWithImpl<$R, $Out>
       autor: data.get(#autor, or: $value.autor),
       likes: data.get(#likes, or: $value.likes),
       dislikes: data.get(#dislikes, or: $value.dislikes),
+      userId: data.get(#userId, or: $value.userId),
       subcomentarios: data.get(#subcomentarios, or: $value.subcomentarios),
       isSubComentario: data.get(#isSubComentario, or: $value.isSubComentario),
       idSubComentario: data.get(#idSubComentario, or: $value.idSubComentario));

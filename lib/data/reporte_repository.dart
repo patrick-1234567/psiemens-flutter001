@@ -1,19 +1,20 @@
 import 'package:psiemens/api/service/reporte_service.dart';
 import 'package:psiemens/domain/reporte.dart';
-import 'package:psiemens/exceptions/api_exception.dart';
+import 'package:psiemens/data/base_repository.dart';
+import 'package:flutter/foundation.dart';
 
-class ReporteRepository {
+class ReporteRepository extends BaseRepository<Reporte> {
   final ReporteService _reporteService = ReporteService();
+  
+  @override
+  ReporteService get service => _reporteService;
 
   // Obtener todos los reportes
   Future<List<Reporte>> obtenerReportes() async {
-    try {
-      return await _reporteService.getReportes();
-    } on ApiException catch (e) {
-      throw Exception('Error al obtener reportes: ${e.message}');
-    } catch (e) {
-      throw Exception('Error al obtener reportes: ${e.toString()}');
-    }
+    return obtenerDatos(
+      fetchFunction: () => _reporteService.getReportes(),
+      cacheKey: 'reportes',
+    );
   }
 
   // Crear un nuevo reporte
@@ -21,37 +22,39 @@ class ReporteRepository {
     required String noticiaId,
     required MotivoReporte motivo,
   }) async {
+    validarNoVacio(noticiaId, 'ID de la noticia');
+    
     try {
-      return await _reporteService.crearReporte(
+      final reporte = await _reporteService.crearReporte(
         noticiaId: noticiaId,
         motivo: motivo,
       );
-    } on ApiException catch (e) {
-      throw Exception('Error al crear reporte: ${e.message}');
+      // Invalidar caché tras crear un reporte
+      limpiarCache();
+      return reporte;
     } catch (e) {
-      throw Exception('Error al crear reporte: ${e.toString()}');
+      debugPrint('Error al crear reporte: $e');
+      return null;
     }
   }
 
   // Obtener reportes por id de noticia
   Future<List<Reporte>> obtenerReportesPorNoticia(String noticiaId) async {
-    try {
-      return await _reporteService.getReportesPorNoticia(noticiaId);
-    } on ApiException catch (e) {
-      throw Exception('Error al obtener reportes por noticia: ${e.message}');
-    } catch (e) {
-      throw Exception('Error al obtener reportes por noticia: ${e.toString()}');
-    }
+    validarNoVacio(noticiaId, 'ID de la noticia');
+    
+    return obtenerDatos(
+      fetchFunction: () => _reporteService.getReportesPorNoticia(noticiaId),
+      cacheKey: 'reportes_noticia_$noticiaId',
+    );
   }
 
   // Eliminar un reporte
   Future<void> eliminarReporte(String reporteId) async {
-    try {
-      await _reporteService.eliminarReporte(reporteId);
-    } on ApiException catch (e) {
-      throw Exception('Error al eliminar reporte: ${e.message}');
-    } catch (e) {
-      throw Exception('Error al eliminar reporte: ${e.toString()}');
-    }
+    validarNoVacio(reporteId, 'ID del reporte');
+    
+    await ejecutarOperacion(
+      operation: () => _reporteService.eliminarReporte(reporteId),
+      errorMessage: 'Error al eliminar reporte.',
+    );
   }
 }

@@ -232,6 +232,7 @@ class ComentarioBloc extends Bloc<ComentarioEvent, ComentarioState> {
       await comentarioRepository.reaccionarComentario(
         comentarioId: event.comentarioId,
         tipoReaccion: event.tipoReaccion,
+        noticiaId: event.noticiaId,
       );
 
       // Recargamos los comentarios para asegurar los datos más recientes
@@ -272,6 +273,7 @@ class ComentarioBloc extends Bloc<ComentarioEvent, ComentarioState> {
         comentarioId: event.comentarioId,
         texto: event.texto,
         autor: event.autor,
+        noticiaId: event.noticiaId,
       );
 
       if (resultado['success'] == true) {
