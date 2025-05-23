@@ -1,52 +1,42 @@
 import 'package:equatable/equatable.dart';
+import 'package:psiemens/domain/categoria.dart';
 
 abstract class CategoriaEvent extends Equatable {
-   @override
-   List<Object?> get props => [];
+  @override
+  List<Object?> get props => [];
 }
 
-// Evento para cargar categorías
-class CategoriaInitEvent extends CategoriaEvent {}
+class CategoriaInitEvent extends CategoriaEvent {
+  final bool forzarRecarga;
+  
+  CategoriaInitEvent({this.forzarRecarga = false});
+  
+  @override
+  List<Object?> get props => [forzarRecarga];
+}
 
-// Evento para crear una nueva categoría
 class CategoriaCreateEvent extends CategoriaEvent {
-  final String nombre;
-  final String descripcion;
-  final String imagenUrl;
+  final Categoria categoria;
 
-  CategoriaCreateEvent({
-    required this.nombre, 
-    required this.descripcion, 
-    this.imagenUrl = '',
-  });
+  CategoriaCreateEvent(this.categoria);
 
   @override
-  List<Object?> get props => [nombre, descripcion, imagenUrl];
+  List<Object?> get props => [categoria];
 }
 
-// Evento para actualizar una categoría existente
 class CategoriaUpdateEvent extends CategoriaEvent {
-  final String id;
-  final String nombre;
-  final String descripcion;
-  final String imagenUrl;
+  final Categoria categoria;
 
-  CategoriaUpdateEvent({
-    required this.id,
-    required this.nombre,
-    required this.descripcion,
-    required this.imagenUrl,
-  });
+  CategoriaUpdateEvent(this.categoria);
 
   @override
-  List<Object?> get props => [id, nombre, descripcion, imagenUrl];
+  List<Object?> get props => [categoria];
 }
 
-// Evento para eliminar una categoría
 class CategoriaDeleteEvent extends CategoriaEvent {
   final String id;
 
-  CategoriaDeleteEvent({required this.id});
+  CategoriaDeleteEvent(this.id);
 
   @override
   List<Object?> get props => [id];

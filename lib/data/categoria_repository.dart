@@ -1,51 +1,80 @@
 import 'package:psiemens/api/service/categoria_service.dart';
-import 'package:psiemens/domain/categoria.dart';
+import 'package:psiemens/constants.dart';
 import 'package:psiemens/data/base_repository.dart';
-import 'package:flutter/foundation.dart';
+import 'package:psiemens/domain/categoria.dart';
 
-class CategoriaRepository extends BaseRepository<Categoria> {
-  // Servicio para acceder a los datos de categorías
+/// Repositorio de categorías con capacidad de caché
+class CategoriaRepository extends CacheableRepository<Categoria> {
   final CategoriaService _categoriaService = CategoriaService();
-  
-  @override
-  CategoriaService get service => _categoriaService;
 
-  /// Obtiene la lista completa de categorías con caché y manejo de errores.
-  Future<List<Categoria>> obtenerCategorias() async {
-    return obtenerDatos(
-      fetchFunction: () => _categoriaService.getCategorias(),
-      cacheKey: 'categorias',
+  // Timestamp de la última actualización
+  DateTime? _lastRefreshed;
+
+  @override
+  void validarEntidad(Categoria categoria) {
+    validarNoVacio(categoria.nombre, ValidacionConstantes.nombreCategoria);
+    validarNoVacio(
+      categoria.descripcion,
+      ValidacionConstantes.descripcionCategoria,
     );
+    validarNoVacio(categoria.imagenUrl, ValidacionConstantes.imagenUrl);
+  }
+
+  /// Implementación del método abstracto de CacheableRepository
+  @override
+  Future<List<Categoria>> cargarDatos() async {
+    final categorias = await manejarExcepcion(
+      () => _categoriaService.obtenerCategorias(),
+      mensajeError: CategoriaConstantes.mensajeError,
+    );
+    _lastRefreshed = DateTime.now();
+    return categorias;
+  }
+
+  /// Obtiene el timestamp de la última actualización
+  DateTime? get lastRefreshed => _lastRefreshed;
+
+  /// Obtiene todas las categorías desde el repositorio
+  /// Si hay caché, devolverá los datos en caché
+  Future<List<Categoria>> obtenerCategorias({
+    bool forzarRecarga = false,
+  }) async {
+    return obtenerDatos(forzarRecarga: forzarRecarga);
   }
 
   /// Crea una nueva categoría
-  Future<void> crearCategoria(Map<String, dynamic> categoriaData) async {
-    await ejecutarOperacion(
-      operation: () => _categoriaService.crearCategoria(categoriaData),
-      errorMessage: 'Error al crear categoría.',
-    );
-    debugPrint('Categoría creada exitosamente.');
+  /// Retorna la categoría creada con su ID asignado por el servidor
+  Future<Categoria> crearCategoria(Categoria categoria) async {
+    return manejarExcepcion(() async {
+      validarEntidad(categoria);
+      final categoriaCreada = await _categoriaService.crearCategoria(categoria);
+      invalidarCache();
+      return categoriaCreada;
+    }, mensajeError: CategoriaConstantes.errorCreated);
   }
 
-  /// Actualiza una categoría existente
-  Future<void> actualizarCategoria(String id, Map<String, dynamic> categoriaData) async {
-    validarNoVacio(id, 'ID de la categoría');
-    
-    await ejecutarOperacion(
-      operation: () => _categoriaService.editarCategoria(id, categoriaData),
-      errorMessage: 'Error al actualizar categoría.',
-    );
-    debugPrint('Categoría con ID $id actualizada exitosamente.');
+  /// Edita una categoría existente
+  Future<Categoria> actualizarCategoria(Categoria categoria) async {
+    return manejarExcepcion(() async {
+      validarEntidad(categoria);
+      final categoriaActualizada = await _categoriaService.editarCategoria(categoria);
+      invalidarCache();
+      return categoriaActualizada;
+    }, mensajeError: CategoriaConstantes.errorUpdated);
   }
 
   /// Elimina una categoría
   Future<void> eliminarCategoria(String id) async {
-    validarNoVacio(id, 'ID de la categoría');
-    
-    await ejecutarOperacion(
-      operation: () => _categoriaService.eliminarCategoria(id),
-      errorMessage: 'Error al eliminar categoría.',
-    );
-    debugPrint('Categoría con ID $id eliminada exitosamente.');
+    return manejarExcepcion(() async {
+      validarId(id);
+      await _categoriaService.eliminarCategoria(id);
+      invalidarCache();
+    }, mensajeError: CategoriaConstantes.errorDelete);
+  }
+
+  /// Limpia la caché de categorías (método público)
+  void limpiarCache() {
+    invalidarCache();
+    _lastRefreshed = null;
   }
 }

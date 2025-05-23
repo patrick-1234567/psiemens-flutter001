@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:psiemens/bloc/connectivity/connectivity_bloc.dart';
+import 'package:psiemens/bloc/connectivity/connectivity_state.dart';
+import 'package:psiemens/components/connectivity_alert.dart';
+import 'package:psiemens/components/no_connectivity_screen.dart';
 
-/// Widget que envuelve la aplicación para gestionar la conectividad
+/// Widget que envuelve la aplicación y muestra una alerta de conectividad cuando es necesario
 class ConnectivityWrapper extends StatelessWidget {
   final Widget child;
 
@@ -8,10 +13,25 @@ class ConnectivityWrapper extends StatelessWidget {
     super.key,
     required this.child,
   });
-
   @override
   Widget build(BuildContext context) {
-    // Simplemente retornamos el child, ya que ahora el handler maneja todo
-    return child;
+    return BlocBuilder<ConnectivityBloc, ConnectivityState>(
+      builder: (context, state) {
+        // Si no hay conexión, mostrar la pantalla completa del dinosaurio
+        if (state is ConnectivityDisconnected) {
+          return const NoConnectivityScreen();
+        }
+        
+        // Si hay conexión, mostrar el contenido normal con el ConnectivityAlert
+        return Stack(
+          children: [
+            // Contenido principal de la aplicación
+            child,
+            
+            // Widget invisible que escucha cambios de conectividad
+            const ConnectivityAlert(),
+          ],
+        );
+      },    );
   }
 }

@@ -1,436 +1,159 @@
-import 'dart:async';
 import 'package:psiemens/api/service/comentarios_service.dart';
-import 'package:psiemens/domain/comentario.dart';
 import 'package:psiemens/data/base_repository.dart';
+import 'package:psiemens/domain/comentario.dart';
 import 'package:psiemens/exceptions/api_exception.dart';
-import 'package:flutter/foundation.dart';
 
-class ComentarioRepository extends BaseRepository<Comentario> {
-  final ComentariosService _service = ComentariosService();
+/// Repositorio para gestionar operaciones relacionadas con los comentarios.
+/// Utiliza caché para mejorar la eficiencia al obtener comentarios.
+class ComentarioRepository extends CacheableRepository<Comentario> {
+  final ComentarioService _comentarioService = ComentarioService();
+  
+  // Caché por noticiaId para evitar recargar comentarios de la misma noticia
+  final Map<String, List<Comentario>> _comentariosPorNoticia = {};
+  
+  // Noticia actualmente seleccionada para mostrar comentarios
+  String? _noticiaSeleccionadaId;
   
   @override
-  ComentariosService get service => _service;
-
-  // Cache de comentarios por noticiaId
-  final Map<String, List<Comentario>> _comentariosCache = {};
+  void validarEntidad(Comentario comentario) {
+    validarNoVacio(comentario.texto, 'texto del comentario');
+    validarNoVacio(comentario.autor, 'autor del comentario');
+    validarNoVacio(comentario.noticiaId, 'ID de la noticia');
+  }
   
-  // Timestamp de la última actualización por noticiaId
-  final Map<String, DateTime> _lastRefreshedByNoticiaId = {};
-  
-  // Tiempo de expiración del caché (5 minutos por defecto)
-  static const Duration cacheExpiration = Duration(minutes: 5);
-
-  /// Verifica si el caché de comentarios para una noticia ha expirado
-  bool _isCacheExpired(String noticiaId) {
-    final lastRefreshed = _lastRefreshedByNoticiaId[noticiaId];
-    if (lastRefreshed == null) return true;
+  /// Implementación requerida por CacheableRepository
+  /// En este caso, carga todos los comentarios de la noticia actual
+  @override
+  Future<List<Comentario>> cargarDatos() async {
+    // Si no hay noticia seleccionada, devolvemos una lista vacía
+    if (_noticiaSeleccionadaId == null) return [];
     
-    final timeSinceLastRefresh = DateTime.now().difference(lastRefreshed);
-    return timeSinceLastRefresh > cacheExpiration;
+    // Obtenemos los comentarios de la noticia actual
+    final comentarios = await _comentarioService.obtenerComentariosPorNoticia(_noticiaSeleccionadaId!);
+    
+    // Almacenamos en la caché por noticia
+    _comentariosPorNoticia[_noticiaSeleccionadaId!] = comentarios;
+    
+    return comentarios;
+  }
+  
+  /// Método para validar un subcomentario
+  void validarSubcomentario(Comentario subcomentario) {
+    // Primero validamos como comentario normal
+    validarEntidad(subcomentario);
+    
+    if (subcomentario.idSubComentario == null || subcomentario.idSubComentario!.isEmpty) {
+      throw ApiException('El ID del comentario padre no puede estar vacío.', statusCode: 400);
+    }
+    if (!subcomentario.isSubComentario) {
+      throw ApiException('El comentario debe marcarse como subcomentario.', statusCode: 400);
+    }
+  }
+  
+  /// Establece la noticia actual y carga sus comentarios
+  Future<void> establecerNoticiaActual(String noticiaId) async {
+    validarNoVacio(noticiaId, 'ID de la noticia');
+    _noticiaSeleccionadaId = noticiaId;
   }
 
-  /// Obtiene los comentarios asociados a una noticia específica
-  Future<List<Comentario>> obtenerComentariosPorNoticia(
-    String noticiaId, {
-    bool forceRefresh = false
-  }) async {
-    validarNoVacio(noticiaId, 'ID de la noticia');
-    
-    try {
-      // Verificar si hay comentarios en caché y si no están expirados
-      final bool useCache = !forceRefresh && 
-                          _comentariosCache.containsKey(noticiaId) && 
-                          !_isCacheExpired(noticiaId);
+  /// Obtiene todos los comentarios de una noticia específica
+  Future<List<Comentario>> obtenerComentariosPorNoticia(String noticiaId) async {
+    return manejarExcepcion(() async {
+      validarNoVacio(noticiaId, 'ID de la noticia');
       
-      if (useCache) {
-        debugPrint('📋 Usando comentarios en caché para noticia: $noticiaId');
-        return List<Comentario>.from(_comentariosCache[noticiaId]!);
+      // Si ya tenemos la caché para esta noticia, la usamos
+      if (_comentariosPorNoticia.containsKey(noticiaId)) {
+        return _comentariosPorNoticia[noticiaId]!;
       }
       
-      debugPrint('🔄 Obteniendo comentarios frescos para noticia: $noticiaId');
-      final comentarios = await _service.obtenerComentariosPorNoticia(noticiaId);
+      // Si es la noticia actual, usamos la funcionalidad del CacheableRepository
+      if (noticiaId == _noticiaSeleccionadaId) {
+        return await obtenerDatos(forzarRecarga: true);
+      }
       
-      // Actualizar caché
-      _comentariosCache[noticiaId] = comentarios;
-      _lastRefreshedByNoticiaId[noticiaId] = DateTime.now();
-      
-      debugPrint('✅ Caché actualizado para noticia $noticiaId: ${comentarios.length} comentarios');
+      // Si es otra noticia, la obtenemos y cacheamos
+      final comentarios = await _comentarioService.obtenerComentariosPorNoticia(noticiaId);
+      _comentariosPorNoticia[noticiaId] = comentarios;
       return comentarios;
-    } catch (e) {
-      debugPrint('❌ Error al obtener comentarios: ${e.toString()}');
-      
-      // Si hay un error pero tenemos datos en caché, devolvemos los datos en caché
-      if (_comentariosCache.containsKey(noticiaId)) {
-        debugPrint('⚠️ Usando caché antiguo debido a error en la obtención de datos frescos');
-        return List<Comentario>.from(_comentariosCache[noticiaId]!);
-      }
-      
-      // Si no hay caché, relanzamos la excepción
-      if (e is ApiException) {
-        rethrow;
-      }
-      throw ApiException('Error inesperado al obtener comentarios: $e');
-    }
+    }, mensajeError: 'Error al obtener comentarios');
   }
 
   /// Agrega un nuevo comentario a una noticia
-  Future<void> agregarComentario(
-    String noticiaId,
-    String texto,
-    String autor,
-    String fecha,
-  ) async {
-    validarNoVacio(noticiaId, 'ID de la noticia');
-    validarNoVacio(texto, 'texto del comentario');
-    validarNoVacio(autor, 'autor');
-    validarNoVacio(fecha, 'fecha');
-    
-    try {
-      // Primero guardamos en la API
-      await _service.agregarComentario(
-        noticiaId,
-        texto,
-        autor,
-        fecha,
-      );
+  Future<void> agregarComentario(Comentario comentario) async {
+    return manejarExcepcion(() async {
+      validarEntidad(comentario);
+      await _comentarioService.agregarComentario(comentario);
       
-      // Crear comentario para el caché (con ID temporal)
-      final nuevoComentario = Comentario(
-        id: DateTime.now().millisecondsSinceEpoch.toString(), // ID temporal
-        noticiaId: noticiaId,
-        texto: texto,
-        fecha: fecha,
-        autor: autor,
-        likes: 0,
-        dislikes: 0,
-        isSubComentario: false,
-      );
-      
-      // Actualizar caché si existe
-      if (_comentariosCache.containsKey(noticiaId)) {
-        // Añadimos al inicio para que aparezca primero (comentarios más recientes primero)
-        _comentariosCache[noticiaId]!.insert(0, nuevoComentario);
-        _lastRefreshedByNoticiaId[noticiaId] = DateTime.now();
-        debugPrint('✅ Comentario añadido al caché para noticia $noticiaId');
-      } else {
-        // Si no existe el caché, forzamos una recarga
-        await obtenerComentariosPorNoticia(noticiaId, forceRefresh: true);
-      }
-    } catch (e) {
-      debugPrint('❌ Error al agregar comentario: ${e.toString()}');
-      if (e is ApiException) {
-        rethrow;
-      }
-      throw ApiException('Error inesperado al agregar comentario: $e');
-    }
+      // Invalidar caché para la noticia correspondiente
+      _comentariosPorNoticia.remove(comentario.noticiaId);
+      invalidarCache();
+    }, mensajeError: 'Error al agregar comentario');
   }
 
-  /// Obtiene el número total de comentarios para una noticia específica
+  /// Obtiene el número de comentarios para una noticia específica
   Future<int> obtenerNumeroComentarios(String noticiaId) async {
-    validarNoVacio(noticiaId, 'ID de la noticia');
-    
-    try {
-      // Primero intentamos obtener del caché
-      if (_comentariosCache.containsKey(noticiaId) && !_isCacheExpired(noticiaId)) {
-        return _comentariosCache[noticiaId]!.length;
-      }
+    return manejarExcepcion(() {
+      validarNoVacio(noticiaId, 'ID de la noticia');
+      return _comentarioService.obtenerNumeroComentarios(noticiaId);
+    }, mensajeError: 'Error al obtener número de comentarios');
+  }  /// Registra una reacción (like o dislike) a un comentario
+  Future<void> reaccionarComentario(
+    String comentarioId, 
+    String tipo, 
+    bool incrementar,
+    String? comentarioPadreId
+  ) async {
+    return manejarExcepcion(() async {
+      validarNoVacio(comentarioId, 'ID del comentario');
       
-      // Si no hay en caché, llamamos a la API
-      final count = await _service.obtenerNumeroComentarios(noticiaId);
-      return count;
-    } catch (e) {
-      debugPrint('❌ Error al obtener número de comentarios: ${e.toString()}');
-      
-      // Si hay caché pero expirado, lo usamos como fallback
-      if (_comentariosCache.containsKey(noticiaId)) {
-        return _comentariosCache[noticiaId]!.length;
-      }
-      
-      // En caso de error sin caché, retornamos 0 como valor seguro
-      return 0;
-    }
-  }
-
-  /// Añade una reacción (like o dislike) a un comentario específico
-  Future<void> reaccionarComentario({
-    required String comentarioId,
-    required String tipoReaccion,
-    required String noticiaId,
-  }) async {
-    validarNoVacio(comentarioId, 'ID del comentario');
-    validarNoVacio(tipoReaccion, 'tipo de reacción');
-    validarNoVacio(noticiaId, 'ID de la noticia');
-    
-    try {
-      // Actualizar caché optimísticamente
-      bool cacheActualizado = false;
-      
-      if (_comentariosCache.containsKey(noticiaId)) {
-        cacheActualizado = _actualizarReaccionEnCache(
-          comentarioId, 
-          tipoReaccion, 
-          noticiaId
+      // Validar el tipo de reacción
+      if (tipo != 'like' && tipo != 'dislike') {
+        throw ApiException(
+          'El tipo de reacción debe ser "like" o "dislike".',
+          statusCode: 400,
         );
       }
       
-      // Luego llamamos a la API para persistir el cambio
-      await _service.reaccionarComentario(
-        comentarioId: comentarioId,
-        tipoReaccion: tipoReaccion,
-      );
-      
-      // Si no se pudo actualizar el caché, refrescamos
-      if (!cacheActualizado && _comentariosCache.containsKey(noticiaId)) {
-        await obtenerComentariosPorNoticia(noticiaId, forceRefresh: true);
-      }
-    } catch (e) {
-      debugPrint('❌ Error al reaccionar al comentario: ${e.toString()}');
-      if (e is ApiException) {
+      try {
+        // Realizar la llamada a la API para registrar la reacción
+        await _comentarioService.reaccionarComentario(
+          comentarioId: comentarioId, 
+          tipoReaccion: tipo  
+        );
+        
+        // Invalidar TODA la caché para asegurar que se recarguen los datos frescos
+        invalidarCache();
+      } catch (e) {
+        // Si hay un error, asegurarse de que se propague
         rethrow;
       }
-      throw ApiException('Error inesperado al reaccionar al comentario: $e');
-    }
+    }, mensajeError: 'Error al registrar reacción');
   }
-
-  /// Actualiza la reacción en caché
-  bool _actualizarReaccionEnCache(String comentarioId, String tipoReaccion, String noticiaId) {
-    bool encontrado = false;
-    
-    // Buscar en comentarios principales
-    for (int i = 0; i < _comentariosCache[noticiaId]!.length; i++) {
-      final comentario = _comentariosCache[noticiaId]![i];
-      
-      if (comentario.id == comentarioId) {
-        // Actualizar likes o dislikes
-        _comentariosCache[noticiaId]![i] = Comentario(
-          id: comentario.id,
-          noticiaId: comentario.noticiaId,
-          texto: comentario.texto,
-          fecha: comentario.fecha,
-          autor: comentario.autor,
-          likes: tipoReaccion == 'like' ? comentario.likes + 1 : comentario.likes,
-          dislikes: tipoReaccion == 'dislike' ? comentario.dislikes + 1 : comentario.dislikes,
-          subcomentarios: comentario.subcomentarios,
-          isSubComentario: comentario.isSubComentario,
-          idSubComentario: comentario.idSubComentario,
-        );
-        encontrado = true;
-        break;
-      }
-      
-      // Revisar subcomentarios
-      if (!encontrado && comentario.subcomentarios != null && comentario.subcomentarios!.isNotEmpty) {
-        final actualizadoEnSub = _actualizarReaccionEnSubcomentarios(
-          i, comentario, comentarioId, tipoReaccion, noticiaId
-        );
-        
-        if (actualizadoEnSub) {
-          encontrado = true;
-          break;
-        }
-      }
-    }
-    
-    if (encontrado) {
-      _lastRefreshedByNoticiaId[noticiaId] = DateTime.now();
-      debugPrint('✅ Reacción ($tipoReaccion) actualizada en caché para comentario $comentarioId');
-    }
-    
-    return encontrado;
-  }
-
-  /// Actualiza la reacción en subcomentarios
-  bool _actualizarReaccionEnSubcomentarios(
-    int indiceComentarioPrincipal, 
-    Comentario comentarioPrincipal,
-    String comentarioId, 
-    String tipoReaccion, 
-    String noticiaId
-  ) {
-    final subcomentarios = List<Comentario>.from(comentarioPrincipal.subcomentarios!);
-    bool subcomentarioActualizado = false;
-    
-    for (int j = 0; j < subcomentarios.length; j++) {
-      final subcomentario = subcomentarios[j];
-      
-      if (subcomentario.id == comentarioId || subcomentario.idSubComentario == comentarioId) {
-        // Actualizar likes o dislikes del subcomentario
-        subcomentarios[j] = Comentario(
-          id: subcomentario.id,
-          noticiaId: subcomentario.noticiaId,
-          texto: subcomentario.texto,
-          fecha: subcomentario.fecha,
-          autor: subcomentario.autor,
-          likes: tipoReaccion == 'like' ? subcomentario.likes + 1 : subcomentario.likes,
-          dislikes: tipoReaccion == 'dislike' ? subcomentario.dislikes + 1 : subcomentario.dislikes,
-          subcomentarios: subcomentario.subcomentarios,
-          isSubComentario: subcomentario.isSubComentario,
-          idSubComentario: subcomentario.idSubComentario,
-        );
-        
-        // Actualizar el comentario principal con los subcomentarios modificados
-        _comentariosCache[noticiaId]![indiceComentarioPrincipal] = Comentario(
-          id: comentarioPrincipal.id,
-          noticiaId: comentarioPrincipal.noticiaId,
-          texto: comentarioPrincipal.texto,
-          fecha: comentarioPrincipal.fecha,
-          autor: comentarioPrincipal.autor,
-          likes: comentarioPrincipal.likes,
-          dislikes: comentarioPrincipal.dislikes,
-          subcomentarios: subcomentarios,
-          isSubComentario: comentarioPrincipal.isSubComentario,
-          idSubComentario: comentarioPrincipal.idSubComentario,
-        );
-        
-        subcomentarioActualizado = true;
-        break;
-      }
-    }
-    
-    return subcomentarioActualizado;
-  }
-
   /// Agrega un subcomentario a un comentario existente
-  Future<Map<String, dynamic>> agregarSubcomentario({
-    required String comentarioId,
-    required String texto,
-    required String autor,
-    required String noticiaId,
-  }) async {
-    validarNoVacio(comentarioId, 'ID del comentario');
-    validarNoVacio(texto, 'texto del subcomentario');
-    validarNoVacio(autor, 'autor');
-    validarNoVacio(noticiaId, 'ID de la noticia');
-
-    try {
-      // Actualizar caché optimísticamente si existe
-      bool cacheActualizado = false;
+  /// Los subcomentarios no pueden tener a su vez subcomentarios
+  Future<void> agregarSubcomentario(Comentario subcomentario) async {
+    return manejarExcepcion(() async {
+      validarSubcomentario(subcomentario);
       
-      if (_comentariosCache.containsKey(noticiaId)) {
-        final subcomentarioId = 'sub_${DateTime.now().millisecondsSinceEpoch}';
-        final nuevoSubcomentario = Comentario(
-          id: subcomentarioId,
-          noticiaId: noticiaId,
-          texto: texto,
-          fecha: DateTime.now().toIso8601String(),
-          autor: autor,
-          likes: 0,
-          dislikes: 0,
-          isSubComentario: true,
-          idSubComentario: subcomentarioId,
-        );
-        
-        cacheActualizado = _agregarSubcomentarioEnCache(comentarioId, nuevoSubcomentario, noticiaId);
-      }
+      // El idSubComentario contiene el ID del comentario padre al que queremos responder
+      final comentarioPadreId = subcomentario.idSubComentario!;
       
-      // Llamar a la API para persistir el cambio
-      final resultado = await _service.agregarSubcomentario(
-        comentarioId: comentarioId,
-        texto: texto,
-        autor: autor,
+      await _comentarioService.agregarSubcomentario(
+        comentarioId: comentarioPadreId, 
+        autor: subcomentario.autor, 
+        texto: subcomentario.texto
       );
       
-      // Si no se pudo actualizar el caché o si el API falló, refrescar
-      if ((!cacheActualizado && _comentariosCache.containsKey(noticiaId)) || 
-          resultado['success'] != true) {
-        await obtenerComentariosPorNoticia(noticiaId, forceRefresh: true);
-      }
-      
-      return resultado;
-    } catch (e) {
-      debugPrint('❌ Error inesperado al agregar subcomentario: ${e.toString()}');
-      
-      // En caso de error, intentar refrescar el caché
-      if (_comentariosCache.containsKey(noticiaId)) {
-        await obtenerComentariosPorNoticia(noticiaId, forceRefresh: true);
-      }
-      
-      return {
-        'success': false,
-        'message': 'Error inesperado al agregar subcomentario: ${e.toString()}'
-      };
-    }
-  }
-
-  /// Agrega un subcomentario al caché
-  bool _agregarSubcomentarioEnCache(String comentarioId, Comentario subcomentario, String noticiaId) {
-    bool encontrado = false;
-    
-    // Buscar el comentario principal
-    for (int i = 0; i < _comentariosCache[noticiaId]!.length; i++) {
-      if (_comentariosCache[noticiaId]![i].id == comentarioId) {
-        // Obtener el comentario actual
-        final comentario = _comentariosCache[noticiaId]![i];
-        final subcomentarios = comentario.subcomentarios ?? [];
-        
-        // Actualizar el comentario con el nuevo subcomentario
-        _comentariosCache[noticiaId]![i] = Comentario(
-          id: comentario.id,
-          noticiaId: comentario.noticiaId,
-          texto: comentario.texto,
-          fecha: comentario.fecha,
-          autor: comentario.autor,
-          likes: comentario.likes,
-          dislikes: comentario.dislikes,
-          subcomentarios: [...subcomentarios, subcomentario],
-          isSubComentario: comentario.isSubComentario,
-          idSubComentario: comentario.idSubComentario,
-        );
-        
-        encontrado = true;
-        break;
-      }
-    }
-    
-    if (encontrado) {
-      _lastRefreshedByNoticiaId[noticiaId] = DateTime.now();
-      debugPrint('✅ Subcomentario añadido al caché para comentario $comentarioId');
-    } else {
-      debugPrint('⚠️ No se encontró el comentario $comentarioId para añadir el subcomentario');
-    }
-    
-    return encontrado;
-  }
-
-  /// Busca comentarios según un criterio de texto
-  List<Comentario> buscarComentarios(String noticiaId, String criterio) {
-    if (!_comentariosCache.containsKey(noticiaId)) {
-      return [];
-    }
-    
-    final textoBuscado = criterio.toLowerCase();
-    return _comentariosCache[noticiaId]!.where((comentario) {
-      final textoComentario = comentario.texto.toLowerCase();
-      final autorComentario = comentario.autor.toLowerCase();
-      
-      return textoComentario.contains(textoBuscado) || 
-             autorComentario.contains(textoBuscado);
-    }).toList();
-  }
-
-  /// Limpia el caché para una noticia específica
-  void limpiarCacheParaNoticia(String noticiaId) {
-    _comentariosCache.remove(noticiaId);
-    _lastRefreshedByNoticiaId.remove(noticiaId);
-    debugPrint('🗑️ Cache limpiado para noticia $noticiaId');
+      // Invalidar caché para la noticia correspondiente
+      _comentariosPorNoticia.remove(subcomentario.noticiaId);
+      invalidarCache();
+    }, mensajeError: 'Error al agregar subcomentario');
   }
   
-  /// Limpia todo el caché de comentarios
+  /// Invalida toda la caché de comentarios
   @override
-  void limpiarCache() {
-    _comentariosCache.clear();
-    _lastRefreshedByNoticiaId.clear();
-    debugPrint('🗑️ Cache de comentarios limpiado completamente');
-    super.limpiarCache();
-  }
-
-  @override
-  Comentario fromMap(Map<String, dynamic> map) {
-    return Comentario.fromMapSafe(map);
-  }
-
-  @override
-  Map<String, dynamic> toMap(Comentario entity) {
-    return entity.toMap();
+  void invalidarCache() {
+    super.invalidarCache();
+    _comentariosPorNoticia.clear();
   }
 }

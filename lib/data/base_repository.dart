@@ -1,105 +1,95 @@
-import 'dart:async';
-import 'package:flutter/foundation.dart';
-import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:psiemens/constants.dart';
 import 'package:psiemens/exceptions/api_exception.dart';
 
-/// Base para todos los repositorios en la aplicación
-/// Proporciona funcionalidades comunes como caché, manejo de errores,
-/// y validaciones generales.
+/// La clase BaseRepository sirve como base para todos los repositorios de la aplicación.
+/// Proporciona funcionalidad común y manejo de errores estandarizado.
 abstract class BaseRepository<T> {
-  /// Servicio API asociado al repositorio
-  dynamic get service;
-  
-  /// Duración predeterminada para la caché
-  final Duration cacheDuration = const Duration(minutes: 15);
-  
-  /// Manager para el manejo de caché
-  final CacheManager cacheManager = DefaultCacheManager();
-  
-  /// Marca si los datos del caché están vigentes
-  bool _cacheValido = false;
-  
-  /// Datos en caché
-  Map<String, dynamic> _cache = {};
-  
-  /// Obtiene datos con manejo de errores y caché
-  /// 
-  /// [fetchFunction] es la función que obtiene los datos desde el servicio API
-  /// [cacheKey] es la clave para almacenar los datos en caché
-  /// [usarCache] indica si se debe utilizar el caché para esta petición
-  Future<List<T>> obtenerDatos({
-    required Future<List<T>> Function() fetchFunction,
-    required String cacheKey,
-    bool usarCache = true,
+  /// Un método para validar entidades genéricas.
+  /// Cada repositorio concreto debe implementar su propia lógica de validación.
+  void validarEntidad(T entidad);
+
+  /// Método utilitario para manejar excepciones de manera consistente.
+  /// Diferencia entre ApiException y otras excepciones, permitiendo un manejo adecuado.
+  Future<R> manejarExcepcion<R>(
+    Future<R> Function() accion, {
+    String mensajeError = 'Error desconocido',
   }) async {
-    // Verificar si hay datos en caché válidos
-    if (usarCache && _cacheValido && _cache.containsKey(cacheKey)) {
-      return _cache[cacheKey] as List<T>;
-    }
-    
     try {
-      final datos = await fetchFunction();
-      
-      // Almacenar en caché si se requiere
-      if (usarCache) {
-        _cache[cacheKey] = datos;
-        _cacheValido = true;
-        
-        // Programar invalidación del caché
-        Timer(cacheDuration, () {
-          _cacheValido = false;
-        });
+      return await accion();
+    } catch (e) {
+      if (e is ApiException) {
+        // Propagar ApiException directamente
+        rethrow;
+      } else {
+        // Envolver otras excepciones en ApiException con mensaje contextual
+        throw ApiException('$mensajeError: $e');
       }
-      
-      return datos;
-    } catch (e) {
-      return _manejarError<List<T>>(e, 'Error al obtener datos.');
     }
   }
-  
-  /// Realiza una operación con manejo de errores
-  /// 
-  /// [operation] es la función que realiza la operación en el servicio API
-  /// [errorMessage] es el mensaje de error personalizado
-  Future<void> ejecutarOperacion({
-    required Future<void> Function() operation,
-    required String errorMessage,
-  }) async {
-    try {
-      await operation();
-      // Invalida el caché después de operaciones de escritura
-      _cacheValido = false;
-    } catch (e) {
-      _manejarError<void>(e, errorMessage);
+
+  /// Valida que un valor no esté vacío y lanza una excepción si lo está.
+  void validarNoVacio(String? valor, String nombreCampo) {
+    if (valor == null || valor.isEmpty) {
+      throw ApiException(
+        '$nombreCampo${ValidacionConstantes.campoVacio}',
+        statusCode: 400,
+      );
     }
   }
-  
-  /// Método genérico para manejo de errores
-  /// 
-  /// [error] es la excepción capturada
-  /// [mensajeError] es el mensaje para mostrar al usuario
-  T _manejarError<T>(dynamic error, String mensajeError) {
-    if (error is ApiException) {
-      throw error; // Relanza la excepción para que la maneje la capa superior
-    }
-    
-    debugPrint('Error inesperado: $error');
-    throw ApiException(mensajeError);
+
+  /// Valida que un ID no esté vacío.
+  void validarId(String? id) {
+    validarNoVacio(id, 'ID');
   }
-  
-  /// Valida que un valor no esté vacío
-  /// 
-  /// [valor] es el valor a validar
-  /// [campo] es el nombre del campo para el mensaje de error
-  void validarNoVacio(String valor, String campo) {
-    if (valor.isEmpty) {
-      throw ApiException('El campo $campo no puede estar vacío.');
+
+  /// Valida que una fecha no esté en el futuro
+  /// @param fecha La fecha a validar
+  /// @param nombreCampo Nombre del campo para el mensaje de error
+  /// @param mensajeError Mensaje de error personalizado (opcional)
+  void validarFechaNoFutura(DateTime fecha, String nombreCampo) {
+    if (fecha.isAfter(DateTime.now())) {
+      throw ApiException(
+        '$nombreCampo${ValidacionConstantes.noFuturo}',
+        statusCode: 400,
+      );
     }
   }
-  
-  /// Limpia el caché del repositorio
-  void limpiarCache() {
-    _cache.clear();
-    _cacheValido = false;
+}
+
+/// Extensión del BaseRepository que incluye capacidades de caché.
+abstract class CacheableRepository<T> extends BaseRepository<T> {
+  /// Almacenamiento en caché de datos
+  List<T>? _cache;
+
+  /// Flag para indicar si hay cambios pendientes
+  bool _cambiosPendientes = false;
+
+  /// Obtiene datos, preferentemente desde la caché
+  Future<List<T>> obtenerDatos({bool forzarRecarga = false}) async {
+    // Si forzarRecarga es true o no hay caché, cargar desde la fuente de datos
+    if (forzarRecarga || _cache == null) {
+      _cache = await cargarDatos();
+    }
+
+    return _cache ?? [];
+  }
+
+  /// Carga datos desde la fuente de datos
+  Future<List<T>> cargarDatos();
+
+  /// Marca que hay cambios pendientes
+  void marcarCambiosPendientes() {
+    _cambiosPendientes = true;
+  }
+
+  /// Verifica si hay cambios pendientes
+  bool hayCambiosPendientes() {
+    return _cambiosPendientes;
+  }
+
+  /// Limpia la caché para forzar una recarga
+  void invalidarCache() {
+    _cache = null;
+    _cambiosPendientes = false;
   }
 }

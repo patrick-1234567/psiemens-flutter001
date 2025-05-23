@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:psiemens/api/service/auth_service.dart';
-import 'package:psiemens/helpers/secure_storage_service.dart';
-import 'package:psiemens/domain/login_response.dart';
+import 'package:psiemens/data/preferencia_repository.dart';
 import 'package:psiemens/domain/login_request.dart';
-import 'package:psiemens/data/base_repository.dart';
-import 'package:psiemens/exceptions/api_exception.dart';
+import 'package:psiemens/domain/login_response.dart';
+import 'package:psiemens/helpers/secure_storage_service.dart';
+import 'package:watch_it/watch_it.dart';
 
-class AuthRepository extends BaseRepository<LoginResponse> {
+class AuthRepository {
   final AuthService _authService = AuthService();
-  final SecureStorageService _secureStorage = SecureStorageService();
-  
-  @override
-  AuthService get service => _authService;
-
-  // Login user and store JWT token
+  final SecureStorageService _secureStorage = SecureStorageService();  // Login user and store JWT token
   Future<bool> login(String email, String password) async {
     try {
-      validarNoVacio(email, 'correo electrónico');
-      validarNoVacio(password, 'contraseña');
+      if (email.isEmpty || password.isEmpty) {
+        throw ArgumentError('Error: Email and password cannot be empty.');
+      }
+      
+      // Limpiar cualquier caché de preferencias previo al login para forzar la carga de las preferencias del nuevo usuario
+      final preferenciaRepository = di<PreferenciaRepository>();
+      preferenciaRepository.invalidarCache();
       
       final loginRequest = LoginRequest(
         username: email,
@@ -27,26 +27,27 @@ class AuthRepository extends BaseRepository<LoginResponse> {
       final LoginResponse response = await _authService.login(loginRequest);
       await _secureStorage.saveJwt(response.sessionToken);
       await _secureStorage.saveUserEmail(email);
+      
+      // Cargar preferencias del usuario recién logueado
+      await preferenciaRepository.inicializarPreferenciasUsuario();
+      
       return true;
     } catch (e) {
-      debugPrint('Login error: $e');
+      debugPrint('Error de login: $e');
       return false;
     }
   }
-  
-  // Logout user
+    // Logout user
   Future<void> logout() async {
-    await ejecutarOperacion(
-      operation: () async {
-        await _secureStorage.clearJwt();
-        await _secureStorage.clearUserEmail();
-        limpiarCache(); // Limpiar caché al cerrar sesión
-      },
-      errorMessage: 'Error al cerrar sesión.',
-    );
+    // Limpiar la caché de preferencias antes de limpiar el token
+    final preferenciaRepository = di<PreferenciaRepository>();
+    preferenciaRepository.invalidarCache();
+    
+    // Limpiar tokens y datos de sesión
+    await _secureStorage.clearJwt();
+    await _secureStorage.clearUserEmail();
   }
-  
-  // Check if user is authenticated
+    // Check if user is authenticated
   Future<bool> isAuthenticated() async {
     // Siempre retorna false para forzar la pantalla de login
     return false;
@@ -54,11 +55,6 @@ class AuthRepository extends BaseRepository<LoginResponse> {
   
   // Get current auth token
   Future<String?> getAuthToken() async {
-    try {
-      return await _secureStorage.getJwt();
-    } catch (e) {
-      debugPrint('Error al obtener token de autenticación: $e');
-      throw ApiException('Error al obtener token de autenticación');
-    }
+    return await _secureStorage.getJwt();
   }
 }

@@ -1,86 +1,57 @@
 import 'package:psiemens/api/service/noticia_service.dart';
-import 'package:psiemens/domain/noticia.dart';
+import 'package:psiemens/constants.dart';
 import 'package:psiemens/data/base_repository.dart';
+import 'package:psiemens/domain/noticia.dart';
 
+/// Repositorio para gestionar operaciones relacionadas con las noticias.
+/// Extiende BaseRepository para aprovechar la gestión de errores estandarizada.
 class NoticiaRepository extends BaseRepository<Noticia> {
-  final NoticiaService _service = NoticiaService();
-  
+  final NoticiaService _noticiaService = NoticiaService();
+
   @override
-  NoticiaService get service => _service;
+  void validarEntidad(Noticia noticia) {
+    validarNoVacio(noticia.titulo, ValidacionConstantes.tituloNoticia);
+    validarNoVacio(
+      noticia.descripcion,
+      ValidacionConstantes.descripcionNoticia,
+    );
+    validarNoVacio(noticia.fuente, ValidacionConstantes.fuenteNoticia);
 
-  /// Obtiene noticias con caché y manejo de errores
+    // Validación adicional para la fecha usando el método genérico
+    validarFechaNoFutura(
+      noticia.publicadaEl,
+      ValidacionConstantes.fechaNoticia,
+    );
+  }
+
+  /// Obtiene todas las noticias desde el repositorio
   Future<List<Noticia>> obtenerNoticias() async {
-    return obtenerDatos(
-      fetchFunction: () => _service.getNoticias(),
-      cacheKey: 'noticias',
+    return manejarExcepcion(
+      () => _noticiaService.obtenerNoticias(),
+      mensajeError: NoticiaConstantes.mensajeError,
     );
   }
-
   /// Crea una nueva noticia
-  Future<void> crearNoticia({
-    required String titulo,
-    required String descripcion,
-    required String fuente,
-    required DateTime publicadaEl,
-    required String urlImagen,
-    required String categoriaId,
-  }) async {
-    // Validar campos requeridos
-    validarNoVacio(titulo, 'título');
-    validarNoVacio(descripcion, 'descripción');
-    validarNoVacio(fuente, 'fuente');
-    
-    final noticia = Noticia(
-      titulo: titulo,
-      descripcion: descripcion,
-      fuente: fuente,
-      publicadaEl: publicadaEl,
-      urlImagen: urlImagen,
-      categoriaId: categoriaId,
-    );
-    
-    await ejecutarOperacion(
-      operation: () => _service.crearNoticia(noticia),
-      errorMessage: 'Error inesperado al crear noticia.',
-    );
+  Future<Noticia> crearNoticia(Noticia noticia) async {
+    return manejarExcepcion(() {
+      validarEntidad(noticia);
+      return _noticiaService.crearNoticia(noticia);
+    }, mensajeError: NoticiaConstantes.errorCreated);
   }
 
-    Future<void> eliminarNoticia(String id) async {
-    validarNoVacio(id, 'ID de la noticia');
-    
-    await ejecutarOperacion(
-      operation: () => _service.eliminarNoticia(id),
-      errorMessage: 'Error inesperado al eliminar noticia.',
-    );
+  /// Edita una noticia existente
+  Future<Noticia> editarNoticia(Noticia noticia) async {
+    return manejarExcepcion(() {
+      validarEntidad(noticia);
+      return _noticiaService.editarNoticia(noticia);
+    }, mensajeError: NoticiaConstantes.errorUpdated);
   }
 
-  Future<void> actualizarNoticia({
-    required String id,
-    required String titulo,
-    required String descripcion,
-    required String fuente,
-    required DateTime publicadaEl,
-    required String urlImagen,
-    required String categoriaId,
-  }) async {
-    // Validar campos requeridos
-    validarNoVacio(id, 'ID de la noticia');
-    validarNoVacio(titulo, 'título');
-    validarNoVacio(descripcion, 'descripción');
-    validarNoVacio(fuente, 'fuente');
-    
-    final noticia = Noticia(
-      titulo: titulo,
-      descripcion: descripcion,
-      fuente: fuente,
-      publicadaEl: publicadaEl,
-      urlImagen: urlImagen,
-      categoriaId: categoriaId,
-    );
-    
-    await ejecutarOperacion(
-      operation: () => _service.editarNoticia(id, noticia),
-      errorMessage: 'Error inesperado al editar noticia.',
-    );
+  /// Elimina una noticia
+  Future<void> eliminarNoticia(String id) async {
+    return manejarExcepcion(() {
+      validarId(id);
+      return _noticiaService.eliminarNoticia(id);
+    }, mensajeError: NoticiaConstantes.errorDelete);
   }
 }
