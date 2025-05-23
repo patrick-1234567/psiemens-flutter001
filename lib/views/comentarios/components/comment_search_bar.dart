@@ -1,7 +1,7 @@
-import 'package:psiemens/bloc/comentarios/comentario_bloc.dart';
-import 'package:psiemens/bloc/comentarios/comentario_event.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:psiemens/bloc/comentarios/comentario_bloc.dart';
+import 'package:psiemens/bloc/comentarios/comentario_event.dart';
 
 class CommentSearchBar extends StatelessWidget {
   final TextEditingController busquedaController;
@@ -36,7 +36,7 @@ class CommentSearchBar extends StatelessWidget {
                           onPressed: () {
                             busquedaController.clear();
                             context.read<ComentarioBloc>()
-                              .add(LoadComentarios(noticiaId: noticiaId));
+                              .add(LoadComentarios(noticiaId));
                           },
                         )
                       : const SizedBox.shrink();
@@ -50,7 +50,6 @@ class CommentSearchBar extends StatelessWidget {
         ElevatedButton(
           onPressed: onSearch,
           style: ElevatedButton.styleFrom(
-            foregroundColor: Colors.blue,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           ),
           child: const Text('Buscar'),

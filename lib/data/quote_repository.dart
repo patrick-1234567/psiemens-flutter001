@@ -1,10 +1,12 @@
 import 'dart:async';
-import 'dart:math'; // Necesario para Random
+import 'dart:math';
 import 'package:psiemens/domain/quote.dart';
+import 'package:psiemens/data/base_repository.dart';
+import 'package:psiemens/exceptions/api_exception.dart';
 
-class QuoteRepository {
-  final Random _random = Random(); // Instancia de Random para generar valores
-
+class QuoteRepository extends CacheableRepository<Quote> {
+  final Random _random = Random();
+  
   // Lista de nombres de compañías de ejemplo para usar
   final List<String> _exampleCompanyNames = [
     'Apple', 'Microsoft', 'Google', 'Amazon', 'Tesla', 'Netflix', 'Meta',
@@ -12,54 +14,26 @@ class QuoteRepository {
     'Cisco', 'Qualcomm', 'Broadcom', 'Texas Instruments', 'SAP', 'Accenture',
     'Infosys', 'TCS', 'Wipro', 'HCL Tech'
   ];
-
-  /// Genera una lista de cotizaciones con datos aleatorios.
-  ///
-  /// [count] El número de cotizaciones aleatorias a generar.
-  Future<List<Quote>> generateRandomQuotes(int count) async {
-    // Simula un pequeño retraso, como si se estuvieran generando o buscando
-    await Future.delayed(Duration(milliseconds: _random.nextInt(500) + 100));
-
-    List<Quote> randomQuotes = [];
-    for (int i = 0; i < count; i++) {
-      // Selecciona un nombre aleatorio de la lista
-      final companyName = _exampleCompanyNames[_random.nextInt(_exampleCompanyNames.length)];
-
-      // Genera un precio de acción aleatorio (ej: entre 10.00 y 4000.00)
-      final stockPrice = _random.nextDouble() * 3990.0 + 10.0;
-
-      // Genera un porcentaje de cambio aleatorio (ej: entre -15.0 y +15.0)
-      // Asegurándose de que esté dentro del rango -100 a 100
-      final changePercentage = (_random.nextDouble() * 30.0) - 15.0; // Rango -15 a +15
-
-      // Genera una fecha de actualización aleatoria en los últimos 30 minutos
-      final lastUpdated = DateTime.now().subtract(Duration(minutes: _random.nextInt(30)));
-
-      randomQuotes.add(Quote(
-        companyName: '${companyName}_${i+1}', // Añade un sufijo para unicidad si es necesario
-        stockPrice: stockPrice,
-        changePercentage: changePercentage,
-        lastUpdated: lastUpdated,
-      ));
+  
+  @override
+  void validarEntidad(Quote quote) {
+    validarNoVacio(quote.companyName, 'nombre de la compañía');
+    if (quote.stockPrice < 0) {
+      throw ApiException('El precio de la acción no puede ser negativo', statusCode: 400);
     }
-    return randomQuotes;
   }
-
-
-  /// Fetches a predefined list of quotes (método original).
-  Future<List<Quote>> fetchQuotes() async {
+  
+  @override
+  Future<List<Quote>> cargarDatos() async {
     // Simula un retraso
-    await Future.delayed(const Duration(seconds: 1)); // Reducido para pruebas más rápidas si se desea
+    await Future.delayed(const Duration(seconds: 1));
 
-    // Lista fija de cotizaciones (como la tenías antes)
-    // Asegúrate de que esta lista también tenga datos variados si la usas
+    // Lista fija de cotizaciones
     return [
-       Quote(
+      Quote(
         companyName: 'Apple',
         stockPrice: 150.25,
-        // ¡Ojo! Este valor 99 será filtrado por tu servicio si mantienes la validación -100 a 100
-        // Considera cambiarlo a un valor dentro del rango válido, ej: 9.9
-        changePercentage: 9.9, // Cambiado de 99
+        changePercentage: 9.9,
         lastUpdated: DateTime.now().subtract(const Duration(minutes: 5)),
       ),
       Quote(
@@ -116,8 +90,7 @@ class QuoteRepository {
         changePercentage: 1.8,
         lastUpdated: DateTime.now().subtract(const Duration(minutes: 12)),
       ),
-      // Puedes añadir más si quieres que la lista fija sea más larga
-       Quote(
+      Quote(
         companyName: 'Intel',
         stockPrice: 55.20,
         changePercentage: -0.2,
@@ -130,5 +103,47 @@ class QuoteRepository {
         lastUpdated: DateTime.now().subtract(const Duration(minutes: 7)),
       ),
     ];
+  }
+
+  /// Genera una lista de cotizaciones con datos aleatorios.
+  ///
+  /// [count] El número de cotizaciones aleatorias a generar.
+  Future<List<Quote>> generateRandomQuotes(int count) async {
+    return manejarExcepcion(() async {
+      // Simula un pequeño retraso
+      await Future.delayed(Duration(milliseconds: _random.nextInt(500) + 100));
+
+      List<Quote> randomQuotes = [];
+      for (int i = 0; i < count; i++) {
+        // Selecciona un nombre aleatorio de la lista
+        final companyName = _exampleCompanyNames[_random.nextInt(_exampleCompanyNames.length)];
+
+        // Genera un precio de acción aleatorio
+        final stockPrice = _random.nextDouble() * 3990.0 + 10.0;
+
+        // Genera un porcentaje de cambio aleatorio
+        final changePercentage = (_random.nextDouble() * 30.0) - 15.0;
+
+        // Genera una fecha de actualización aleatoria
+        final lastUpdated = DateTime.now().subtract(Duration(minutes: _random.nextInt(30)));
+
+        randomQuotes.add(Quote(
+          companyName: '${companyName}_${i+1}',
+          stockPrice: stockPrice,
+          changePercentage: changePercentage,
+          lastUpdated: lastUpdated,
+        ));
+      }
+      
+      // Invalidar la caché para que se use esta nueva lista aleatoria
+      invalidarCache();
+      
+      return randomQuotes;
+    }, mensajeError: 'Error al generar cotizaciones aleatorias');
+  }
+
+  /// Obtiene una lista predefinida de cotizaciones.
+  Future<List<Quote>> fetchQuotes() async {
+    return obtenerDatos();
   }
 }

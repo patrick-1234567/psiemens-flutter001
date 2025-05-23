@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 class CommentAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool ordenAscendente;
   final Function(bool) onOrdenChanged;
+  final String? titulo;
 
   const CommentAppBar({
     super.key,
     required this.ordenAscendente,
     required this.onOrdenChanged,
+    this.titulo,
   });
 
   @override
@@ -16,7 +18,7 @@ class CommentAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      title: const Text('Comentarios'),
+      title: Text(titulo != null ? 'Comentarios: $titulo' : 'Comentarios'),
       leading: IconButton(
         icon: const Icon(Icons.arrow_back),
         onPressed: () => Navigator.pop(context),

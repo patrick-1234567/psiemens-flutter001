@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
 import 'package:psiemens/bloc/comentarios/comentario_bloc.dart';
 import 'package:psiemens/bloc/comentarios/comentario_event.dart';
 import 'package:psiemens/domain/comentario.dart';
-import 'package:psiemens/components/comments/subcomment_card.dart'; 
+import 'package:psiemens/views/comentarios/components/subcomment_card.dart';
 
 class CommentCard extends StatelessWidget {
   final Comentario comentario;
@@ -19,14 +18,12 @@ class CommentCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final fecha = DateFormat('dd/MM/yyyy HH:mm')
-        .format(DateTime.parse(comentario.fecha));
+  Widget build(BuildContext context) {    // La fecha ya viene formateada del backend, la usamos directamente
+    final fecha = comentario.fecha;
 
     return Card(
       elevation: 2,
       margin: const EdgeInsets.symmetric(vertical: 4),
-      color: const Color(0xFFE3F2FD),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -83,7 +80,6 @@ class CommentCard extends StatelessWidget {
                       icon: const Icon(Icons.reply, size: 24),
                       label: const Text('Responder'),
                       style: TextButton.styleFrom(
-                        foregroundColor: Colors.blue,
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
@@ -115,15 +111,27 @@ class CommentCard extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  void _handleReaction(BuildContext context, String tipoReaccion) {
-    context.read<ComentarioBloc>().add(
+  }  void _handleReaction(BuildContext context, String tipoReaccion) {
+    // Capturamos una referencia al bloc fuera del Future.delayed
+    final comentarioBloc = context.read<ComentarioBloc>();
+    final String currentNoticiaId = noticiaId;
+    
+    // Primero enviamos el evento de reacción
+    comentarioBloc.add(
       AddReaccion(
-        noticiaId: noticiaId,
-        comentarioId: comentario.id ?? '',
-        tipoReaccion: tipoReaccion,
+        comentario.id ?? '', 
+        tipoReaccion, 
+        true, // incrementar = true
+        null // comentarioPadreId null para comentarios principales
       ),
     );
+    
+    // Luego forzamos la recarga de comentarios para actualizar la UI
+    // No usamos context dentro del Future.delayed
+    Future.delayed(const Duration(milliseconds: 500), () {
+      comentarioBloc.add(
+        LoadComentarios(currentNoticiaId),
+      );
+    });
   }
 }

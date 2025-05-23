@@ -1,125 +1,127 @@
-import 'package:psiemens/exceptions/api_exception.dart';
-import  'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:psiemens/bloc/categorias/categorias_event.dart';
 import 'package:psiemens/bloc/categorias/categorias_state.dart';
 import 'package:psiemens/data/categoria_repository.dart';
-import 'package:psiemens/domain/categoria.dart';
-import 'package:psiemens/api/service/category_cache_service.dart';
+import 'package:psiemens/domain/categoria.dart'; // Añadir importación para Categoria
+import 'package:psiemens/exceptions/api_exception.dart';
 import 'package:watch_it/watch_it.dart';
 
-
 class CategoriaBloc extends Bloc<CategoriaEvent, CategoriaState> {
-   final CategoriaRepository categoriaRepository = di<CategoriaRepository>();
-   final CategoryCacheService categoryCacheService = di<CategoryCacheService>();
- 
-   CategoriaBloc() : super(CategoriaInitial()) {
-     on<CategoriaInitEvent>(_onInit);
-     on<CategoriaCreateEvent>(_onCreateCategoria);
-     on<CategoriaUpdateEvent>(_onUpdateCategoria);
-     on<CategoriaDeleteEvent>(_onDeleteCategoria);
-   }
- 
-   Future<void> _onInit (CategoriaInitEvent event, Emitter<CategoriaState> emit) async {
-     emit(CategoriaLoading());
- 
-     try {
-       // Usar el servicio de cache en lugar del repositorio directamente
-       final categorias = await categoryCacheService.getCategories();
-       emit(CategoriaLoaded(categorias, categoryCacheService.lastRefreshed ?? DateTime.now()));
-     } catch (e) {
-        final int? statusCode = e is ApiException ? e.statusCode : null;
-        emit(CategoriaError('Failed to load categories: ${e.toString()}',statusCode: statusCode));
-     }
-   }
-     Future<void> _onCreateCategoria(CategoriaCreateEvent event, Emitter<CategoriaState> emit) async {
-     emit(CategoriaCreating());
-     
-     try {
-       // Crear el mapa de datos de la categoria
-       final categoriaData = {
-         'nombre': event.nombre,
-         'descripcion': event.descripcion,
-         'imagenUrl': event.imagenUrl,
-       };
-       
-       // Llamar al repositorio para crear la categoría
-       await categoriaRepository.crearCategoria(categoriaData);
-       
-       // Crear instancia de Categoria (sin ID ya que es generado por el backend)
-       final newCategoria = Categoria(
-         id: '',
-         nombre: event.nombre,
-         descripcion: event.descripcion,
-         imagenUrl: event.imagenUrl,
-       );
-       
-       emit(CategoriaCreated(newCategoria));
-       
-       // Refrescar el caché de categorías
-       await categoryCacheService.refreshCategories();
-       
-       // Recargar la lista después de crear
-       add(CategoriaInitEvent());
-     } catch (e) {
-        final int? statusCode = e is ApiException ? e.statusCode : null;
-        debugPrint('Error creando categoría: $e');
-        emit(CategoriaError('Error al crear categoría: ${e.toString()}',statusCode: statusCode));
-     }
-   }
-     Future<void> _onUpdateCategoria(CategoriaUpdateEvent event, Emitter<CategoriaState> emit) async {
-     emit(CategoriaUpdating());
-     
-     try {
-       // Crear el mapa de datos de la categoria
-       final categoriaData = {
-         'nombre': event.nombre,
-         'descripcion': event.descripcion,
-         'imagenUrl': event.imagenUrl,
-       };
-       
-       // Llamar al repositorio para actualizar la categoría
-       await categoriaRepository.actualizarCategoria(event.id, categoriaData);
-       
-       // Crear instancia de Categoria actualizada
-       final updatedCategoria = Categoria(
-         id: event.id,
-         nombre: event.nombre,
-         descripcion: event.descripcion,
-         imagenUrl: event.imagenUrl,
-       );
-       
-       emit(CategoriaUpdated(updatedCategoria));
-       
-       // Refrescar el caché de categorías
-       await categoryCacheService.refreshCategories();
-       
-       // Recargar la lista después de actualizar
-       add(CategoriaInitEvent());
-     } catch (e) {
-        final int? statusCode = e is ApiException ? e.statusCode : null;
-        debugPrint('Error actualizando categoría: $e');
-        emit(CategoriaError('Error al actualizar categoría: ${e.toString()}',statusCode: statusCode));
-     }
-   }
-     Future<void> _onDeleteCategoria(CategoriaDeleteEvent event, Emitter<CategoriaState> emit) async {
-     emit(CategoriaDeleting());
-     
-     try {
-       // Llamar al repositorio para eliminar la categoría
-       await categoriaRepository.eliminarCategoria(event.id);
-       
-       emit(CategoriaDeleted(event.id));
-       
-       // Refrescar el caché de categorías
-       await categoryCacheService.refreshCategories();
-       
-       // Recargar la lista después de eliminar
-       add(CategoriaInitEvent());
-     } catch (e) {
-        final int? statusCode = e is ApiException ? e.statusCode : null;
-        debugPrint('Error eliminando categoría: $e');
-        emit(CategoriaError('Error al eliminar categoría: ${e.toString()}',statusCode: statusCode));
-     }
-   }
+  final CategoriaRepository _categoriaRepository = di<CategoriaRepository>();
+
+  CategoriaBloc() : super(CategoriaInitial()) {
+    on<CategoriaInitEvent>(_onInit);
+    on<CategoriaCreateEvent>(_onCreate);
+    on<CategoriaUpdateEvent>(_onUpdate);
+    on<CategoriaDeleteEvent>(_onDelete);
+  }
+
+  Future<void> _onInit(
+    CategoriaInitEvent event,
+    Emitter<CategoriaState> emit,
+  ) async {
+    // Siempre emitimos un estado de carga
+    emit(CategoriaLoading());
+
+    try {
+      // Pasamos el parámetro forzarRecarga al repositorio
+      final categorias = await _categoriaRepository.obtenerCategorias(
+        forzarRecarga: event.forzarRecarga,
+      );
+      // Emitir simplemente el estado cargado sin mostrar SnackBar
+      if (event.forzarRecarga == true) {
+        emit(CategoriaReloaded(categorias, DateTime.now()));
+      } else {
+        emit(CategoriaLoaded(categorias, _categoriaRepository.lastRefreshed!));
+      }
+    } catch (e) {
+      if (e is ApiException) {
+        emit(CategoriaError(e, TipoOperacion.cargar));
+      }
+    }
+  }
+
+  Future<void> _onCreate(
+    CategoriaCreateEvent event,
+    Emitter<CategoriaState> emit,
+  ) async {
+    // Guardar el estado actual para no perder las categorías ya cargadas
+    List<Categoria> categoriasActuales = [];
+    if (state is CategoriaLoaded) {
+      categoriasActuales = [...(state as CategoriaLoaded).categorias];
+    }
+    emit(CategoriaLoading());
+    try {
+      final categoriaCreada = await _categoriaRepository.crearCategoria(
+        event.categoria,
+      );
+      //Agrega al final la categoría creada
+      final categoriasActualizadas = [...categoriasActuales, categoriaCreada];
+      emit(CategoriaCreated(categoriasActualizadas, DateTime.now()));
+    } catch (e) {
+      if (e is ApiException) {
+        emit(CategoriaError(e, TipoOperacion.crear));
+      }
+    }
+  }
+
+  Future<void> _onUpdate(
+    CategoriaUpdateEvent event,
+    Emitter<CategoriaState> emit,
+  ) async {
+    List<Categoria> categoriasActuales = [];
+    if (state is CategoriaLoaded) {
+      categoriasActuales = [...(state as CategoriaLoaded).categorias];
+    }
+    emit(CategoriaLoading());
+
+    try {
+      final categoriaActualizada = await _categoriaRepository
+          .actualizarCategoria(event.categoria);
+
+      // Reemplazar la categoría con el mismo ID por la versión actualizada
+      final categoriasActualizadas =
+          categoriasActuales.map((categoria) {
+            // Si encuentra la categoría con el mismo ID, devuelve la versión actualizada
+            if (categoria.id == categoriaActualizada.id) {
+              return categoriaActualizada;
+            }
+            // De lo contrario, mantiene la categoría original
+            return categoria;
+          }).toList();
+
+      emit(CategoriaUpdated(categoriasActualizadas, DateTime.now()));
+    } catch (e) {
+      if (e is ApiException) {
+        emit(CategoriaError(e, TipoOperacion.actualizar));
+      }
+    }
+  }
+
+  Future<void> _onDelete(
+    CategoriaDeleteEvent event,
+    Emitter<CategoriaState> emit,
+  ) async {
+    List<Categoria> categoriasActuales = [];
+    if (state is CategoriaLoaded) {
+      categoriasActuales = [...(state as CategoriaLoaded).categorias];
+    }
+    emit(CategoriaLoading());
+
+    try {
+      await _categoriaRepository.eliminarCategoria(event.id);
+
+      // Filtrar la lista de categorías para quitar la categoría eliminada
+      final categoriasActualizadas =
+          categoriasActuales
+              .where((categoria) => categoria.id != event.id)
+              .toList();
+
+      emit(CategoriaDeleted(categoriasActualizadas, DateTime.now()));
+    } catch (e) {
+      if (e is ApiException) {
+        emit(CategoriaError(e, TipoOperacion.eliminar));
+      }
+    }
+  }
 }

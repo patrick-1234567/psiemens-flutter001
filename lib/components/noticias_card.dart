@@ -1,362 +1,222 @@
 import 'package:flutter/material.dart';
-import 'package:psiemens/constants.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:psiemens/bloc/comentarios/comentario_bloc.dart';
-import 'package:psiemens/bloc/comentarios/comentario_event.dart';
-import 'package:psiemens/bloc/comentarios/comentario_state.dart';
 import 'package:psiemens/bloc/reportes/reportes_bloc.dart';
 import 'package:psiemens/bloc/reportes/reportes_event.dart';
 import 'package:psiemens/bloc/reportes/reportes_state.dart';
-import 'package:psiemens/helpers/categoria_helper.dart';
+import 'package:psiemens/constants.dart';
+import 'package:psiemens/domain/noticia.dart';
+import 'package:intl/intl.dart';
+import 'package:psiemens/views/comentarios/comentarios_screen.dart';
+import 'package:psiemens/components/reporte_dialog.dart';
 import 'package:watch_it/watch_it.dart';
 
-class NoticiaCard extends StatefulWidget {
-  final String? id;
-  final String titulo;
-  final String descripcion;
-  final String fuente;
-  final String publicadaEl;
-  final String imageUrl;
-  final String categoriaId;
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
-  final VoidCallback onComment;
-  final VoidCallback onReport;
-  final String categoriaNombre;
-  
+class NoticiaCard extends StatelessWidget {
+  final Noticia noticia;
+  final VoidCallback onEdit; // Callback para editar la noticia
+  final String
+  categoriaNombre; // Nuevo parámetro para mostrar el nombre de la categoría
+  final VoidCallback? onReport; // Callback para reportar la noticia
+
   const NoticiaCard({
     super.key,
-    this.id,
-    required this.titulo,
-    required this.descripcion,
-    required this.fuente,
-    required this.publicadaEl,
-    required this.imageUrl,
-    required this.categoriaId,
+    required this.noticia,
     required this.onEdit,
-    required this.onDelete,
     required this.categoriaNombre,
-    required this.onComment,
-    required this.onReport,
+    this.onReport,
   });
 
   @override
-  State<NoticiaCard> createState() => _NoticiaCardState();
-}
-
-class _NoticiaCardState extends State<NoticiaCard> {
-  int _numeroComentarios = 0;
-  int _numeroReportes = 0;
-  bool _isLoading = true;
-  bool _tieneReportes = false;
-  final ReporteBloc _reporteBloc = di<ReporteBloc>();
-
-  @override
-  void initState() {
-    super.initState();
-    // Consultar si la noticia tiene reportes
-    if (widget.id != null) {
-      _reporteBloc.add(ReporteGetByNoticiaEvent(noticiaId: widget.id!));
-    }
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    try {
-      if (_isLoading) {
-        if (widget.id != null) {
-          context.read<ComentarioBloc>().add(
-            GetNumeroComentarios(noticiaId: widget.id!),
-          );
-        }
-        _isLoading = false;
-      }
-
-      // Verificar estado de comentarios
-      final comentarioState = context.watch<ComentarioBloc>().state;
-      if (comentarioState is NumeroComentariosLoaded && comentarioState.noticiaId == widget.id) {
-        if (_numeroComentarios != comentarioState.numeroComentarios) {
-          setState(() {
-            _numeroComentarios = comentarioState.numeroComentarios;
-          });
-        }
-      }
-      
-      // Verificar estado de reportes
-      if (widget.id != null) {
-        final reporteState = _reporteBloc.state;
-        if (reporteState is ReportesPorNoticiaLoaded && 
-            reporteState.noticiaId == widget.id) {
-          setState(() {
-            _numeroReportes = reporteState.reportes.length;
-            _tieneReportes = _numeroReportes > 0;
-          });
-        }
-      }
-    } catch (e) {
-      debugPrint('Error al cargar comentarios o reportes: $e');
-    }
-  }
-
-  Future<String> _obtenerNombreCategoria(String categoriaId) async {
-    // Usar el nuevo helper que implementa la caché de categorías
-    return await CategoryHelper.getCategoryName(categoriaId);
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        vertical: NoticiaConstantes.espaciadoAlto,
-        horizontal: 16,
-      ),
-      child: Card(
-        color: Colors.white,
-        elevation: 4,
-        child: Stack(
-          children: [
-            // Badge de reportes si tiene alguno
-            if (_tieneReportes)
-              Positioned(
-                top: 0,
-                right: 0,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.red.shade700,
-                    borderRadius: const BorderRadius.only(
-                      topRight: Radius.circular(8),
-                      bottomLeft: Radius.circular(8),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.warning,
-                        color: Colors.white,
-                        size: 14,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '$_numeroReportes',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            
-            // Contenido normal de la tarjeta
-            Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
+      children: [
+        Card(
+          margin: const EdgeInsets.only(
+            top: 16.0,
+            bottom: 0.0,
+            left: 0.0,
+            right: 0.0,
+          ), // Margen de la tarjeta
+          color: Colors.white,
+          shape: null,
+          elevation: 0.0,
+          child: Column(
+            children: [              Row(
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.titulo,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          widget.fuente,
-                          style: const TextStyle(
-                            fontStyle: FontStyle.italic,
-                            fontWeight: FontWeight.w300,
-                            fontSize: 12,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          widget.descripcion,
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                        const SizedBox(height: 1),
-                        Text(
-                          '${NoticiaConstantes.publicadaEl} ${widget.publicadaEl}',
-                          style: const TextStyle(fontSize: 10, color: Colors.grey),
-                        ),
-                        const SizedBox(height: 1),
-                        FutureBuilder<String>(
-                          future: _obtenerNombreCategoria(widget.categoriaId),
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState ==
-                                ConnectionState.waiting) {
-                              return const Text(
-                                'Cargando...',
-                                style: TextStyle(fontSize: 10, color: Colors.grey),
-                              );
-                            }
-                            if (snapshot.hasError) {
-                              return const Text(
-                                'Error',
-                                style: TextStyle(fontSize: 10, color: Colors.red),
-                              );
-                            }
-                            final categoriaNombre =
-                                snapshot.data ?? 'Sin categoría';
-                            return Text(
-                              'Cat: $categoriaNombre',
-                              style: const TextStyle(
-                                fontSize: 10,
-                                color: Colors.grey,
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 2),
-                  SizedBox(
-                    width: 120, // Mantenemos el ancho para la columna de imagen y botones
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (widget.imageUrl.isNotEmpty)
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(4),
-                            child: Image.network(
-                              widget.imageUrl,
-                              fit: BoxFit.cover,
-                              width: 60,
-                              height: 60,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  width: 60,
-                                  height: 60,
-                                  color: Colors.grey[300],
-                                  child: const Icon(Icons.broken_image, size: 24),
-                                );
-                              },
-                            ),
-                          ),
-                        const SizedBox(height: 8),
-                        // Ajustamos la fila de íconos para evitar overflow
-                        SizedBox(
-                          width: 120,
-                          child: Row(
-                            mainAxisAlignment:
-                                MainAxisAlignment
-                                    .spaceEvenly, // Distribuye el espacio uniformemente
-                            mainAxisSize:
-                                MainAxisSize.max, // Ocupa todo el ancho disponible
-                            children: [
-                              // Botón de comentarios - más compacto
-                              InkWell(
-                                onTap: widget.onComment,
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      '$_numeroComentarios',
-                                      style: const TextStyle(
-                                        fontSize: 15, // Reducimos tamaño de fuente
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 4),
-
-                                    Icon(
-                                      Icons.comment,
-                                      size: 24, // Reducimos más el tamaño del ícono
-                                      color: Theme.of(context).primaryColor,
-                                    ),
-                                    const SizedBox(width: 8),
-                                  ],
-                                ),
-                              ),
-
-                              // Botón de reporte - más compacto
-                              GestureDetector(
-                                onTap: widget.onReport,
-                                child: Icon(
-                                  Icons.report,
-                                  size: 24, // Tamaño reducido
-                                  color: _tieneReportes ? Colors.red : Colors.amber,
-                                ),
-                              ),
-
-                              // Menú de tres puntos - más compacto
-                              PopupMenuButton<String>(
-                                icon: const Icon(
-                                  Icons.more_vert,
-                                  size: 24, // Tamaño reducido
-                                ),
-                                padding: EdgeInsets.zero,
-                                iconSize:
-                                    18, // Establecemos el tamaño explícitamente
-                                itemBuilder:
-                                    (BuildContext context) => [
-                                      const PopupMenuItem<String>(
-                                        value: 'edit',
-                                        child: Row(
-                                          children: [
-                                            Icon(
-                                              Icons.edit,
-                                              color: Colors.blue,
-                                              size: 18,
-                                            ),
-                                            SizedBox(width: 4),
-                                            Text(
-                                              'Editar',
-                                              style: TextStyle(fontSize: 14),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      const PopupMenuItem<String>(
-                                        value: 'delete',
-                                        child: Row(
-                                          children: [
-                                            Icon(
-                                              Icons.delete,
-                                              color: Colors.red,
-                                              size: 18,
-                                            ),
-                                            SizedBox(width: 4),
-                                            Text(
-                                              'Eliminar',
-                                              style: TextStyle(fontSize: 14),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                onSelected: (String value) {
-                                  if (value == 'edit') {
-                                    widget.onEdit();
-                                  } else if (value == 'delete') {
-                                    widget.onDelete();
-                                  }
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                  Icon(Icons.category, size: 14, color: Colors.grey[600]),
+                  const SizedBox(width: 4),
+                  Text(
+                    categoriaNombre,
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
               ),
-            ),
-          ],
+              // Primera fila: Texto y la imagen
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Columna para el texto (2/3 del ancho)
+                    Expanded(
+                      flex: 2,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            noticia.titulo,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8.0),
+                          Text(
+                            noticia.descripcion,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 6.0),
+                          Text(
+                            noticia.fuente,
+                            style: const TextStyle(
+                              fontStyle: FontStyle.italic,
+                              fontSize: 12,
+                            ),
+                          ),
+                          const SizedBox(height: 4.0),
+                          Text(
+                            _formatDate(noticia.publicadaEl),
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 30),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(16.0),
+                      child: Image.network(
+                        noticia.urlImagen.isNotEmpty
+                            ? noticia.urlImagen
+                            : 'https://via.placeholder.com/100', // Imagen por defecto si no hay URL
+                        height: 80, // Altura de la imagen
+                        width: 100,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          // Widget alternativo cuando la imagen no carga
+                          return Container(
+                            height: 80,
+                            width: 100,
+                            color: Colors.grey[300], // Fondo gris claro
+                            child: const Icon(
+                              Icons.broken_image, // Ícono de imagen rota
+                              color: Colors.grey,
+                              size: 40,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),              Row(
+                mainAxisAlignment:
+                    MainAxisAlignment.end, // Alinea los botones al final
+                children: [                  IconButton(
+                    icon: const Icon(Icons.comment),
+                    onPressed: () {
+                      // Navegar a la vista de comentarios
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder:
+                              (context) => ComentariosScreen(
+                                noticiaId: noticia.id!,
+                                noticiaTitulo: noticia.titulo,
+                              ),
+                        ),
+                      );                    },
+                    tooltip: 'Ver comentarios',
+                  ),                  // Botón de reportar con ícono de warning
+                  BlocProvider(
+                    create: (context) => di<ReporteBloc>()..add(CargarEstadisticasReporte(noticiaId: noticia.id!)),
+                    child: BlocBuilder<ReporteBloc, ReporteState>(
+                      builder: (context, state) {
+                        // Calcular el total de reportes
+                        int totalReportes = 0;
+                        bool isLoading = state is ReporteLoading;
+                        
+                        if (state is ReporteEstadisticasLoaded && state.noticiaId == noticia.id) {
+                          // Sumar todos los reportes de diferentes tipos
+                          totalReportes = state.estadisticas.values.fold(0, (sum, value) => sum + value);
+                        }
+                        
+                        // Determinar el color basado en el número de reportes
+                        Color iconColor;
+                        
+                        if (totalReportes == 0) {
+                          iconColor = Colors.grey;
+                        } else if (totalReportes < 5) {
+                          iconColor = Colors.orange;
+                        } else {
+                          iconColor = Colors.red;
+                        }
+                        
+                        return IconButton(
+                          icon: Icon(
+                            Icons.warning,
+                            color: iconColor,
+                          ),
+                          onPressed: isLoading ? null : () {
+                            if (onReport != null) {
+                              onReport!();
+                            } else {
+                              ReporteDialog.mostrarDialogoReporte(
+                                context: context,
+                                noticiaId: noticia.id!,
+                              );
+                            }
+                          },
+                          tooltip: 'Reportar noticia',
+                        );
+                      },
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.edit),
+                    onPressed: () {
+                      // Acción para mostrar más opciones
+                      onEdit();
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
-      ),
+        const Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: 17.0,
+            vertical: 0.0,
+          ), // Padding horizontal de 16
+          child: Divider(color: Colors.grey),
+        ),
+      ],
     );
+  }
+
+  String _formatDate(DateTime date) {
+    return DateFormat(AppConstants.formatoFecha).format(date);
   }
 }

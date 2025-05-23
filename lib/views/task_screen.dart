@@ -195,7 +195,7 @@ void _showTaskModal(BuildContext context) {
                     if (titleController.text.isNotEmpty) {
                       try {
                         final int numeroDePasos = 2;
-                        final pasos = _taskService.obtenerPasos(
+                        final pasos = await _taskService.obtenerPasos(
                           titleController.text,
                           selectedDate!,
                           numeroDePasos,
@@ -323,7 +323,7 @@ void _showTaskOptionsModal(BuildContext context, int index) {
                         '${pickedDate.day.toString().padLeft(2, '0')}/${pickedDate.month.toString().padLeft(2, '0')}/${pickedDate.year}';
 
                     final int numeroDePasos = 2;
-                    final updatedSteps = _taskService.obtenerPasos(task.titulo, selectedDate!, numeroDePasos);
+                    final updatedSteps = await _taskService.obtenerPasos(task.titulo, selectedDate!, numeroDePasos);
                     stepsController.text = updatedSteps.join('\n'); 
                   }
                 },

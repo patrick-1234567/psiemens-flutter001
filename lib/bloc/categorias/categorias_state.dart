@@ -1,67 +1,51 @@
 import 'package:equatable/equatable.dart';
 import 'package:psiemens/domain/categoria.dart';
- 
+import 'package:psiemens/exceptions/api_exception.dart';
+
 abstract class CategoriaState extends Equatable {
   @override
   List<Object?> get props => [];
 }
- 
-class CategoriaInitial extends CategoriaState {
-  @override
-  List<Object> get props => [];
-}
- 
+
+class CategoriaInitial extends CategoriaState {}
+
+enum TipoOperacion { cargar, crear, actualizar, eliminar }
+
 class CategoriaError extends CategoriaState {
-  final String message;
- 
-  CategoriaError(this.message, {int? statusCode});
- 
+  final ApiException error;
+  final TipoOperacion tipoOperacion;
+
+  CategoriaError(this.error, this.tipoOperacion);
+
   @override
-  List<Object> get props => [message];
+  List<Object?> get props => [error, tipoOperacion];
 }
- 
+
 class CategoriaLoading extends CategoriaState {}
- 
+
 class CategoriaLoaded extends CategoriaState {
   final List<Categoria> categorias;
-  final DateTime timestamp;
+  final DateTime lastUpdated;
 
-  CategoriaLoaded(this.categorias, this.timestamp);
+  CategoriaLoaded(this.categorias, this.lastUpdated);
 
   @override
-  List<Object> get props => [categorias, timestamp];
+  List<Object?> get props => [categorias, lastUpdated];
 }
 
-// Estados para operaciones específicas
-class CategoriaCreating extends CategoriaState {}
-
-class CategoriaCreated extends CategoriaState {
-  final Categoria categoria;
-  
-  CategoriaCreated(this.categoria);
-  
-  @override
-  List<Object> get props => [categoria];
+class CategoriaCreated extends CategoriaLoaded {
+  CategoriaCreated(super.categorias, super.lastUpdated);
 }
 
-class CategoriaUpdating extends CategoriaState {}
-
-class CategoriaUpdated extends CategoriaState {
-  final Categoria categoria;
-  
-  CategoriaUpdated(this.categoria);
-  
-  @override
-  List<Object> get props => [categoria];
+class CategoriaUpdated extends CategoriaLoaded {
+  CategoriaUpdated(super.categorias, super.lastUpdated);
 }
 
-class CategoriaDeleting extends CategoriaState {}
+class CategoriaDeleted extends CategoriaLoaded {
+  CategoriaDeleted(super.categorias, super.lastUpdated);
+}
 
-class CategoriaDeleted extends CategoriaState {
-  final String id;
-  
-  CategoriaDeleted(this.id);
-  
-  @override
-  List<Object> get props => [id];
+/// Estado especial para cuando se recarga la caché forzadamente
+class CategoriaReloaded extends CategoriaLoaded {
+  CategoriaReloaded(super.categorias, super.lastUpdated);
 }

@@ -1,18 +1,40 @@
 import 'package:psiemens/domain/task.dart';
 import 'package:psiemens/data/api_repository.dart'; 
+import 'package:psiemens/data/base_repository.dart';
+import 'package:psiemens/exceptions/api_exception.dart';
 import 'dart:math';
 import 'dart:async';
-class TaskRepository {
-  final ApiRepository apiRepository = ApiRepository(); 
+
+class TaskRepository extends CacheableRepository<Task> {
+  final ApiRepository apiRepository = ApiRepository();
   final Random random = Random();
-  Future<List<Task>> getTasks() async {
+  
+  // Caché por páginas para evitar recargar tareas ya obtenidas
+  final Map<String, List<Task>> _tareasPaginadas = {};
+  
+  @override
+  void validarEntidad(Task task) {
+    validarNoVacio(task.titulo, 'título de la tarea');
+    validarNoVacio(task.descripcion, 'descripción de la tarea');
+    validarNoVacio(task.tipo, 'tipo de la tarea');
+    
+    // Validar que la fecha límite no esté en el pasado
+    if (task.fechaLimite.isBefore(DateTime.now())) {
+      throw ApiException('La fecha límite no puede estar en el pasado', statusCode: 400);
+    }
+  }
+  
+  @override
+  Future<List<Task>> cargarDatos() async {
+    // Simular delay de carga de datos
     await Future.delayed(const Duration(seconds: 2));
+    
     return [
       Task(
         titulo: 'Tarea 1',
         tipo: 'urgente',
         descripcion: 'Descripción de la tarea 1',
-        fechaLimite: DateTime(2025, 4, 10), //Modificacion 1.3
+        fechaLimite: DateTime(2025, 4, 10),
         pasos: [],
       ),
       Task(
@@ -45,20 +67,58 @@ class TaskRepository {
       ),
     ];
   }
+  
+  /// Obtiene tareas con caché incorporado
+  Future<List<Task>> getTasks() async {
+    return obtenerDatos();
+  }
+  /// Obtiene más tareas paginadas con caché por página
+  Future<List<Task>> getMoreTasks({int offset = 0, int limit = 5}) async {
+    return manejarExcepcion(() async {
+      final cacheKey = 'tasks_offset_${offset}_limit_$limit';
+      
+      // Si ya tenemos la caché para esta página, la usamos
+      if (_tareasPaginadas.containsKey(cacheKey)) {
+        return _tareasPaginadas[cacheKey]!;
+      }
 
- Future<List<Task>>getMoreTasks({int offset = 0, int limit = 5}) async {
-    await Future.delayed(const Duration(seconds: 2));// Simula la obtención de más tareas
-    return List.generate(limit, (index) {
-      final taskNumber = offset + index + 1;
-      final fechaLimite = DateTime.now().add(Duration(days: random.nextInt(5) + 1));
-      final numeroDePasos = random.nextInt(5) + 3;
-      return Task(
-        titulo: 'Tarea $taskNumber',
-        tipo: taskNumber % 2 == 0 ? 'normal' : 'urgente',
-        descripcion: 'Descripción de la tarea $taskNumber',
-        fechaLimite: fechaLimite,
-        pasos: apiRepository.obtenerPasos('Tarea $taskNumber', fechaLimite, numeroDePasos), 
-      );
-    });
+      // Simular delay de carga de datos
+      await Future.delayed(const Duration(seconds: 2));
+      
+      final List<Task> tasks = [];
+      
+      for (int i = 0; i < limit; i++) {
+        final taskNumber = offset + i + 1;
+        final fechaLimite = DateTime.now().add(Duration(days: random.nextInt(5) + 1));
+        final numeroDePasos = random.nextInt(5) + 3;
+        
+        // Obtener los pasos de manera asíncrona
+        final pasos = await apiRepository.obtenerPasos(
+          'Tarea $taskNumber', 
+          fechaLimite, 
+          numeroDePasos
+        );
+        
+        tasks.add(Task(
+          titulo: 'Tarea $taskNumber',
+          tipo: taskNumber % 2 == 0 ? 'normal' : 'urgente',
+          descripcion: 'Descripción de la tarea $taskNumber',
+          fechaLimite: fechaLimite,
+          pasos: pasos, 
+        ));
+      }
+      
+      // Almacenamos en la caché por página
+      _tareasPaginadas[cacheKey] = tasks;
+      
+      return tasks;
+    }, mensajeError: 'Error al obtener más tareas');
+  }
+  
+  /// Invalida toda la caché de tareas
+  @override
+  void invalidarCache() {
+    super.invalidarCache();
+    _tareasPaginadas.clear();
   }
 }

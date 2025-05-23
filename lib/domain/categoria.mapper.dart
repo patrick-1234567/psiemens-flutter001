@@ -27,9 +27,9 @@ class CategoriaMapper extends ClassMapperBase<Categoria> {
   static String _$descripcion(Categoria v) => v.descripcion;
   static const Field<Categoria, String> _f$descripcion =
       Field('descripcion', _$descripcion);
-  static String? _$imagenUrl(Categoria v) => v.imagenUrl;
+  static String _$imagenUrl(Categoria v) => v.imagenUrl;
   static const Field<Categoria, String> _f$imagenUrl =
-      Field('imagenUrl', _$imagenUrl, opt: true);
+      Field('imagenUrl', _$imagenUrl);
 
   @override
   final MappableFields<Categoria> fields = const {
@@ -115,12 +115,12 @@ class _CategoriaCopyWithImpl<$R, $Out>
           {Object? id = $none,
           String? nombre,
           String? descripcion,
-          Object? imagenUrl = $none}) =>
+          String? imagenUrl}) =>
       $apply(FieldCopyWithData({
         if (id != $none) #id: id,
         if (nombre != null) #nombre: nombre,
         if (descripcion != null) #descripcion: descripcion,
-        if (imagenUrl != $none) #imagenUrl: imagenUrl
+        if (imagenUrl != null) #imagenUrl: imagenUrl
       }));
   @override
   Categoria $make(CopyWithData data) => Categoria(

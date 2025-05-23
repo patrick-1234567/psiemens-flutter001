@@ -11,14 +11,13 @@ class TaskService {
   TaskService(this._repository, this._apiRepository);
 
   final List<Task> _tasks = [];
-
   Future<List<Task>> getTasksWithSteps() async {
     final tasks = await _repository.getTasks();
 
     final updatedTasks = await Future.wait(tasks.map((task) async {
       try {
-        // Elimina el 'await' si obtenerPasos no es asíncrono
-        var pasos = _apiRepository.obtenerPasos(task.titulo, task.fechaLimite, 2);
+        // Ahora obtenerPasos es asíncrono
+        var pasos = await _apiRepository.obtenerPasos(task.titulo, task.fechaLimite, 2);
         pasos = pasos.take(2).toList();
         return Task(
           titulo: task.titulo,
@@ -35,14 +34,13 @@ class TaskService {
 
     return updatedTasks;
   }
-
   Future<List<Task>> getMoreTaskWithSteps(int offset) async {
     final tasks = await _repository.getMoreTasks(offset: offset, limit: 5);
 
     final updatedTasks = await Future.wait(tasks.map((task) async {
       try {
-        // Elimina el 'await' si obtenerPasos no es asíncrono
-        var pasos = _apiRepository.obtenerPasos(task.titulo, task.fechaLimite, 2);
+        // Ahora obtenerPasos es asíncrono y debemos usar await
+        var pasos = await _apiRepository.obtenerPasos(task.titulo, task.fechaLimite, 2);
         pasos = pasos.take(2).toList();
         return Task(
           titulo: task.titulo,
@@ -60,9 +58,8 @@ class TaskService {
     return updatedTasks;
   }
 
-
-  List<String> obtenerPasos(String titulo, DateTime fecha, int numeroDePasos) {
-    return _apiRepository.obtenerPasos(titulo, fecha, numeroDePasos);
+  Future<List<String>> obtenerPasos(String titulo, DateTime fecha, int numeroDePasos) async {
+    return await _apiRepository.obtenerPasos(titulo, fecha, numeroDePasos);
   }
 
   bool updateTask(int index, {String? title, String? type, String? description, DateTime? date}) {
