@@ -8,46 +8,27 @@ import 'package:psiemens/helpers/shared_preferences_service.dart';
 import 'package:watch_it/watch_it.dart';
 
 class TareasRepository extends BaseRepository<Tarea> {
-  final TareaService _tareaService;
-  final SecureStorageService _secureStorage;
-  final SharedPreferencesService _sharedPreferences;
-
-  TareasRepository({
-    TareaService? tareaService,
-    SecureStorageService? secureStorage,
-    SharedPreferencesService? sharedPreferences,
-  }) : _tareaService = tareaService ?? di<TareaService>(),
-       _secureStorage = secureStorage ?? di<SecureStorageService>(),
-       _sharedPreferences = sharedPreferences ?? di<SharedPreferencesService>() {
-    _initUsuarioAutenticado();
-  }
+  
+  final _tareaService = di<TareaService>();
+  final _secureStorage = di<SecureStorageService>();
+  final _sharedPreferences = di<SharedPreferencesService>();
+  
+  TareasRepository();
 
   // Definimos una clave constante para almacenar/recuperar las tareas en caché
   static const String _tareasCacheKey = 'tareas_cache_prefs';
-  String? _usuarioAutenticado;
+  String? usuarioAutenticado;
 
   // Funciones auxiliares para mapear objetos
   TareaCachePrefs _fromJson(Map<String, dynamic> json) =>
       TareaCachePrefsMapper.fromMap(json);
   Map<String, dynamic> _toJson(TareaCachePrefs cache) => cache.toMap();
 
-  Future<String> get usuarioAutenticado async {
-    if (_usuarioAutenticado == null) {
-      _usuarioAutenticado = await _secureStorage.getUserEmail();
-      if (_usuarioAutenticado == null) {
-        throw Exception('Usuario no autenticado');
-      }
-    }
-    return _usuarioAutenticado!;
-  }
 
   //Trae el usuario autenticado desde el secure storage
-  Future<void> _initUsuarioAutenticado() async {
-    try {
-      await usuarioAutenticado; // Esto inicializará el usuario
-    } catch (e) {
-      // Manejar el error si es necesario
-    }
+  Future<String> _obtenerUsuarioAutenticado() async {
+    usuarioAutenticado ??= await _secureStorage.getUserEmail();
+    return usuarioAutenticado!;
   }
 
   /// Valida los campos de la entidad Tarea
@@ -70,9 +51,10 @@ class TareasRepository extends BaseRepository<Tarea> {
 
   /// Guarda una lista de tareas en la caché
   Future<bool> _guardarEnCache(List<Tarea> tareas) async {
+    final usuario = await _obtenerUsuarioAutenticado();
     return _sharedPreferences.saveObject<TareaCachePrefs>(
       key: _tareasCacheKey,
-      value: TareaCachePrefs(usuario: _usuarioAutenticado!, misTareas: tareas),
+      value: TareaCachePrefs(usuario: usuario, misTareas: tareas),
       toJson: _toJson,
     );
   }
@@ -106,28 +88,29 @@ class TareasRepository extends BaseRepository<Tarea> {
   Future<List<Tarea>> obtenerTareas({bool forzarRecarga = false}) async {
     return manejarExcepcion(() async {
       List<Tarea> tareas = [];
+      final usuario = await _obtenerUsuarioAutenticado();
 
       // Obtenemos el objeto desde SharedPreferences con un valor por defecto
       TareaCachePrefs? tareasCache = await _obtenerCache(
         defaultValue: TareaCachePrefs(
-          usuario: _usuarioAutenticado!,
+          usuario: usuario,
           misTareas: tareas,
         ),
       );
 
       // Si no coincide el usuario actual con el de la caché, invalidamos la caché
-      if (_usuarioAutenticado != tareasCache?.usuario) {
+      if (usuario != tareasCache?.usuario) {
         await _sharedPreferences.remove(_tareasCacheKey);
         tareasCache = null;
       }
 
       // Si se fuerza la recarga, ignoramos la caché
       // Si no esta forzada la recarga y tenemos datos en caché, los usamos
-      if (forzarRecarga != true && tareasCache != null) {
+      if (forzarRecarga != true && tareasCache != null  && tareasCache.misTareas.isNotEmpty) {
         tareas = tareasCache.misTareas;
       } else {
         // Si no hay caché, cargamos desde la API
-        tareas = await obtenerTareasUsuario(_usuarioAutenticado!);
+        tareas = await obtenerTareasUsuario(usuario);
         await _guardarEnCache(tareas);
       }
       return tareas;
@@ -138,11 +121,12 @@ class TareasRepository extends BaseRepository<Tarea> {
   Future<Tarea> agregarTarea(Tarea tarea) async {
     return manejarExcepcion(() async {
       validarEntidad(tarea);
+      final usuario = await _obtenerUsuarioAutenticado();
 
       // Verificamos si ya tiene email, de lo contrario lo obtenemos
       final tareaConEmail =
           (tarea.usuario.isEmpty)
-              ? tarea.copyWith(usuario: _usuarioAutenticado!)
+              ? tarea.copyWith(usuario: usuario)
               : tarea;
 
       // Enviamos la tarea a la API
@@ -196,5 +180,9 @@ class TareasRepository extends BaseRepository<Tarea> {
       });
       return tareaActualizada;
     }, mensajeError: AppConstants.errorActualizar);
+  }
+
+  Future<void> limpiarCache() async {
+    usuarioAutenticado = null;
   }
 }

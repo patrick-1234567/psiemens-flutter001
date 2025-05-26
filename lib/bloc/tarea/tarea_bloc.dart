@@ -8,12 +8,11 @@ import 'package:watch_it/watch_it.dart';
 class TareaBloc extends Bloc<TareaEvent, TareaState> {
   final TareasRepository _tareaRepository;
 
-   TareaBloc() : _tareaRepository = di<TareasRepository>(), super(TareaInitial()) {
+  TareaBloc() : _tareaRepository = di<TareasRepository>(), super(TareaInitial()) {
     on<LoadTareasEvent>(_onLoadTareas);
-     // on<LoadMoreTareasEvent>(_onLoadMoreTareas);
-    // on<CreateTareaEvent>(_onCreateTarea);
-    // on<UpdateTareaEvent>(_onUpdateTarea);
-    // on<DeleteTareaEvent>(_onDeleteTarea);
+    on<CreateTareaEvent>(_onCreateTarea);
+    on<UpdateTareaEvent>(_onUpdateTarea);
+    on<DeleteTareaEvent>(_onDeleteTarea);
   }
 
   Future<void> _onLoadTareas(
@@ -33,5 +32,45 @@ class TareaBloc extends Bloc<TareaEvent, TareaState> {
     }
   }
 
-  // Implementar los demás métodos _on... para cada evento
+  Future<void> _onCreateTarea(
+    CreateTareaEvent event,
+    Emitter<TareaState> emit,
+  ) async {
+    emit(TareaLoading());
+    try {
+      await _tareaRepository.agregarTarea(event.tarea);
+      final tareas = await _tareaRepository.obtenerTareas();
+      emit(TareaCreated(tareas, TipoOperacionTarea.crear, 'Tarea creada correctamente'));
+    } catch (e) {
+      emit(TareaError(e is ApiException ? e : ApiException(e.toString())));
+    }
+  }
+
+  Future<void> _onUpdateTarea(
+    UpdateTareaEvent event,
+    Emitter<TareaState> emit,
+  ) async {
+    emit(TareaLoading());
+    try {
+      await _tareaRepository.actualizarTarea(event.tarea);
+      final tareas = await _tareaRepository.obtenerTareas();
+      emit(TareaUpdated(tareas, TipoOperacionTarea.editar, 'Tarea actualizada correctamente'));
+    } catch (e) {
+      emit(TareaError(e is ApiException ? e : ApiException(e.toString())));
+    }
+  }
+
+  Future<void> _onDeleteTarea(
+    DeleteTareaEvent event,
+    Emitter<TareaState> emit,
+  ) async {
+    emit(TareaLoading());
+    try {
+      await _tareaRepository.eliminarTarea(event.id);
+      final tareas = await _tareaRepository.obtenerTareas();
+      emit(TareaDeleted(tareas, TipoOperacionTarea.eliminar, 'Tarea eliminada correctamente'));
+    } catch (e) {
+      emit(TareaError(e is ApiException ? e : ApiException(e.toString())));
+    }
+  }
 }

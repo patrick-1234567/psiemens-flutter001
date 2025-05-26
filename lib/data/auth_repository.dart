@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:psiemens/api/service/auth_service.dart';
 import 'package:psiemens/data/preferencia_repository.dart';
+import 'package:psiemens/data/task_repository.dart';
 import 'package:psiemens/domain/login_request.dart';
 import 'package:psiemens/domain/login_response.dart';
 import 'package:psiemens/helpers/secure_storage_service.dart';
@@ -8,6 +9,7 @@ import 'package:watch_it/watch_it.dart';
 
 class AuthRepository {
   final AuthService _authService = AuthService();
+  final _tareaRepository = di<TareasRepository>();
   final SecureStorageService _secureStorage = SecureStorageService();  // Login user and store JWT token
   Future<bool> login(String email, String password) async {
     try {
@@ -42,6 +44,7 @@ class AuthRepository {
     // Limpiar la caché de preferencias antes de limpiar el token
     final preferenciaRepository = di<PreferenciaRepository>();
     preferenciaRepository.invalidarCache();
+    _tareaRepository.limpiarCache();
     
     // Limpiar tokens y datos de sesión
     await _secureStorage.clearJwt();
