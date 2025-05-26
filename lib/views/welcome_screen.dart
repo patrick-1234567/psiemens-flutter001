@@ -39,7 +39,7 @@ class WelcomeScreen extends StatelessWidget {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const TaskScreen()),
+                  MaterialPageRoute(builder: (context) => const TareaScreen()),
                 );
               },
             ),

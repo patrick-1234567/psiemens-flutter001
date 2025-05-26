@@ -6,44 +6,41 @@
 
 part of 'task.dart';
 
-class TaskMapper extends ClassMapperBase<Task> {
-  TaskMapper._();
+class TareaMapper extends ClassMapperBase<Tarea> {
+  TareaMapper._();
 
-  static TaskMapper? _instance;
-  static TaskMapper ensureInitialized() {
+  static TareaMapper? _instance;
+  static TareaMapper ensureInitialized() {
     if (_instance == null) {
-      MapperContainer.globals.use(_instance = TaskMapper._());
+      MapperContainer.globals.use(_instance = TareaMapper._());
     }
     return _instance!;
   }
 
   @override
-  final String id = 'Task';
+  final String id = 'Tarea';
 
-  static String? _$id(Task v) => v.id;
-  static const Field<Task, String> _f$id = Field('id', _$id, opt: true);
-  static String _$usuario(Task v) => v.usuario;
-  static const Field<Task, String> _f$usuario = Field('usuario', _$usuario);
-  static String _$titulo(Task v) => v.titulo;
-  static const Field<Task, String> _f$titulo = Field('titulo', _$titulo);
-  static String _$tipo(Task v) => v.tipo;
-  static const Field<Task, String> _f$tipo =
+  static String? _$id(Tarea v) => v.id;
+  static const Field<Tarea, String> _f$id = Field('id', _$id, opt: true);
+  static String _$usuario(Tarea v) => v.usuario;
+  static const Field<Tarea, String> _f$usuario = Field('usuario', _$usuario);
+  static String _$titulo(Tarea v) => v.titulo;
+  static const Field<Tarea, String> _f$titulo = Field('titulo', _$titulo);
+  static String _$tipo(Tarea v) => v.tipo;
+  static const Field<Tarea, String> _f$tipo =
       Field('tipo', _$tipo, opt: true, def: 'normal');
-  static String? _$descripcion(Task v) => v.descripcion;
-  static const Field<Task, String> _f$descripcion =
+  static String? _$descripcion(Tarea v) => v.descripcion;
+  static const Field<Tarea, String> _f$descripcion =
       Field('descripcion', _$descripcion, opt: true);
-  static DateTime? _$fecha(Task v) => v.fecha;
-  static const Field<Task, DateTime> _f$fecha =
+  static DateTime? _$fecha(Tarea v) => v.fecha;
+  static const Field<Tarea, DateTime> _f$fecha =
       Field('fecha', _$fecha, opt: true);
-  static DateTime? _$fechaLimite(Task v) => v.fechaLimite;
-  static const Field<Task, DateTime> _f$fechaLimite =
+  static DateTime? _$fechaLimite(Tarea v) => v.fechaLimite;
+  static const Field<Tarea, DateTime> _f$fechaLimite =
       Field('fechaLimite', _$fechaLimite, opt: true);
-  static List<String>? _$pasos(Task v) => v.pasos;
-  static const Field<Task, List<String>> _f$pasos =
-      Field('pasos', _$pasos, opt: true);
 
   @override
-  final MappableFields<Task> fields = const {
+  final MappableFields<Tarea> fields = const {
     #id: _f$id,
     #usuario: _f$usuario,
     #titulo: _f$titulo,
@@ -51,68 +48,65 @@ class TaskMapper extends ClassMapperBase<Task> {
     #descripcion: _f$descripcion,
     #fecha: _f$fecha,
     #fechaLimite: _f$fechaLimite,
-    #pasos: _f$pasos,
   };
 
-  static Task _instantiate(DecodingData data) {
-    return Task(
+  static Tarea _instantiate(DecodingData data) {
+    return Tarea(
         id: data.dec(_f$id),
         usuario: data.dec(_f$usuario),
         titulo: data.dec(_f$titulo),
         tipo: data.dec(_f$tipo),
         descripcion: data.dec(_f$descripcion),
         fecha: data.dec(_f$fecha),
-        fechaLimite: data.dec(_f$fechaLimite),
-        pasos: data.dec(_f$pasos));
+        fechaLimite: data.dec(_f$fechaLimite));
   }
 
   @override
   final Function instantiate = _instantiate;
 
-  static Task fromMap(Map<String, dynamic> map) {
-    return ensureInitialized().decodeMap<Task>(map);
+  static Tarea fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<Tarea>(map);
   }
 
-  static Task fromJson(String json) {
-    return ensureInitialized().decodeJson<Task>(json);
+  static Tarea fromJson(String json) {
+    return ensureInitialized().decodeJson<Tarea>(json);
   }
 }
 
-mixin TaskMappable {
+mixin TareaMappable {
   String toJson() {
-    return TaskMapper.ensureInitialized().encodeJson<Task>(this as Task);
+    return TareaMapper.ensureInitialized().encodeJson<Tarea>(this as Tarea);
   }
 
   Map<String, dynamic> toMap() {
-    return TaskMapper.ensureInitialized().encodeMap<Task>(this as Task);
+    return TareaMapper.ensureInitialized().encodeMap<Tarea>(this as Tarea);
   }
 
-  TaskCopyWith<Task, Task, Task> get copyWith =>
-      _TaskCopyWithImpl<Task, Task>(this as Task, $identity, $identity);
+  TareaCopyWith<Tarea, Tarea, Tarea> get copyWith =>
+      _TareaCopyWithImpl<Tarea, Tarea>(this as Tarea, $identity, $identity);
   @override
   String toString() {
-    return TaskMapper.ensureInitialized().stringifyValue(this as Task);
+    return TareaMapper.ensureInitialized().stringifyValue(this as Tarea);
   }
 
   @override
   bool operator ==(Object other) {
-    return TaskMapper.ensureInitialized().equalsValue(this as Task, other);
+    return TareaMapper.ensureInitialized().equalsValue(this as Tarea, other);
   }
 
   @override
   int get hashCode {
-    return TaskMapper.ensureInitialized().hashValue(this as Task);
+    return TareaMapper.ensureInitialized().hashValue(this as Tarea);
   }
 }
 
-extension TaskValueCopy<$R, $Out> on ObjectCopyWith<$R, Task, $Out> {
-  TaskCopyWith<$R, Task, $Out> get $asTask =>
-      $base.as((v, t, t2) => _TaskCopyWithImpl<$R, $Out>(v, t, t2));
+extension TareaValueCopy<$R, $Out> on ObjectCopyWith<$R, Tarea, $Out> {
+  TareaCopyWith<$R, Tarea, $Out> get $asTarea =>
+      $base.as((v, t, t2) => _TareaCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
-abstract class TaskCopyWith<$R, $In extends Task, $Out>
+abstract class TareaCopyWith<$R, $In extends Tarea, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
-  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>? get pasos;
   $R call(
       {String? id,
       String? usuario,
@@ -120,23 +114,16 @@ abstract class TaskCopyWith<$R, $In extends Task, $Out>
       String? tipo,
       String? descripcion,
       DateTime? fecha,
-      DateTime? fechaLimite,
-      List<String>? pasos});
-  TaskCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
+      DateTime? fechaLimite});
+  TareaCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
 
-class _TaskCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Task, $Out>
-    implements TaskCopyWith<$R, Task, $Out> {
-  _TaskCopyWithImpl(super.value, super.then, super.then2);
+class _TareaCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Tarea, $Out>
+    implements TareaCopyWith<$R, Tarea, $Out> {
+  _TareaCopyWithImpl(super.value, super.then, super.then2);
 
   @override
-  late final ClassMapperBase<Task> $mapper = TaskMapper.ensureInitialized();
-  @override
-  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>? get pasos =>
-      $value.pasos != null
-          ? ListCopyWith($value.pasos!,
-              (v, t) => ObjectCopyWith(v, $identity, t), (v) => call(pasos: v))
-          : null;
+  late final ClassMapperBase<Tarea> $mapper = TareaMapper.ensureInitialized();
   @override
   $R call(
           {Object? id = $none,
@@ -145,8 +132,7 @@ class _TaskCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Task, $Out>
           String? tipo,
           Object? descripcion = $none,
           Object? fecha = $none,
-          Object? fechaLimite = $none,
-          Object? pasos = $none}) =>
+          Object? fechaLimite = $none}) =>
       $apply(FieldCopyWithData({
         if (id != $none) #id: id,
         if (usuario != null) #usuario: usuario,
@@ -154,21 +140,19 @@ class _TaskCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Task, $Out>
         if (tipo != null) #tipo: tipo,
         if (descripcion != $none) #descripcion: descripcion,
         if (fecha != $none) #fecha: fecha,
-        if (fechaLimite != $none) #fechaLimite: fechaLimite,
-        if (pasos != $none) #pasos: pasos
+        if (fechaLimite != $none) #fechaLimite: fechaLimite
       }));
   @override
-  Task $make(CopyWithData data) => Task(
+  Tarea $make(CopyWithData data) => Tarea(
       id: data.get(#id, or: $value.id),
       usuario: data.get(#usuario, or: $value.usuario),
       titulo: data.get(#titulo, or: $value.titulo),
       tipo: data.get(#tipo, or: $value.tipo),
       descripcion: data.get(#descripcion, or: $value.descripcion),
       fecha: data.get(#fecha, or: $value.fecha),
-      fechaLimite: data.get(#fechaLimite, or: $value.fechaLimite),
-      pasos: data.get(#pasos, or: $value.pasos));
+      fechaLimite: data.get(#fechaLimite, or: $value.fechaLimite));
 
   @override
-  TaskCopyWith<$R2, Task, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
-      _TaskCopyWithImpl<$R2, $Out2>($value, $cast, t);
+  TareaCopyWith<$R2, Tarea, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
+      _TareaCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }

@@ -4,12 +4,12 @@ import 'package:psiemens/domain/task.dart';
 part 'task_cache_prefs.mapper.dart';
 
 @MappableClass()
-class TaskCachePrefs with TaskCachePrefsMappable {
-  final String email;
-  final List<Task> misTareas;
+class TareaCachePrefs with TareaCachePrefsMappable {
+  final String usuario;
+  final List<Tarea> misTareas;
 
-  const TaskCachePrefs({
-    required this.email,
+  const TareaCachePrefs({
+    required this.usuario,
     required this.misTareas,
   });
 }

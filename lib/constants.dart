@@ -35,6 +35,10 @@ class AppConstants {
   static const String errorRecuperarRecursos = 'Error al recuperar recursos del servidor';
   static const String errorCriticoServidor = 'Error crítico en el servidor';
   static const String formatoFecha = 'dd/MM/yyyy HH:mm';
+  static const String mensajeError = 'Error al obtener tareas';
+  static const String errorCrear = 'Error al crear la tarea';
+  static const String errorEliminar = 'Error al eliminar la tarea';
+  static const String errorActualizar = 'Error al actualizar la tarea';
 }
 
 class GameConstants {
@@ -77,8 +81,10 @@ class NoticiaConstantes {
 }
 
 class ApiConstantes {
-   static final String newsurl = ApiConfig.beeceptorBaseUrl;
+  static final String newsurl = ApiConfig.beeceptorBaseUrl;
   static const String categoriaEndpoint = '/categorias';
+  static const String tareasCachePrefsEndpoint = '/tareasPreferencias';
+  static const String tareasEndpoint = '/tareas';
   static const int timeoutSeconds = 10; 
   static const String errorTimeout = 'Tiempo de espera agotado'; 
   static const String errorNoCategory = 'Categoría no encontrada'; 
@@ -169,4 +175,23 @@ class ValidacionConstantes {
   static const String descripcionNoticia = 'La descripción de la noticia';
   static const String fuenteNoticia = 'La fuente de la noticia';
   static const String fechaNoticia = 'La fecha de la publicación de la noticia';
+}
+
+class TareasConstantes {
+  static const String tituloAppBar = 'Mis Tareas';
+  static const String listaVacia = 'No hay tareas';
+  static const String tipoTarea = 'Tipo: ';
+  static const String taskTypeNormal = 'normal';
+  static const String taskTypeUrgent = 'urgente';
+  static const String taskDescription = 'Descripción: ';
+  static const String pasosTitulo = 'Pasos para completar: ';
+  static const String fechaLimite = 'Fecha límite: ';
+  static const String tareaEliminada = 'Tarea eliminada';
+  static const int limitePasos = 2;
+  static const int limiteTareas = 10;
+  static const String mensajeError = 'Error al obtener tareas';
+  static const String errorEliminar = 'Error al eliminar la tarea';
+  static const String errorActualizar = 'Error al actualizar la tarea';
+  static const String errorCrear = 'Error al crear la tarea';
+
 }
