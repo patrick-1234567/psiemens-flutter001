@@ -3,6 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:psiemens/bloc/tarea/tarea_bloc.dart';
 import 'package:psiemens/bloc/tarea/tarea_event.dart';
 import 'package:psiemens/bloc/tarea/tarea_state.dart';
+import 'package:psiemens/bloc/tarea_contador/tarea_contador_bloc.dart';
+import 'package:psiemens/bloc/tarea_contador/tarea_contador_event.dart';
+import 'package:psiemens/bloc/tarea_contador/tarea_contador_state.dart';
 import 'package:psiemens/components/add_task_modal.dart';
 import 'package:psiemens/components/custom_bottom_navigation_bar.dart';
 import 'package:psiemens/components/last_updated_header.dart';
@@ -13,6 +16,7 @@ import 'package:psiemens/helpers/dialog_helper.dart';
 import 'package:psiemens/helpers/snackbar_helper.dart';
 import 'package:psiemens/helpers/snackbar_manager.dart';
 import 'package:psiemens/helpers/task_card_helper.dart';
+import 'package:psiemens/views/task_detail_screen.dart';
 
 class TareaScreen extends StatelessWidget {
   const TareaScreen({super.key});
@@ -26,8 +30,15 @@ class TareaScreen extends StatelessWidget {
       }
     });
 
-    return BlocProvider(
-      create: (context) => TareaBloc()..add(LoadTareasEvent()),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<TareaBloc>(
+          create: (context) => TareaBloc()..add(LoadTareasEvent()),
+        ),
+        BlocProvider<TareaContadorBloc>(
+          create: (context) => TareaContadorBloc(),
+        ),
+      ],
       child: const _TareaScreenContent(),
     );
   }
@@ -38,7 +49,7 @@ class _TareaScreenContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<TareaBloc, TareaState>(
+    return BlocListener<TareaBloc, TareaState>(
       listener: (context, state) {
         if (state is TareaError) {
           SnackBarHelper.manejarError(context, state.error);
@@ -50,41 +61,81 @@ class _TareaScreenContent extends StatelessWidget {
             context,
             mensaje: TareasConstantes.listaVacia,
           );
+        } else if (state is TareaCompletada) {
+          // Notificar a TareaContadorBloc si fue marcado o desmarcado
+          if (state.tarea.completada) {
+            context.read<TareaContadorBloc>().add(IncrementarContador());
+            SnackBarHelper.mostrarExito(context, mensaje: '¡Tarea marcada como completada!');
+          } else {
+            context.read<TareaContadorBloc>().add(DecrementarContador());
+            SnackBarHelper.mostrarInfo(context, mensaje: 'Tarea marcada como pendiente.');
+          }
         }
       },
-      builder: (context, state) {
-        DateTime? lastUpdated;
-        if (state is TareaLoaded) {
-          lastUpdated = state.lastUpdated;
-        }
+      child: BlocBuilder<TareaBloc, TareaState>(
+        builder: (context, state) {
+          DateTime? lastUpdated;
+          if (state is TareaLoaded) {
+            lastUpdated = state.lastUpdated;
+          }
 
-        return Scaffold(
-          appBar: AppBar(
-            title: Text(
-              state is TareaLoaded
-                  ? '${TareasConstantes.tituloAppBar} - Total: ${state.tareas.length}'
-                  : TareasConstantes.tituloAppBar,
+          return Scaffold(
+            appBar: AppBar(
+              title: Text(
+                state is TareaLoaded
+                    ? '${TareasConstantes.tituloAppBar} - Total: ${state.tareas.length}'
+                    : TareasConstantes.tituloAppBar,
+              ),
+              centerTitle: true,
             ),
-            centerTitle: true,
-          ),
-          drawer: const SideMenu(),
-          backgroundColor: Colors.grey[200],
-          body: Column(
-            children: [
-              LastUpdatedHeader(lastUpdated: lastUpdated),
-              Expanded(child: _construirCuerpoTareas(context, state)),
-            ],
-          ),
-          floatingActionButton: FloatingActionButton(
-            onPressed: () => _mostrarModalAgregarTarea(context),
-            tooltip: 'Agregar Tarea',
-            child: const Icon(Icons.add),
-          ),
-          bottomNavigationBar: const CustomBottomNavigationBar(
-            selectedIndex: 0,
-          ),
-        );
-      },
+            drawer: const SideMenu(),
+            backgroundColor: Colors.grey[200],
+            body: Column(
+              children: [
+                // Progreso de tareas completadas
+                BlocBuilder<TareaContadorBloc, TareaContadorState>(
+                  builder: (context, contadorState) {
+                    final total = (state is TareaLoaded) ? state.tareas.length : 0;
+                    final completadas = contadorState.completadas;
+                    final porcentaje = (total > 0) ? completadas / total : 0.0;
+                    return Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: LinearProgressIndicator(
+                                  value: porcentaje,
+                                  minHeight: 8,
+                                  backgroundColor: Colors.grey[300],
+                                  color: Colors.green,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Text('$completadas/$total'),
+                            ],
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+                LastUpdatedHeader(lastUpdated: lastUpdated),
+                Expanded(child: _construirCuerpoTareas(context, state)),
+              ],
+            ),
+            floatingActionButton: FloatingActionButton(
+              onPressed: () => _mostrarModalAgregarTarea(context),
+              tooltip: 'Agregar Tarea',
+              child: const Icon(Icons.add),
+            ),
+            bottomNavigationBar: const CustomBottomNavigationBar(
+              selectedIndex: 0,
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -162,7 +213,26 @@ class _TareaScreenContent extends StatelessWidget {
                       child: construirTarjetaDeportiva(
                         tarea,
                         tarea.id!,
-                        () => _mostrarModalEditarTarea(context, tarea)
+                        () => _mostrarModalEditarTarea(context, tarea),
+                        onCompletadaChanged: (checked) {
+                          context.read<TareaBloc>().add(
+                            CompletarTareaEvent(
+                              tarea.copyWith(completada: checked ?? false),
+                              checked ?? false,
+                            ),
+                          );
+                        },
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => TaskDetailsScreen(
+                                tareas: state.tareas,
+                                indice: index,
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     );
                   },

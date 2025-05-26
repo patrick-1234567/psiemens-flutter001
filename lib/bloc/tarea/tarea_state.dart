@@ -63,3 +63,12 @@ class TareaUpdated extends TareaOperationSuccess {
 class TareaDeleted extends TareaOperationSuccess {
   TareaDeleted(super.tareas, super.tipoOperacion, super.mensaje);
 }
+
+/// Estado específico para tarea marcada como completada o no completada
+class TareaCompletada extends TareaState {
+  final Tarea tarea;
+  final bool completada;
+  TareaCompletada(this.tarea, this.completada);
+  @override
+  List<Object?> get props => [tarea, completada];
+}

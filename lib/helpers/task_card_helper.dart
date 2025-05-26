@@ -74,35 +74,45 @@ class CommonWidgetsHelper {
   }
 }
 
-Widget construirTarjetaDeportiva(Tarea tarea, String tareaId, VoidCallback onEdit) {
+Widget construirTarjetaDeportiva(
+  Tarea tarea,
+  String tareaId,
+  VoidCallback onEdit, {
+  ValueChanged<bool?>? onCompletadaChanged,
+  VoidCallback? onTap,
+}) {
   return Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0), // Espaciado entre tarjetas
-    child:ListTile(
-    contentPadding: const EdgeInsets.all(16.0), // Padding interno del ListTile
-    tileColor: Colors.white, // Fondo blanco para el ListTile
-    shape: CommonWidgetsHelper.buildRoundedBorder(),
-    leading: CommonWidgetsHelper.buildLeadingIcon(tarea.tipo), // Ícono dinámico
-    title: CommonWidgetsHelper.buildBoldTitle(tarea.id!), // Título en negrita
-      // subtitle: Column(
-      //   crossAxisAlignment: CrossAxisAlignment.start,
-      //   children: [
-      //     // Text('${TareasConstantes.tipoTarea} ${tarea.type}'), // Muestra el tipo de tarea
-      //     // CommonWidgetsHelper.buildSpacing(),
-      //     // if (tarea.pasos != null && tarea.pasos!.isNotEmpty)
-      //     //     CommonWidgetsHelper.buildInfoLines(
-      //     //       '${TareasConstantes.pasosTitulo} ${tarea.pasos![0]}',
-      //     //     ) // Muestra el primer paso
-      //     // else
-      //       CommonWidgetsHelper.buildNoStepsText(), // Mensaje si no hay pasos
-      //   ],
-      // ),
-      trailing: IconButton(
-        onPressed: onEdit, // Llama a la función de edición
-        icon: const Icon(Icons.edit, size: 16),
-        style: ElevatedButton.styleFrom(                     
-          foregroundColor: Colors.grey, // Color del texto
+    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+    child: ListTile(
+      onTap: onTap,
+      contentPadding: const EdgeInsets.all(16.0),
+      tileColor: Colors.white,
+      shape: CommonWidgetsHelper.buildRoundedBorder(),
+      leading: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Checkbox(
+            value: tarea.completada,
+            onChanged: onCompletadaChanged,
+          ),
+          CommonWidgetsHelper.buildLeadingIcon(tarea.tipo),
+        ],
+      ),
+      title: Text(
+        tarea.titulo,
+        style: TextStyle(
+          fontSize: 22,
+          fontWeight: FontWeight.bold,
+          decoration: tarea.completada ? TextDecoration.lineThrough : null,
         ),
       ),
-    ),        
+      trailing: IconButton(
+        onPressed: onEdit,
+        icon: const Icon(Icons.edit, size: 16),
+        style: ElevatedButton.styleFrom(
+          foregroundColor: Colors.grey,
+        ),
+      ),
+    ),
   );
 }

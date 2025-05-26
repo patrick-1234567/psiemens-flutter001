@@ -13,6 +13,7 @@ class TareaBloc extends Bloc<TareaEvent, TareaState> {
     on<CreateTareaEvent>(_onCreateTarea);
     on<UpdateTareaEvent>(_onUpdateTarea);
     on<DeleteTareaEvent>(_onDeleteTarea);
+    on<CompletarTareaEvent>(_onCompletarTarea);
   }
 
   Future<void> _onLoadTareas(
@@ -69,6 +70,22 @@ class TareaBloc extends Bloc<TareaEvent, TareaState> {
       await _tareaRepository.eliminarTarea(event.id);
       final tareas = await _tareaRepository.obtenerTareas();
       emit(TareaDeleted(tareas, TipoOperacionTarea.eliminar, 'Tarea eliminada correctamente'));
+    } catch (e) {
+      emit(TareaError(e is ApiException ? e : ApiException(e.toString())));
+    }
+  }
+
+  Future<void> _onCompletarTarea(
+    CompletarTareaEvent event,
+    Emitter<TareaState> emit,
+  ) async {
+    try {
+      final tareaActualizada = event.tarea.copyWith(completada: event.completada);
+      final tareaFinal = await _tareaRepository.actualizarTarea(tareaActualizada);
+      emit(TareaCompletada(tareaFinal, event.completada));
+      // Opcional: recargar la lista de tareas
+      final tareas = await _tareaRepository.obtenerTareas();
+      emit(TareaLoaded(tareas: tareas, lastUpdated: DateTime.now()));
     } catch (e) {
       emit(TareaError(e is ApiException ? e : ApiException(e.toString())));
     }
