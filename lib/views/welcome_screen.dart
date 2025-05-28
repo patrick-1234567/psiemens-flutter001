@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:psiemens/views/category_screen.dart';
+import 'package:psiemens/theme/theme.dart';
+import 'package:psiemens/views/acerca_de_screen.dart';
+import 'package:psiemens/views/categoria_screen.dart';
 import 'package:psiemens/views/contador_screen.dart';
 import 'package:psiemens/views/login_screen.dart';
 import 'package:psiemens/views/task_screen.dart';
@@ -15,7 +17,8 @@ class WelcomeScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Patrick Flutter App'),
-        backgroundColor: Colors.blue,
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
       ),
       drawer: Drawer(
         child: ListView(
@@ -23,7 +26,7 @@ class WelcomeScreen extends StatelessWidget {
           children: [
             const DrawerHeader(
               decoration: BoxDecoration(
-                color: Colors.blue,
+                color: AppColors.primary,
               ),
               child: Text(
                 'Menú',
@@ -34,18 +37,18 @@ class WelcomeScreen extends StatelessWidget {
               ),
             ),
             ListTile(
-              leading: const Icon(Icons.list),
-              title: const Text('Lista de Tareas'),
+              leading: const Icon(Icons.list, color: AppColors.primary),
+              title: const Text('Lista de Tareas', style: TextStyle(color: AppColors.primary)),
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const TaskScreen()),
+                  MaterialPageRoute(builder: (context) => const TareaScreen()),
                 );
               },
             ),
             ListTile(
-              leading: const Icon(Icons.countertops),
-              title: const Text('Contador'),
+              leading: const Icon(Icons.countertops, color: AppColors.primary),
+              title: const Text('Contador', style: TextStyle(color: AppColors.primary)),
               onTap: () {
                 Navigator.push(
                   context,
@@ -54,8 +57,8 @@ class WelcomeScreen extends StatelessWidget {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.quiz),
-              title: const Text('Juego de Preguntas'),
+              leading: const Icon(Icons.quiz, color: AppColors.primary),
+              title: const Text('Juego de Preguntas', style: TextStyle(color: AppColors.primary)),
               onTap: () {
                 Navigator.push(
                   context,
@@ -64,8 +67,8 @@ class WelcomeScreen extends StatelessWidget {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.money),
-              title: const Text('Cotizaciones'),
+              leading: const Icon(Icons.money, color: AppColors.primary),
+              title: const Text('Cotizaciones', style: TextStyle(color: AppColors.primary)),
               onTap: () {
                 Navigator.push(
                   context,
@@ -73,9 +76,9 @@ class WelcomeScreen extends StatelessWidget {
                 );
               },
             ),
-             ListTile(
-              leading: const Icon(Icons.newspaper),
-              title: const Text('Noticias'),
+            ListTile(
+              leading: const Icon(Icons.newspaper, color: AppColors.primary),
+              title: const Text('Noticias', style: TextStyle(color: AppColors.primary)),
               onTap: () {
                 Navigator.push(
                   context,
@@ -84,22 +87,32 @@ class WelcomeScreen extends StatelessWidget {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.category),
-              title: const Text('Categorias'),
+              leading: const Icon(Icons.category, color: AppColors.primary),
+              title: const Text('Categorias', style: TextStyle(color: AppColors.primary)),
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const CategoryScreen()),
+                  MaterialPageRoute(builder: (context) => const CategoriaScreen()),
                 );
               },
             ),
             ListTile(
-              leading: const Icon(Icons.logout),
-              title: const Text('Cerrar Sesión'),
+              leading: const Icon(Icons.info, color: AppColors.primary),
+              title: const Text('Acerca de', style: TextStyle(color: AppColors.primary)),
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                  MaterialPageRoute(builder: (context) => const AcercaDeScreen()),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.logout, color: AppColors.primary),
+              title: const Text('Cerrar Sesión', style: TextStyle(color: AppColors.primary)),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => LoginScreen()),
                 );
               },
             ),
@@ -107,14 +120,14 @@ class WelcomeScreen extends StatelessWidget {
         ),
       ),
       body: const Center(
-        child: const Column(
+        child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text(
+            Text(
               '¡Bienvenido! El login fue exitoso.',
-              style: TextStyle(fontSize: 24),
+              style: TextStyle(fontSize: 24, color: AppColors.primary, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
           ],
         ),
       ),

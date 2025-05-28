@@ -1,390 +1,314 @@
-import 'package:psiemens/bloc/comentarios/comentario_bloc.dart';
-import 'package:psiemens/bloc/comentarios/comentario_event.dart';
-import 'package:psiemens/components/reporte_dialog.dart';
-import 'package:psiemens/helpers/categoria_helper.dart';
-import 'package:psiemens/views/comentarios/comentarios_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:psiemens/bloc/bloc%20noticias/noticias_event.dart';
-import 'package:psiemens/bloc/bloc%20noticias/noticias_state.dart';
-import 'package:psiemens/bloc/bloc%20noticias/noticias_bloc.dart';
-import 'package:psiemens/bloc/preferencia/preferencia_bloc.dart';
-import 'package:psiemens/bloc/preferencia/preferencia_event.dart';
-import 'package:psiemens/components/noticia_dialogs.dart';
-import 'package:psiemens/domain/noticia.dart';
-import 'package:psiemens/constants.dart';
-import 'package:psiemens/helpers/noticia_card_helper.dart';
-import 'package:psiemens/exceptions/api_exception.dart';
-import 'package:psiemens/helpers/error_helper.dart';
-import 'package:psiemens/views/category_screen.dart';
-import 'package:psiemens/views/preferencia_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:psiemens/bloc/categorias/categorias_bloc.dart';
+import 'package:psiemens/bloc/categorias/categorias_event.dart';
+import 'package:psiemens/bloc/categorias/categorias_state.dart';
+import 'package:psiemens/bloc/noticias/noticias_bloc.dart';
+import 'package:psiemens/bloc/noticias/noticias_event.dart';
+import 'package:psiemens/bloc/noticias/noticias_state.dart';
+import 'package:psiemens/components/floating_add_button.dart';
+import 'package:psiemens/components/formulario_noticia.dart';
+import 'package:psiemens/components/last_updated_header.dart';
+import 'package:psiemens/components/noticias_card.dart';
+import 'package:psiemens/components/reporte_dialog.dart';
+import 'package:psiemens/constants.dart';
+import 'package:psiemens/domain/categoria.dart';
+import 'package:psiemens/domain/noticia.dart';
+import 'package:psiemens/helpers/categoria_helper.dart';
+import 'package:psiemens/helpers/dialog_helper.dart';
+import 'package:psiemens/helpers/modal_helper.dart';
 import 'package:psiemens/helpers/snackbar_helper.dart';
-class NoticiaScreen extends StatelessWidget {
-  const NoticiaScreen({super.key});
+import 'package:psiemens/helpers/snackbar_manager.dart';
+import 'package:psiemens/views/categoria_screen.dart';
+import 'package:psiemens/views/preferencia_screen.dart';
 
+class NoticiaScreen extends StatelessWidget {
+  const NoticiaScreen({super.key});  @override
+  Widget build(BuildContext context) {
+    // Limpiar cualquier SnackBar existente al entrar a esta pantalla
+    // pero solo si no está mostrándose el SnackBar de conectividad
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!SnackBarManager().isConnectivitySnackBarShowing) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      }
+    });    // Usamos el NoticiaBloc global que viene del MultiBlocProvider en main.dart
+    return BlocProvider<CategoriaBloc>(
+      create: (context) => CategoriaBloc()..add(CategoriaInitEvent()),
+      child: _NoticiaScreenContent(),
+    );
+  }
+}
+
+class _NoticiaScreenContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider(
-          create: (context) => NoticiasBloc()..add(const FetchNoticias()),
-        ),
-        BlocProvider(
-          create:
-              (context) => PreferenciaBloc()..add(const CargarPreferencias()),
-        ),
-        // Asegurarnos de usar el BLoC global    
-        BlocProvider.value(value: context.read<ComentarioBloc>()),
-      ],
-      child: BlocConsumer<NoticiasBloc, NoticiasState>(
-        listener: (context, state) {
-          if (state is NoticiasError) {
-            _mostrarError(context, state.statusCode);
+    return BlocConsumer<NoticiaBloc, NoticiaState>(
+      listener: (context, state) {
+        if (state is NoticiaError) {
+          SnackBarHelper.manejarError(
+            context,
+            state.error,
+          );
+        }else if (state is NoticiaCreated) {
+          SnackBarHelper.mostrarExito(
+            context,
+            mensaje: NoticiaConstantes.successCreated,
+          );
+        }else if (state is NoticiaUpdated) {
+          SnackBarHelper.mostrarExito(
+            context,
+            mensaje: NoticiaConstantes.successUpdated,
+          );
+        }else if (state is NoticiaDeleted) {
+          SnackBarHelper.mostrarExito(
+            context,
+            mensaje: NoticiaConstantes.successDeleted,
+          );
+        }else if (state is NoticiaFiltered) {
+          SnackBarHelper.mostrarExito(
+            context,
+            mensaje: "Noticias filtradas correctamente",
+          );
+        }else if (state is NoticiaLoaded) { 
+          if (state.noticias.isEmpty) {
+            SnackBarHelper.mostrarInfo(
+              context,
+              mensaje: NoticiaConstantes.listaVacia,
+            );
+          }else{
+            SnackBarHelper.mostrarExito(
+              context,
+              mensaje: 'Noticias cargadas correctamente',
+            );
           }
-        },
-        builder: (context, state) {
-          // Acceder al estado de preferencias para mostrar información de filtros
-          final preferenciaState = context.watch<PreferenciaBloc>().state;
-          final filtrosActivos =
-              preferenciaState.categoriasSeleccionadas.isNotEmpty;
-
-          return Scaffold(
-            backgroundColor: Colors.grey[200],
-            appBar: AppBar(
-              title: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    NoticiaConstantes.tituloApp,
-                    style: TextStyle(color: Colors.black),
-                  ),
-                  if (state
-                      is NoticiasLoaded) // Check if state is NoticiasLoaded before accessing lastUpdated
-                    Text(
-                      'Última actualización: ${(DateFormat(NoticiaConstantes.formatoFecha)).format(state.lastUpdated)}',
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                ],
-              ),
-              backgroundColor: Colors.blue,
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.add),
-                  tooltip: 'Agregar Noticia',
-                  onPressed: () async {                    try {
-                      await NoticiaModal.mostrarModal(
-                        context: context,
-                        noticia: null,
-                        onSave: (_, noticiaActualizada) {
-                          // Para el caso de crear, simplemente recargamos las noticias
-                          context.read<NoticiasBloc>().add(
-                            const FetchNoticias(),
-                          );
-                          SnackBarHelper.showSnackBar(
-                            context,
-                            ApiConstantes.newssuccessCreated,
-                            statusCode: 200,
-                          );
-                        },
-                      );
-                      if (!context.mounted) return;
-                    } catch (e) {
-                      if (e is ApiException) {
-                        _mostrarError(context, e.statusCode);
-                      }
-                    }
-                  },
-                ),
-                IconButton(
-                  icon: const Icon(Icons.category),
-                  tooltip: 'Categorías',
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const CategoryScreen(),
+        }
+      },
+      builder: (context, state) {
+        DateTime? lastUpdated;
+        if (state is NoticiaLoaded) {
+          lastUpdated = state.lastUpdated;
+        }        return Scaffold(
+          appBar: AppBar(
+            title: const Text(NoticiaConstantes.tituloApp),
+            centerTitle: true,            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            ),
+            actions: [              
+              IconButton(
+                icon: const Icon(Icons.filter_list),
+                tooltip: 'Filtrar por categorías',
+                onPressed: () async {
+                  // Obtener el NoticiaBloc antes de navegar
+                  final noticiaBloc = context.read<NoticiaBloc>();
+                  // Navegar a la pantalla de preferencias proporcionando el NoticiaBloc actual
+                  await Navigator.push(
+                    context,                    MaterialPageRoute(
+                      builder: (context) => BlocProvider.value(
+                        value: noticiaBloc,
+                        child: const PreferenciaScreen(),
                       ),
+                    ),
+                  );
+                  // No necesitamos hacer nada más aquí porque la pantalla de preferencias
+                  // ya se encarga de emitir el evento de filtrado al NoticiaBloc
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.category),
+                tooltip: 'Categorías',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const CategoriaScreen(),
+                    ),
+                  );
+                },
+              ),
+            ],          ),
+          backgroundColor: Colors.white,
+          body: Column(
+            children: [
+              LastUpdatedHeader(lastUpdated: lastUpdated),
+              Expanded(child: _construirCuerpoNoticias(context, state)),
+            ],
+          ),
+          floatingActionButton: BlocBuilder<CategoriaBloc, CategoriaState>(
+            builder: (context, categoriaState) {
+              return FloatingAddButton(
+                onPressed: () async {
+
+                  // Si las categorías aún se están cargando, inicia la carga
+                  if (categoriaState is! CategoriaLoaded) {
+                    context.read<CategoriaBloc>().add(CategoriaInitEvent());
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Cargando categorías...')),
+                    );
+                    return;
+                  }
+
+                  final List<Categoria> categorias = categoriaState.categorias;
+
+                  final noticia = await ModalHelper.mostrarDialogo<Noticia>(
+                    context: context,
+                    title: 'Agregar Noticia',
+                    child: FormularioNoticia(categorias: categorias),
+                  );
+
+                  // Si se obtuvo una categoría del formulario y el contexto sigue montado
+                  if (noticia != null && context.mounted) {
+                    // Usar el BLoC para crear la categoría
+                    context.read<NoticiaBloc>().add(
+                      AddNoticiaEvent(noticia),
+                    );
+                  }
+                },
+                tooltip: 'Agregar Noticia',              );              
+            },            
+          ),
+        );        
+      }
+    );
+  }
+
+  Widget _construirCuerpoNoticias(
+    BuildContext context,
+    NoticiaState state,
+  ) {
+    if (state is NoticiaLoading) {
+      return const Center(child: CircularProgressIndicator());
+    } else if (state is NoticiaError) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              state.error.message,
+              style: const TextStyle(color: Colors.red),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => context.read<NoticiaBloc>().add(FetchNoticiasEvent()),
+              child: const Text('Reintentar'),
+            ),
+          ],
+        ),
+      );
+    } else if (state is NoticiaLoaded) {
+      // Obtener las categorías del BlocProvider
+      final categoriaState = context.watch<CategoriaBloc>().state;
+      List<Categoria> categorias = [];
+      
+      if (categoriaState is CategoriaLoaded) {
+        categorias = categoriaState.categorias;
+      }
+      if (state.noticias.isNotEmpty) {
+        return RefreshIndicator(
+          onRefresh: () async {
+            await Future.delayed(const Duration(milliseconds: 1200));
+            if (context.mounted) {
+              context.read<NoticiaBloc>().add(FetchNoticiasEvent());
+            }
+          },
+          child: ListView.builder(
+            physics:
+                const AlwaysScrollableScrollPhysics(), // Necesario para pull-to-refresh
+            itemCount: state.noticias.length,
+            itemBuilder: (context, index) {
+              final noticia= state.noticias[index];
+              return Dismissible(
+                key: Key(noticia.id ?? UniqueKey().toString()),
+                background: Container(
+                  color: Colors.red,
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: const Icon(Icons.delete, color: Colors.white),
+                ),
+                direction: DismissDirection.startToEnd,
+                confirmDismiss: (direction) async {
+                  return await DialogHelper.mostrarConfirmacion(
+                    context: context,
+                    titulo: 'Confirmar eliminación',
+                    mensaje: '¿Estás seguro de que deseas eliminar esta noticia?',
+                    textoCancelar: 'Cancelar',
+                    textoConfirmar: 'Eliminar',
+                  );
+                },
+                onDismissed: (direction) {
+                  context.read<NoticiaBloc>().add(DeleteNoticiaEvent(noticia.id!));
+                },                child: NoticiaCard(
+                  noticia: noticia,
+                  onReport: () {
+                    // Mostrar el diálogo de reportes
+                    ReporteDialog.mostrarDialogoReporte(
+                      context: context, 
+                      noticiaId: noticia.id!,
                     );
                   },
-                ),
-                IconButton(
-                  icon: Icon(
-                    Icons.filter_list,
-                    color: filtrosActivos ? Colors.amber : null,
+                  onEdit: () async {
+                  // Solo muestra el formulario si las categorías están cargadas
+                  if (categorias.isEmpty) {
+                    SnackBarHelper.mostrarInfo(
+                      context, 
+                      mensaje: 'Cargando categorías...'
+                    );
+                    context.read<CategoriaBloc>().add(CategoriaInitEvent());
+                    return;
+                  }
+                  
+                  final noticiaEditada = await ModalHelper.mostrarDialogo<Noticia>(
+                    context: context,
+                    title: 'Editar Noticia',
+                    child: FormularioNoticia(
+                      noticia: noticia,
+                      categorias: categorias,
+                    ),
+                  );
+                  
+                  if (noticiaEditada != null && context.mounted) {
+                    // Usar copyWith para mantener el ID original y actualizar el resto de datos
+                    final noticiaActualizada = noticiaEditada.copyWith(id: noticia.id);
+                    context.read<NoticiaBloc>().add(
+                      UpdateNoticiaEvent(noticiaActualizada),
+                    );
+                  }
+                },
+                  categoriaNombre: CategoriaHelper.obtenerNombreCategoria(
+                    noticia.categoriaId?? '',
+                    categorias,
                   ),
-                  tooltip: 'Preferencias',
-                  onPressed: () {
-                    Navigator.push<List<String>>(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const PreferenciasScreen(),
-                      ),
-                    ).then((categoriasSeleccionadas) {
-                      if (!context.mounted) return;
-                      if (categoriasSeleccionadas != null) {
-                        if (categoriasSeleccionadas.isNotEmpty) {
-                          // Si hay categorías seleccionadas, aplicar filtro
-                          context.read<NoticiasBloc>().add(
-                            FilterNoticiasByPreferencias(
-                              categoriasSeleccionadas,
-                            ),
-                          );
-                        } else {
-                          // Si la lista está vacía, usar el evento FetchNoticias para mostrar todas
-                          context.read<NoticiasBloc>().add(
-                            const FetchNoticias(),
-                          );
-                        }
-                      }
-                    });
-                  },
                 ),
-                IconButton(
-                  icon: const Icon(Icons.refresh),
-                  tooltip: 'Refrescar',
-                  onPressed: () {
-                    // Al refrescar, aplicar los filtros actuales si existen
-                    final categoriasSeleccionadas =
-                        context
-                            .read<PreferenciaBloc>()
-                            .state
-                            .categoriasSeleccionadas;
-                    if (categoriasSeleccionadas.isNotEmpty) {
-                      context.read<NoticiasBloc>().add(
-                        FilterNoticiasByPreferencias(categoriasSeleccionadas),
-                      );
-                    } else {
-                      context.read<NoticiasBloc>().add(const FetchNoticias());
-                      CategoryHelper.refreshCategories();
-                    }
-                  },
-                ),
-              ],
-            ),
-            body: Column(
+              );   
+            } 
+          ),       
+        );
+      } else {
+          // Añadir esta parte para manejar el caso de lista vacía
+          return RefreshIndicator(
+            onRefresh: () async {
+              await Future.delayed(const Duration(milliseconds: 1200));
+              if (context.mounted) {
+                context.read<NoticiaBloc>().add(FetchNoticiasEvent());
+              }            
+            },
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
               children: [
-                // Chip para mostrar filtros activos
-                if (filtrosActivos)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 8.0,
-                      horizontal: 16.0,
-                    ),
-                    color: Colors.grey[300],
-                    child: Row(
-                      children: [
-                        const Icon(Icons.filter_list, size: 18),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'Filtrado por ${preferenciaState.categoriasSeleccionadas.length} categorías',
-                            style: const TextStyle(fontSize: 14),
-                          ),
-                        ),
-                        InkWell(
-                          onTap: () {
-                            // Limpiar filtros y mostrar todas las noticias
-                            context.read<PreferenciaBloc>().add(
-                              const ReiniciarFiltros(),
-                            );
-                            context.read<NoticiasBloc>().add(
-                              const FetchNoticias(),
-                            );
-                            SnackBarHelper.showSnackBar(
-                              context,
-                              'Filtros reiniciados.',
-                              statusCode: 200,
-                            );
-                          },
-                          child: const Padding(
-                            padding: EdgeInsets.all(4.0),
-                            child: Text(
-                              'Limpiar filtros',
-                              style: TextStyle(
-                                color: Colors.blue,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                Expanded(child: _buildBody(state)),
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.6,
+                  child: const Center(child: Text(NoticiaConstantes.listaVacia)),
+                ),
               ],
             ),
           );
-        },
-      ),
-    );
-  }
-
-  Widget _buildBody(NoticiasState state) {
-    if (state is NoticiasLoading) {
-      return const Center(child: CircularProgressIndicator());
-    } else if (state is NoticiasLoaded) {
-      final noticias = state.noticiasList;
-      if (noticias.isEmpty) {
-        return const Center(child: Text(NoticiaConstantes.listaVacia));
-      } else {
-        return ListView.separated(
-          itemCount: noticias.length,
-          itemBuilder: (context, index) {
-            final noticia = noticias[index];
-            return NoticiaCardHelper.buildNoticiaCard(
-              noticia: noticia,
-              onEdit: () async {
-                try {
-                  await _editarNoticia(context, noticia);
-                } catch (e) {
-                  if (e is ApiException) {
-                    if (!context.mounted) return;
-                    _mostrarError(context, e.statusCode);
-                  }
-                }
-              },
-              onReport: () async {
-                // Mostrar diálogo de reporte
-                await _mostrarDialogoReporte(context, noticia.id!);
-              },
-              onDelete: () async {
-                final confirmacion = await showDialog<bool>(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      title: const Text('Eliminar Noticia'),
-                      content: const Text(
-                        '¿Estás seguro de que deseas eliminar esta noticia? Esta acción no se puede deshacer.',
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, false),
-                          child: const Text('Cancelar'),
-                        ),
-                        ElevatedButton(
-                          onPressed: () => Navigator.pop(context, true),
-                          style: ElevatedButton.styleFrom(
-                            foregroundColor: Colors.white,
-                            backgroundColor: Colors.red,
-                          ),
-                          child: const Text('Eliminar'),
-                        ),
-                      ],
-                    );
-                  },
-                );
-
-                if (confirmacion == true) {
-                  try {
-                    if (!context.mounted) return;
-                    context.read<NoticiasBloc>().add(
-                      DeleteNoticia(noticia.id!),
-                    );
-                    SnackBarHelper.showSnackBar(
-                      context,
-                      ApiConstantes.newssuccessDeleted,
-                      statusCode: 200,
-                    );
-                  } catch (e) {
-                    if (e is ApiException) {
-                      if (!context.mounted) return;
-                      _mostrarError(context, e.statusCode);
-                    }
-                  }
-                }
-              },
-              onComment: () async {
-                // Abrir el diálogo de comentarios
-                if (!context.mounted) return;
-
-                // Mostrar el diálogo de comentarios
-                await Navigator.of(context)
-                    .push(
-                      MaterialPageRoute(
-                        builder:
-                            (context) =>
-                                ComentariosScreen(noticiaId: noticia.id!),
-                      ),
-                    )
-                    .then((_) {
-                      // Cuando el diálogo se cierra, recargar toda la página de noticias
-                      if (context.mounted) {
-                        // Recargamos todas las noticias
-                        context.read<NoticiasBloc>().add(const FetchNoticias());
-
-                        // También actualizamos el contador específico de comentarios
-                        context.read<ComentarioBloc>().add(
-                          GetNumeroComentarios(noticiaId: noticia.id!),
-                        );
-                      }
-                    });
-              },
-            );
-          },
-          separatorBuilder:
-              (context, index) =>
-                  const Divider(color: Colors.grey, thickness: 0.5, height: 1),
-        );
-      }
+        }
+    } else {
+      return Container();
     }
-    // Estado predeterminado o error
-    return const Center(child: Text('Algo salió mal al cargar las noticias.'));  }  
-  
-  Future<void> _editarNoticia(BuildContext context, Noticia noticia) async {
-    await NoticiaModal.mostrarModal(
-      context: context,
-      noticia: noticia.toMap(),
-      onSave: (oldNoticia, noticiaActualizada) {
-        // Crear una nueva instancia de Noticia con los datos actualizados
-        final noticiaModel = Noticia(
-          id: noticia.id,
-          titulo: noticiaActualizada['titulo'],
-          descripcion: noticiaActualizada['descripcion'],
-          fuente: noticiaActualizada['fuente'],
-          publicadaEl: DateTime.parse(noticiaActualizada['publicadaEl']),
-          urlImagen: noticiaActualizada['urlImagen'],
-          categoriaId: noticiaActualizada['categoriaId'],
-        );
-
-        // Llamar al evento UpdateNoticia del bloc
-        context.read<NoticiasBloc>().add(UpdateNoticia(noticia.id!, noticiaModel));
-        
-        // Mostrar mensaje de éxito
-        SnackBarHelper.showSnackBar(
-          context,
-          ApiConstantes.newssuccessUpdated,
-          statusCode: 200,
-        );
-
-        // También recargamos las noticias para asegurar que se muestren actualizadas
-        Future.delayed(const Duration(milliseconds: 300), () {
-          if (context.mounted) {
-            context.read<NoticiasBloc>().add(const FetchNoticias());
-          }
-        });
-      },
-    );
   }
-
-  void _mostrarError(BuildContext context, int? statusCode) {
-    final errorData = ErrorHelper.getErrorMessageAndColor(statusCode);
-    final message = errorData['message'];
-
-    SnackBarHelper.showSnackBar(
-      context,
-      message,
-      statusCode:
-          statusCode, // Pasar el código de estado para el color adecuado
-    );
-  }
-
-  /// Muestra un diálogo para reportar una noticia
-  Future<void> _mostrarDialogoReporte(
-  BuildContext context,
-  String noticiaId,
-) async {
-  // Usar el componente de diálogo de reportes
-  await ReporteDialog.mostrarDialogoReporte(context, noticiaId);
 }
-}
+

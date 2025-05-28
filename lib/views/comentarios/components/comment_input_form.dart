@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:psiemens/bloc/comentarios/comentario_bloc.dart';
 import 'package:psiemens/bloc/comentarios/comentario_event.dart';
+import 'package:psiemens/domain/comentario.dart';
 import 'package:psiemens/helpers/snackbar_helper.dart';
 
 class CommentInputForm extends StatelessWidget {
@@ -22,9 +23,6 @@ class CommentInputForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color borderColor = const Color(0xFF90CAF9); // Azul claro
-    final Color focusedBorderColor = const Color(0xFF1976D2);
-
     return Column(
       children: [
         const Divider(),
@@ -36,19 +34,7 @@ class CommentInputForm extends StatelessWidget {
             hintText: respondingToId == null 
                 ? 'Escribe tu comentario' 
                 : 'Escribe tu respuesta...',
-            border: OutlineInputBorder(
-              borderSide: BorderSide(color: borderColor), // Borde azul claro normal
-              borderRadius: BorderRadius.circular(8),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: borderColor), // Borde azul claro cuando está habilitado
-              borderRadius: BorderRadius.circular(8),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: focusedBorderColor, width: 2), // Borde azul medio cuando tiene foco
-              borderRadius: BorderRadius.circular(8),
-            ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            border: const OutlineInputBorder(),
           ),
           maxLines: 2,
         ),
@@ -60,7 +46,6 @@ class CommentInputForm extends StatelessWidget {
               ? 'Publicar comentario' 
               : 'Enviar respuesta'),
           style: ElevatedButton.styleFrom(
-            foregroundColor: Colors.blue,
             padding: const EdgeInsets.only(left: 15,right: 15,top: 10, bottom: 10),
           ),
         ),
@@ -99,42 +84,53 @@ class CommentInputForm extends StatelessWidget {
   }
 
   void _handleSubmit(BuildContext context) {
-    if (comentarioController.text.trim().isEmpty) {
-      SnackBarHelper.showSnackBar(
+    if (comentarioController.text.trim().isEmpty) {      SnackBarHelper.mostrarInfo(
         context, 
-        'El comentario no puede estar vacío', 
-        statusCode: 400
+        mensaje: 'El comentario no puede estar vacío'
       );
       return;
-    }
-
-    final fecha = DateTime.now().toIso8601String();
+    }    final fecha = DateTime.now().toIso8601String();
     final bloc = context.read<ComentarioBloc>();
 
     if (respondingToId == null) {
-      bloc.add(AddComentario(
+      // Crear un comentario principal
+      final nuevoComentario = Comentario(
+        id: '',
         noticiaId: noticiaId,
         texto: comentarioController.text,
-        autor: 'Usuario anónimo',
         fecha: fecha,
-      ));
-    } else {
-      bloc.add(AddSubcomentario(
-        comentarioId: respondingToId!,
+        autor: 'Usuario anónimo',
+        likes: 0,
+        dislikes: 0,
+        subcomentarios: [],
+        isSubComentario: false
+      );
+      
+      bloc.add(AddComentario(noticiaId, nuevoComentario));    } else {
+      // Crear un subcomentario
+      final nuevoSubComentario = Comentario(
+        id: '', // El ID real se generará en el backend
         noticiaId: noticiaId,
         texto: comentarioController.text,
+        fecha: fecha,
         autor: 'Usuario anónimo',
-      ));
+        likes: 0,
+        dislikes: 0,
+        subcomentarios: [], // Un subcomentario no puede tener sus propios subcomentarios
+        isSubComentario: true,
+        idSubComentario: respondingToId // Este es el ID del comentario padre al que estamos respondiendo
+      );
+      
+      bloc.add(AddSubcomentario(nuevoSubComentario));
     }
 
-    bloc.add(GetNumeroComentarios(noticiaId: noticiaId));
+    bloc.add(GetNumeroComentarios(noticiaId));
     comentarioController.clear();
     onCancelarRespuesta();
 
-    SnackBarHelper.showSnackBar(
-      context, 
-      'Comentario agregado con éxito', 
-      statusCode: 200
+    SnackBarHelper.mostrarExito(
+      context,
+      mensaje: 'Comentario agregado con éxito'
     );
   }
 }

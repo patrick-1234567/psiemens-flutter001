@@ -1,58 +1,80 @@
-// services/categoria_service.dart
-import 'package:psiemens/api/service/categoria_service.dart'; // Importa tu repositorio
-import 'package:psiemens/domain/categoria.dart'; // Importa tu entidad Categoria
-import 'package:flutter/foundation.dart'; // Para debugPrint
+import 'package:psiemens/api/service/categoria_service.dart';
+import 'package:psiemens/constants.dart';
+import 'package:psiemens/data/base_repository.dart';
+import 'package:psiemens/domain/categoria.dart';
 
-class CategoriaRepository {
-  // Inyecta la dependencia del repositorio
+/// Repositorio de categorías con capacidad de caché
+class CategoriaRepository extends CacheableRepository<Categoria> {
   final CategoriaService _categoriaService = CategoriaService();
 
-  // Constructor que recibe la instancia del repositorio
-  CategoriaRepository();
+  // Timestamp de la última actualización
+  DateTime? _lastRefreshed;
 
-  /// Obtiene la lista completa de categorías desde el repositorio.
-  Future<List<Categoria>> obtenerCategorias() async {
-    try {
-      // Llama al método del repositorio para obtener los datos
-      final categorias = await _categoriaService.getCategorias();
-      return categorias;
-    } catch (e) {
-      // Puedes añadir lógica de logging o manejo de errores específico del servicio aquí
-      debugPrint('Error en CategoriaService al obtener categorías: $e');
-      rethrow;
-    }
+  @override
+  void validarEntidad(Categoria categoria) {
+    validarNoVacio(categoria.nombre, ValidacionConstantes.nombreCategoria);
+    validarNoVacio(
+      categoria.descripcion,
+      ValidacionConstantes.descripcionCategoria,
+    );
+    validarNoVacio(categoria.imagenUrl, ValidacionConstantes.imagenUrl);
   }
 
-  Future<void> crearCategoria(Map<String, dynamic> categoriaData) async {
-    try {
-      // Llama al método del repositorio para crear la categoría
-      await _categoriaService.crearCategoria(categoriaData);
-      debugPrint('Categoría creada exitosamente.');
-    } catch (e) {
-      debugPrint('Error en CategoriaService al crear categoría: $e');
-      rethrow;
-    }
+  /// Implementación del método abstracto de CacheableRepository
+  @override
+  Future<List<Categoria>> cargarDatos() async {
+    final categorias = await manejarExcepcion(
+      () => _categoriaService.obtenerCategorias(),
+      mensajeError: CategoriaConstantes.mensajeError,
+    );
+    _lastRefreshed = DateTime.now();
+    return categorias;
   }
 
-  Future<void> actualizarCategoria(String id, Map<String, dynamic> categoriaData) async {
-    try {
-      // Llama al método del repositorio para editar la categoría
-      await _categoriaService.editarCategoria(id, categoriaData);
-      debugPrint('Categoría con ID $id actualizada exitosamente.');
-    } catch (e) {
-      debugPrint('Error en CategoriaService al actualizar categoría $id: $e');
-      rethrow;
-    }
+  /// Obtiene el timestamp de la última actualización
+  DateTime? get lastRefreshed => _lastRefreshed;
+
+  /// Obtiene todas las categorías desde el repositorio
+  /// Si hay caché, devolverá los datos en caché
+  Future<List<Categoria>> obtenerCategorias({
+    bool forzarRecarga = false,
+  }) async {
+    return obtenerDatos(forzarRecarga: forzarRecarga);
   }
 
+  /// Crea una nueva categoría
+  /// Retorna la categoría creada con su ID asignado por el servidor
+  Future<Categoria> crearCategoria(Categoria categoria) async {
+    return manejarExcepcion(() async {
+      validarEntidad(categoria);
+      final categoriaCreada = await _categoriaService.crearCategoria(categoria);
+      invalidarCache();
+      return categoriaCreada;
+    }, mensajeError: CategoriaConstantes.errorCreated);
+  }
+
+  /// Edita una categoría existente
+  Future<Categoria> actualizarCategoria(Categoria categoria) async {
+    return manejarExcepcion(() async {
+      validarEntidad(categoria);
+      final categoriaActualizada = await _categoriaService.editarCategoria(categoria);
+      invalidarCache();
+      return categoriaActualizada;
+    }, mensajeError: CategoriaConstantes.errorUpdated);
+  }
+
+  /// Elimina una categoría
   Future<void> eliminarCategoria(String id) async {
-    try {
-      // Llama al método del repositorio para eliminar la categoría
+    return manejarExcepcion(() async {
+      validarId(id);
       await _categoriaService.eliminarCategoria(id);
-      debugPrint('Categoría con ID $id eliminada exitosamente.');
-    } catch (e) {
-      debugPrint('Error en CategoriaService al eliminar categoría $id: $e');
-      rethrow;
-    }
+      invalidarCache();
+    }, mensajeError: CategoriaConstantes.errorDelete);
+  }
+
+  /// Limpia la caché de categorías (método público)
+  void limpiarCache() {
+    invalidarCache();
+    _lastRefreshed = null;
   }
 }

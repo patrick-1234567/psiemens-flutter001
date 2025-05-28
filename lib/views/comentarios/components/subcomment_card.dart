@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
-import 'package:psiemens/domain/comentario.dart';
 import 'package:psiemens/bloc/comentarios/comentario_bloc.dart';
 import 'package:psiemens/bloc/comentarios/comentario_event.dart';
+import 'package:psiemens/domain/comentario.dart';
 
 class SubcommentCard extends StatelessWidget {
   final Comentario subcomentario;
@@ -14,12 +13,10 @@ class SubcommentCard extends StatelessWidget {
     required this.subcomentario,
     required this.noticiaId,
   });
-
   @override
   Widget build(BuildContext context) {
-    final fecha = DateFormat(
-      'dd/MM/yyyy HH:mm',
-    ).format(DateTime.parse(subcomentario.fecha));
+    // La fecha ya viene formateada desde el backend
+    final fecha = subcomentario.fecha;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 12, 8),
@@ -83,15 +80,45 @@ class SubcommentCard extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  void _handleReaction(BuildContext context, String tipoReaccion) {
-    context.read<ComentarioBloc>().add(
+  }  void _handleReaction(BuildContext context, String tipoReaccion) {
+    // Capturamos una referencia al bloc fuera del Future.delayed
+    final comentarioBloc = context.read<ComentarioBloc>();
+    final String currentNoticiaId = noticiaId;
+    
+    // Determinamos correctamente los IDs para la reacción
+    String comentarioId = '';
+    String? padreId;
+    
+    // Si tiene ID propio, lo usamos directamente
+    if (subcomentario.id != null && subcomentario.id!.isNotEmpty) {
+      comentarioId = subcomentario.id!;
+      
+      // Si además tiene idSubComentario, ese es el padre
+      if (subcomentario.idSubComentario != null && subcomentario.idSubComentario!.isNotEmpty) {
+        padreId = subcomentario.idSubComentario;
+      }
+    } 
+    // Si no tiene ID propio pero tiene idSubComentario, usamos ese como su ID
+    else if (subcomentario.idSubComentario != null && subcomentario.idSubComentario!.isNotEmpty) {
+      comentarioId = subcomentario.idSubComentario!;
+    }
+    
+    // Agregamos la reacción con los IDs correctos
+    comentarioBloc.add(
       AddReaccion(
-        noticiaId: noticiaId,
-        comentarioId: subcomentario.idSubComentario ?? '',
-        tipoReaccion: tipoReaccion,
+        comentarioId,
+        tipoReaccion,
+        true,
+        padreId,
       ),
     );
+    
+    // Luego forzamos la recarga de comentarios para actualizar la UI
+    // No usamos context dentro del Future.delayed
+    Future.delayed(const Duration(milliseconds: 500), () {
+      comentarioBloc.add(
+        LoadComentarios(currentNoticiaId),
+      );
+    });
   }
 }

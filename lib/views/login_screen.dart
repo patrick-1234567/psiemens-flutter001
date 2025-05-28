@@ -3,119 +3,157 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:psiemens/bloc/auth/auth_bloc.dart';
 import 'package:psiemens/bloc/auth/auth_event.dart';
 import 'package:psiemens/bloc/auth/auth_state.dart';
+import 'package:psiemens/bloc/noticias/noticias_bloc.dart';
+import 'package:psiemens/bloc/noticias/noticias_event.dart';
+import 'package:psiemens/components/snackbar_component.dart';
+import 'package:psiemens/theme/theme.dart';
 import 'package:psiemens/views/welcome_screen.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class LoginScreen extends StatelessWidget {
+  final _formKey = GlobalKey<FormState>();
 
-  @override
-  State<LoginScreen> createState() => _LoginScreenState();
-}
-
-class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  LoginScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Login'),
-      ),      body: BlocConsumer<AuthBloc, AuthState>(
+    final TextEditingController usernameController = TextEditingController();
+    final TextEditingController passwordController = TextEditingController();
+
+    return BlocProvider(
+      create: (context) => AuthBloc(),
+      child: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
-          if (state is AuthAuthenticated) {
-            debugPrint('cambiando a la pantalla de bienvenida');
-            // Navegar a la pantalla de bienvenida cuando el usuario está autenticado
+          if (state is AuthLoading) {
+            // Mostrar indicador de carga
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (BuildContext context) {
+                return const Center(child: CircularProgressIndicator());
+              },
+            );
+          } else if (state is AuthAuthenticated) {
+            // Cerrar diálogo de carga si está abierto
+            Navigator.of(
+              context,
+              rootNavigator: true,
+            ).popUntil((route) => route.isFirst);
+
+            // Cargar noticias para el nuevo usuario
+            context.read<NoticiaBloc>().add(FetchNoticiasEvent());
+
+            // Navegar a la pantalla principal
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(
-                builder: (context) => const WelcomeScreen()
-              ),
+              MaterialPageRoute(builder: (context) => const WelcomeScreen()),
             );
           } else if (state is AuthFailure) {
-            // Mostrar mensaje de error en caso de fallo
+            // Cerrar diálogo de carga si está abierto
+            Navigator.of(
+              context,
+              rootNavigator: true,
+            ).popUntil((route) => route.isFirst);
+
+            // Mostrar error
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.error),
-                backgroundColor: Colors.red,
+              SnackBarComponent.crear(
+                mensaje: state.error,
+                color: Colors.red,
+                duracion: const Duration(seconds: 4),
               ),
             );
           }
         },
         builder: (context, state) {
-          return Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Campo de Usuario
-                  TextFormField(
-                    controller: _usernameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Usuario',
-                      border: OutlineInputBorder(),
+          return Scaffold(
+            backgroundColor: AppColors.surface,
+            body: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'Inicio de Sesión',
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Por favor, ingresa tu usuario';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-
-                  TextFormField(
-                    controller: _passwordController,
-                    decoration: const InputDecoration(
-                      labelText: 'Contraseña',
-                      border: OutlineInputBorder(),
-                    ),
-                    obscureText: true,
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Por favor, ingresa tu contraseña';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  // Botón de Iniciar Sesión con estado de carga
-                  state is AuthLoading
-                      ? const CircularProgressIndicator()
-                      : ElevatedButton(
-                          onPressed: () {
-                            // Validar el formulario
-                            if (_formKey.currentState?.validate() ?? false) {
-                              final username = _usernameController.text.trim();
-                              final password = _passwordController.text.trim();
-
-                              // Dispara el evento de login al BLoC
-                              context.read<AuthBloc>().add(
-                                    AuthLoginRequested(
-                                      email: username,
-                                      password: password,
-                                    ),
-                                  );
-                            }
-                          },
-                          child: const Text('Iniciar Sesión'),
+                    const SizedBox(height: 24),
+                    TextFormField(
+                      controller: usernameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Usuario *',
+                        border: OutlineInputBorder(),
+                        labelStyle: TextStyle(color: AppColors.primary),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: AppColors.primary),
                         ),
-                ],
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'El correo es obligatorio';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: passwordController,
+                      decoration: const InputDecoration(
+                        labelText: 'Contraseña *',
+                        border: OutlineInputBorder(),
+                        labelStyle: TextStyle(color: AppColors.primary),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: AppColors.primary),
+                        ),
+                      ),
+                      obscureText: true,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'La contraseña es obligatoria';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                    Center(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 32),
+                          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          elevation: 2,
+                        ),
+                        onPressed: () {
+                          if (_formKey.currentState!.validate()) {
+                            final username = usernameController.text.trim();
+                            final password = passwordController.text.trim();
+                            context.read<AuthBloc>().add(
+                              AuthLoginRequested(
+                                email: username,
+                                password: password,
+                              ),
+                            );
+                          }
+                        },
+                        child: const Text('Iniciar Sesión'),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           );
         },
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _usernameController.dispose();
-    _passwordController.dispose();
-    super.dispose();
   }
 }

@@ -1,11 +1,11 @@
-import 'package:psiemens/bloc/comentarios/comentario_event.dart';
-import 'package:psiemens/helpers/snackbar_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:psiemens/bloc/comentarios/comentario_bloc.dart';
+import 'package:psiemens/bloc/comentarios/comentario_event.dart';
 import 'package:psiemens/bloc/comentarios/comentario_state.dart';
 import 'package:psiemens/domain/comentario.dart';
-import 'package:psiemens/components/comments/comment_card.dart';
+import 'package:psiemens/helpers/snackbar_helper.dart';
+import 'package:psiemens/views/comentarios/components/comment_card.dart';
 
 class CommentList extends StatelessWidget {
   final String noticiaId;
@@ -16,26 +16,24 @@ class CommentList extends StatelessWidget {
     required this.noticiaId,
     required this.onResponderComentario,
   });
-
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<ComentarioBloc, ComentarioState>(
+    return BlocConsumer<ComentarioBloc, ComentarioState>(      
       listener: (context, state) {
         if (state is ComentarioError) {
-          SnackBarHelper.showSnackBar(
+          SnackBarHelper.manejarError(
             context,
-            'Error: ${state.errorMessage}',
-            statusCode: 500,
+            state.error,
           );
         }
       },
       builder: (context, state) {
         if (state is ComentarioLoading) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator());        
         } else if (state is ComentarioLoaded) {
-          return _buildList(context, state.comentariosList); // Pasar context aquí
+          return _buildList(context, state.comentarios); 
         } else if (state is ComentarioError) {
-          return _buildErrorState(context); // Pasar context aquí
+          return _buildErrorState(context);
         }
         return const SizedBox.shrink();
       },
@@ -74,10 +72,9 @@ class CommentList extends StatelessWidget {
             'Error al cargar comentarios',
             style: TextStyle(color: Colors.red[700]),
           ),
-          const SizedBox(height: 8),
-          ElevatedButton(
+          const SizedBox(height: 8),          ElevatedButton(
             onPressed: () => context.read<ComentarioBloc>()
-              ..add(LoadComentarios(noticiaId: noticiaId)),
+              ..add(LoadComentarios(noticiaId)),
             child: const Text('Reintentar'),
           ),
         ],
