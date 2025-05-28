@@ -6,6 +6,7 @@ import 'package:psiemens/bloc/auth/auth_state.dart';
 import 'package:psiemens/bloc/noticias/noticias_bloc.dart';
 import 'package:psiemens/bloc/noticias/noticias_event.dart';
 import 'package:psiemens/components/snackbar_component.dart';
+import 'package:psiemens/theme/theme.dart';
 import 'package:psiemens/views/welcome_screen.dart';
 
 class LoginScreen extends StatelessWidget {
@@ -65,6 +66,7 @@ class LoginScreen extends StatelessWidget {
         },
         builder: (context, state) {
           return Scaffold(
+            backgroundColor: AppColors.surface,
             body: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Form(
@@ -74,13 +76,22 @@ class LoginScreen extends StatelessWidget {
                   children: [
                     const Text(
                       'Inicio de Sesión',
-                      style: TextStyle(color: Colors.black, fontSize: 22),
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
+                    const SizedBox(height: 24),
                     TextFormField(
                       controller: usernameController,
                       decoration: const InputDecoration(
                         labelText: 'Usuario *',
                         border: OutlineInputBorder(),
+                        labelStyle: TextStyle(color: AppColors.primary),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: AppColors.primary),
+                        ),
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
@@ -95,6 +106,10 @@ class LoginScreen extends StatelessWidget {
                       decoration: const InputDecoration(
                         labelText: 'Contraseña *',
                         border: OutlineInputBorder(),
+                        labelStyle: TextStyle(color: AppColors.primary),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: AppColors.primary),
+                        ),
                       ),
                       obscureText: true,
                       validator: (value) {
@@ -104,23 +119,33 @@ class LoginScreen extends StatelessWidget {
                         return null;
                       },
                     ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          final username = usernameController.text.trim();
-                          final password = passwordController.text.trim();
-
-                          // Usar el BLoC para manejar la autenticación
-                          context.read<AuthBloc>().add(
-                            AuthLoginRequested(
-                              email: username,
-                              password: password,
-                            ),
-                          );
-                        }
-                      },
-                      child: const Text('Iniciar Sesión'),
+                    const SizedBox(height: 24),
+                    Center(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 32),
+                          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          elevation: 2,
+                        ),
+                        onPressed: () {
+                          if (_formKey.currentState!.validate()) {
+                            final username = usernameController.text.trim();
+                            final password = passwordController.text.trim();
+                            context.read<AuthBloc>().add(
+                              AuthLoginRequested(
+                                email: username,
+                                password: password,
+                              ),
+                            );
+                          }
+                        },
+                        child: const Text('Iniciar Sesión'),
+                      ),
                     ),
                   ],
                 ),
