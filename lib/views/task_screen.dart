@@ -7,9 +7,7 @@ import 'package:psiemens/bloc/tarea_contador/tarea_contador_bloc.dart';
 import 'package:psiemens/bloc/tarea_contador/tarea_contador_event.dart';
 import 'package:psiemens/bloc/tarea_contador/tarea_contador_state.dart';
 import 'package:psiemens/components/add_task_modal.dart';
-import 'package:psiemens/components/custom_bottom_navigation_bar.dart';
 import 'package:psiemens/components/last_updated_header.dart';
-import 'package:psiemens/components/side_menu.dart';
 import 'package:psiemens/constants.dart';
 import 'package:psiemens/domain/task.dart';
 import 'package:psiemens/helpers/dialog_helper.dart';
@@ -83,12 +81,15 @@ class _TareaScreenContent extends StatelessWidget {
             appBar: AppBar(
               title: Text(
                 state is TareaLoaded
-                    ? '${TareasConstantes.tituloAppBar} - Total: ${state.tareas.length}'
+                    ? '${TareasConstantes.tituloAppBar} - Total: ${state.tareas.length}'
                     : TareasConstantes.tituloAppBar,
               ),
               centerTitle: true,
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
             ),
-            drawer: const SideMenu(),
             backgroundColor: Colors.grey[200],
             body: Column(
               children: [
@@ -129,9 +130,6 @@ class _TareaScreenContent extends StatelessWidget {
               onPressed: () => _mostrarModalAgregarTarea(context),
               tooltip: 'Agregar Tarea',
               child: const Icon(Icons.add),
-            ),
-            bottomNavigationBar: const CustomBottomNavigationBar(
-              selectedIndex: 0,
             ),
           );
         },

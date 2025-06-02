@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:psiemens/bloc/reportes/reportes_bloc.dart';
-import 'package:psiemens/bloc/reportes/reportes_event.dart';
-import 'package:psiemens/bloc/reportes/reportes_state.dart';
+import 'package:psiemens/bloc/noticias/noticias_bloc.dart';
+import 'package:psiemens/bloc/noticias/noticias_event.dart';
 import 'package:psiemens/constants.dart';
 import 'package:psiemens/domain/noticia.dart';
 import 'package:intl/intl.dart';
 import 'package:psiemens/views/comentarios/comentarios_screen.dart';
 import 'package:psiemens/components/reporte_dialog.dart';
-import 'package:watch_it/watch_it.dart';
 
 class NoticiaCard extends StatelessWidget {
   final Noticia noticia;
@@ -40,7 +38,8 @@ class NoticiaCard extends StatelessWidget {
           shape: null,
           elevation: 0.0,
           child: Column(
-            children: [              Row(
+            children: [
+              Row(
                 children: [
                   Icon(Icons.category, size: 14, color: Colors.grey[600]),
                   const SizedBox(width: 4),
@@ -131,67 +130,116 @@ class NoticiaCard extends StatelessWidget {
                     ),
                   ],
                 ),
-              ),              Row(
+              ),
+              Row(
                 mainAxisAlignment:
                     MainAxisAlignment.end, // Alinea los botones al final
-                children: [                  IconButton(
-                    icon: const Icon(Icons.comment),
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.star_border),
                     onPressed: () {
-                      // Navegar a la vista de comentarios
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder:
-                              (context) => ComentariosScreen(
-                                noticiaId: noticia.id!,
-                                noticiaTitulo: noticia.titulo,
+                      // Acción para marcar como favorito
+                    },
+                  ),
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.comment),
+                        onPressed: () async {
+                          // Navegar a la vista de comentarios
+                          await Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder:
+                                  (context) => ComentariosScreen(
+                                    noticiaId: noticia.id!,
+                                    noticiaTitulo: noticia.titulo,
+                                  ),
+                            ),
+                          );
+                          // Al volver, actualiza las noticias
+                          if (context.mounted) {
+                            context.read<NoticiaBloc>().add(FetchNoticiasEvent());
+                          }
+                        },
+                        tooltip: 'Ver comentarios',
+                      ),
+                      if ((noticia.contadorComentarios ?? 0) > 0)
+                        Positioned(
+                          right: 8,
+                          top: 8,
+                          child: Container(
+                            padding: const EdgeInsets.all(2),
+                            decoration: BoxDecoration(
+                              color: Colors.blue,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            constraints: const BoxConstraints(
+                              minWidth: 16,
+                              minHeight: 16,
+                            ),
+                            child: Text(
+                              (noticia.contadorComentarios ?? 0) > 99
+                                  ? '99+'
+                                  : (noticia.contadorComentarios ?? 0).toString(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 8,
+                                fontWeight: FontWeight.bold,
                               ),
-                        ),
-                      );                    },
-                    tooltip: 'Ver comentarios',
-                  ),                  // Botón de reportar con ícono de warning
-                  BlocProvider(
-                    create: (context) => di<ReporteBloc>()..add(CargarEstadisticasReporte(noticiaId: noticia.id!)),
-                    child: BlocBuilder<ReporteBloc, ReporteState>(
-                      builder: (context, state) {
-                        // Calcular el total de reportes
-                        int totalReportes = 0;
-                        bool isLoading = state is ReporteLoading;
-                        
-                        if (state is ReporteEstadisticasLoaded && state.noticiaId == noticia.id) {
-                          // Sumar todos los reportes de diferentes tipos
-                          totalReportes = state.estadisticas.values.fold(0, (sum, value) => sum + value);
-                        }
-                        
-                        // Determinar el color basado en el número de reportes
-                        Color iconColor;
-                        
-                        if (totalReportes == 0) {
-                          iconColor = Colors.grey;
-                        } else if (totalReportes < 5) {
-                          iconColor = Colors.orange;
-                        } else {
-                          iconColor = Colors.red;
-                        }
-                        
-                        return IconButton(
-                          icon: Icon(
-                            Icons.warning,
-                            color: iconColor,
+                              textAlign: TextAlign.center,
+                            ),
                           ),
-                          onPressed: isLoading ? null : () {
-                            if (onReport != null) {
-                              onReport!();
-                            } else {
-                              ReporteDialog.mostrarDialogoReporte(
-                                context: context,
-                                noticiaId: noticia.id!,
-                              );
-                            }
-                          },
-                          tooltip: 'Reportar noticia',
-                        );
-                      },
-                    ),
+                        ),
+                    ],
+                  ),
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.flag),
+                        onPressed: () {
+                          // Acción para reportar noticia
+                          if (onReport != null) {
+                            onReport!();
+                          } else {
+                            // Si no se proporcionó un callback, usar el diálogo de reportes directamente
+                            ReporteDialog.mostrarDialogoReporte(
+                              context: context,
+                              noticia: noticia,
+                            );
+                          }
+                        },
+                        tooltip: 'Reportar noticia',
+                      ),
+                      if (noticia.contadorReportes != null && noticia.contadorReportes! > 0)
+                        Positioned(
+                          right: 8,
+                          top: 8,
+                          child: Container(
+                            padding: const EdgeInsets.all(2),
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            constraints: const BoxConstraints(
+                              minWidth: 16,
+                              minHeight: 16,
+                            ),
+                            child: Text(
+                              noticia.contadorReportes! > 99
+                                  ? '99+'
+                                  : noticia.contadorReportes.toString(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 8,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                   IconButton(
                     icon: const Icon(Icons.edit),

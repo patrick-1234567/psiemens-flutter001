@@ -9,7 +9,6 @@ import 'package:psiemens/constants.dart';
 import 'package:psiemens/components/categoria_card.dart';
 import 'package:psiemens/components/formulario_categoria.dart';
 import 'package:psiemens/domain/categoria.dart';
-import 'package:psiemens/helpers/dialog_helper.dart';
 import 'package:psiemens/helpers/modal_helper.dart';
 import 'package:psiemens/helpers/snackbar_helper.dart';
 import 'package:psiemens/helpers/snackbar_manager.dart';
@@ -89,22 +88,19 @@ class _CategoriaScreenContent extends StatelessWidget {
         DateTime? lastUpdated;
         if (state is CategoriaLoaded) {
           lastUpdated = state.lastUpdated;
-        }        return Scaffold(          appBar: AppBar(
+        }
+        return Scaffold(
+          appBar: AppBar(
             title: const Text('Categorías de Noticias'),
-            centerTitle: true,            leading: IconButton(
-              icon: const Icon(Icons.arrow_back),
-              onPressed: () {
-                Navigator.pop(context);
-              },
-            ),
+            centerTitle: true,
             actions: [
               IconButton(
                 icon: const Icon(Icons.refresh),
                 onPressed: () =>
-                    // Forzar la recarga de la caché desde el servidor cuando se presiona el icono de refresh
                     context.read<CategoriaBloc>().add(CategoriaInitEvent(forzarRecarga: true)),
               ),
-            ],          ),
+            ],
+          ),
           backgroundColor: Colors.white,
           body: Column(
             children: [
@@ -114,20 +110,18 @@ class _CategoriaScreenContent extends StatelessWidget {
           ),
           floatingActionButton: FloatingAddButton(
             onPressed: () async {
-              final categoria = await ModalHelper.mostrarDialogo<Categoria>(
+              final categoriaResult = await ModalHelper.mostrarDialogo<Categoria>(
                 context: context,
                 title: 'Agregar Categoría',
                 child: const FormularioCategoria(),
               );
-
-              // Si se obtuvo una categoría del formulario y el contexto sigue montado
-              if (categoria != null && context.mounted) {
-                // Usar el BLoC para crear la categoría
+              if (categoriaResult != null && context.mounted) {
                 context.read<CategoriaBloc>().add(
-                  CategoriaCreateEvent(categoria),
+                  CategoriaCreateEvent(categoriaResult),
                 );
               }
-            },            tooltip: 'Agregar Categoría',
+            },
+            tooltip: 'Agregar Categoría',
           ),
           floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
         );
@@ -192,7 +186,6 @@ class _CategoriaScreenContent extends StatelessWidget {
               return CategoriaCard(
                 categoria: categoria,
                 onEdit: () => _editarCategoria(context, categoria),
-                onDelete: () => _eliminarCategoria(context, categoria),
               );
             },
           ),
@@ -226,22 +219,6 @@ class _CategoriaScreenContent extends StatelessWidget {
       
       // Usar el BLoC para actualizar la categoría
       context.read<CategoriaBloc>().add(CategoriaUpdateEvent(categoriaActualizada));
-    }
-  }
-  
-  // Extraer la lógica de eliminación a un método separado para mejorar la legibilidad
-  Future<void> _eliminarCategoria(BuildContext context, Categoria categoria) async {
-    // Mostrar diálogo de confirmación
-    final confirmar = await DialogHelper.mostrarConfirmacion(
-      context: context,
-      titulo: 'Confirmar eliminación',
-      mensaje: '¿Estás seguro de eliminar la categoría "${categoria.nombre}"?',
-      textoCancelar: 'Cancelar',
-      textoConfirmar: 'Eliminar',
-    );
-    
-    if (confirmar == true && context.mounted) {
-      context.read<CategoriaBloc>().add(CategoriaDeleteEvent(categoria.id!));
     }
   }
 }
