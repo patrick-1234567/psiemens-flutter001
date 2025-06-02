@@ -1,4 +1,5 @@
 import 'package:psiemens/api/service/preferencia_service.dart';
+import 'package:psiemens/constants.dart';
 import 'package:psiemens/data/base_repository.dart';
 import 'package:psiemens/domain/preferencia.dart';
 import 'package:psiemens/exceptions/api_exception.dart';
@@ -16,7 +17,7 @@ class PreferenciaRepository extends CacheableRepository<Preferencia> {
 
   @override
   void validarEntidad(Preferencia preferencia) {
-    validarNoVacio(preferencia.email, 'email del usuario');
+    validarNoVacio(preferencia.email, ValidacionConstantes.email);
   }
 
   @override
@@ -37,22 +38,23 @@ class PreferenciaRepository extends CacheableRepository<Preferencia> {
       // Obtener el email del usuario autenticado
       final email = await _secureStorage.getUserEmail();
       if (email == null || email.isEmpty) {
-        throw ApiException('No hay usuario autenticado', statusCode: 401);
+        throw ApiException(AppConstants.notUser, statusCode: 401);
       }
-      
-      try {
+        try {
         // Buscar directamente por email (más eficiente)
-        _cachedPreferencias = await _preferenciaService.obtenerPreferenciaPorEmail(email);
+        final preferencia = await _preferenciaService.obtenerPreferenciaPorEmail(email);
+        // Guardar en caché
+        _cachedPreferencias = preferencia;
       } catch (e) {
         // Si no encuentra la preferencia (error 404), crear una nueva
         if (e is ApiException && e.statusCode == 404) {
-          _cachedPreferencias = await _preferenciaService.crearPreferencias(email);
+          _cachedPreferencias = await _preferenciaService.crearPreferencia(email);
         } else {
           // Si es otro tipo de error, propagarlo
           rethrow;
         }
       }
-    }, mensajeError: 'Error al inicializar preferencias');
+    }, mensajeError: PreferenciaConstantes.errorInit);
   }
   
   /// Obtiene las categorías seleccionadas para filtrar las noticias
@@ -64,7 +66,7 @@ class PreferenciaRepository extends CacheableRepository<Preferencia> {
       }
 
       return _cachedPreferencias?.categoriasSeleccionadas ?? [];
-    }, mensajeError: 'Error al obtener categorías seleccionadas');
+    }, mensajeError: CategoriaConstantes.mensajeError);
   }
 
   /// Actualiza la caché local con las nuevas categorías (sin hacer PUT a la API)
@@ -77,7 +79,7 @@ class PreferenciaRepository extends CacheableRepository<Preferencia> {
       
       // Obtener el email actual desde la caché o buscar uno nuevo
       final email = _cachedPreferencias?.email ?? 
-                   (await _secureStorage.getUserEmail() ?? 'usuario@anonymous.com');
+                   (await _secureStorage.getUserEmail() ?? AppConstants.usuarioDefault);
       
       // Actualizar el objeto en caché
       _cachedPreferencias = Preferencia(
@@ -87,7 +89,7 @@ class PreferenciaRepository extends CacheableRepository<Preferencia> {
       
       // Marcar que hay cambios pendientes
       marcarCambiosPendientes();
-    }, mensajeError: 'Error al actualizar caché local');
+    }, mensajeError: AppConstants.errorCache);
   }
 
   /// Guarda las categorías seleccionadas en la API (solo cuando se presiona Aplicar Filtros)
@@ -112,7 +114,7 @@ class PreferenciaRepository extends CacheableRepository<Preferencia> {
       
       // Una vez guardado, ya no hay cambios pendientes
       super.invalidarCache(); // Esto también establece _cambiosPendientes = false
-    }, mensajeError: 'Error al guardar preferencias');
+    }, mensajeError: PreferenciaConstantes.errorUpdated);
   }
 
   /// Este método se mantiene para compatibilidad, pero ahora solo actualiza cache
@@ -129,7 +131,7 @@ class PreferenciaRepository extends CacheableRepository<Preferencia> {
         categorias.add(categoriaId);
         await _actualizarCacheLocal(categorias);
       }
-    }, mensajeError: 'Error al agregar categoría');
+    }, mensajeError: CategoriaConstantes.errorAdd);
   }
 
   /// Elimina una categoría de las categorías seleccionadas (solo en caché)
@@ -138,7 +140,7 @@ class PreferenciaRepository extends CacheableRepository<Preferencia> {
       final categorias = await obtenerCategoriasSeleccionadas();
       categorias.remove(categoriaId);
       await _actualizarCacheLocal(categorias);
-    }, mensajeError: 'Error al eliminar categoría');
+    }, mensajeError: CategoriaConstantes.errorDelete);
   }
 
   /// Limpia todas las categorías seleccionadas (solo en caché)
@@ -150,18 +152,5 @@ class PreferenciaRepository extends CacheableRepository<Preferencia> {
   void invalidarCache() {
     super.invalidarCache();
     _cachedPreferencias = null;
-    
-    // // Asegurarnos de que se eliminen todos los rastros de preferencias anteriores
-    // try {
-    //   // No esperamos a que termine porque esto es solo una limpieza
-    //   _secureStorage.getUserEmail().then((email) {
-    //     if (email != null && email.isNotEmpty) {
-    //       // Crear preferencias vacías para el usuario actual
-    //       _preferenciaService.crearPreferencias(email, categorias: []);
-    //     }
-    //   });
-    // } catch (e) {
-    //   // Ignoramos cualquier error de limpieza, ya que esto es solo precaución adicional
-    // }
   }
 }

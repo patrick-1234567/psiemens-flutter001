@@ -49,3 +49,23 @@ class FilterNoticiasByPreferenciasEvent extends NoticiaEvent {
 }
 
 class ResetNoticiaEvent extends NoticiaEvent {}
+
+class ActualizarContadorReportesEvent extends NoticiaEvent {
+  final String noticiaId;
+  final int nuevoContador;
+
+  ActualizarContadorReportesEvent(this.noticiaId, this.nuevoContador);
+
+  @override
+  List<Object> get props => [noticiaId, nuevoContador];
+}
+
+class ActualizarContadorComentariosEvent extends NoticiaEvent {
+  final String noticiaId;
+  final int nuevoContador;
+
+  ActualizarContadorComentariosEvent(this.noticiaId, this.nuevoContador);
+
+  @override
+  List<Object> get props => [noticiaId, nuevoContador];
+}

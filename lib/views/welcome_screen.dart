@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:psiemens/helpers/dialog_helper.dart';
 import 'package:psiemens/theme/theme.dart';
 import 'package:psiemens/views/acerca_de_screen.dart';
 import 'package:psiemens/views/categoria_screen.dart';
@@ -6,11 +7,52 @@ import 'package:psiemens/views/contador_screen.dart';
 import 'package:psiemens/views/login_screen.dart';
 import 'package:psiemens/views/task_screen.dart';
 import 'package:psiemens/views/start_screen.dart';
-import 'package:psiemens/views/quote_screen.dart'; 
+import 'package:psiemens/views/quote_screen.dart';
 import 'package:psiemens/views/noticia_screen.dart';
+import 'package:psiemens/helpers/secure_storage_service.dart';
+import 'package:watch_it/watch_it.dart';
 
-class WelcomeScreen extends StatelessWidget {
+class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
+
+  @override
+  WelcomeScreenState createState() => WelcomeScreenState();
+}
+
+class WelcomeScreenState extends State<WelcomeScreen> {
+  String _userEmail = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _verificarAutenticacionYCargarEmail();
+  }
+
+  Future<void> _verificarAutenticacionYCargarEmail() async {
+    final SecureStorageService secureStorage = di<SecureStorageService>();
+
+    // Verificar si hay un token válido
+    final token = await secureStorage.getJwt();
+
+    // Si no hay token, redireccionar a la pantalla de login
+    if (token == null || token.isEmpty) {
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => LoginScreen()),
+          (route) => false,
+        );
+      }
+      return;
+    }
+
+    // Si hay token, cargar el email del usuario
+    final email = await secureStorage.getUserEmail() ?? 'Usuario';
+    if (mounted) {
+      setState(() {
+        _userEmail = email;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,16 +66,29 @@ class WelcomeScreen extends StatelessWidget {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(
+            DrawerHeader(
+              decoration: const BoxDecoration(
                 color: AppColors.primary,
               ),
-              child: Text(
-                'Menú',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Menú',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    _userEmail.isNotEmpty ? _userEmail : 'Usuario',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
               ),
             ),
             ListTile(
@@ -110,24 +165,21 @@ class WelcomeScreen extends StatelessWidget {
               leading: const Icon(Icons.logout, color: AppColors.primary),
               title: const Text('Cerrar Sesión', style: TextStyle(color: AppColors.primary)),
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => LoginScreen()),
-                );
+                DialogHelper.mostrarDialogoCerrarSesion(context);
               },
             ),
           ],
         ),
       ),
-      body: const Center(
+      body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              '¡Bienvenido! El login fue exitoso.',
-              style: TextStyle(fontSize: 24, color: AppColors.primary, fontWeight: FontWeight.bold),
+              '¡Bienvenido/a $_userEmail! El login fue exitoso.',
+              style: const TextStyle(fontSize: 24, color: AppColors.primary, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
           ],
         ),
       ),
