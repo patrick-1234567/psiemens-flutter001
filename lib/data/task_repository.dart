@@ -34,7 +34,7 @@ class TareasRepository extends BaseRepository<Tarea> {
   /// Valida los campos de la entidad Tarea
   @override
   void validarEntidad(Tarea tarea) {
-    validarNoVacio(tarea.titulo, AppConstants.tituloTarea);
+    validarNoVacio(tarea.titulo, TareasConstantes.tituloTarea);
     //agregar validaciones que correspondan
   }
 
@@ -79,7 +79,7 @@ class TareasRepository extends BaseRepository<Tarea> {
   Future<List<Tarea>> obtenerTareasUsuario(String usuario) async {
     List<Tarea> tareasUsuario = await manejarExcepcion(
       () => _tareaService.obtenerTareasUsuario(usuario),
-      mensajeError: AppConstants.mensajeError,
+      mensajeError: TareasConstantes.mensajeError,
     );
     return tareasUsuario;
   }
@@ -114,7 +114,7 @@ class TareasRepository extends BaseRepository<Tarea> {
         await _guardarEnCache(tareas);
       }
       return tareas;
-    }, mensajeError: AppConstants.mensajeError);
+    }, mensajeError: TareasConstantes.mensajeError);
   }
 
   /// Agrega una nueva tarea y actualiza la caché
@@ -137,7 +137,7 @@ class TareasRepository extends BaseRepository<Tarea> {
         (cache) => cache.copyWith(misTareas: [...cache.misTareas, nuevaTarea]),
       );
       return nuevaTarea;
-    }, mensajeError: AppConstants.errorCrear);
+    }, mensajeError: TareasConstantes.errorCrear);
   }
 
   /// Elimina una tarea y actualiza la caché
@@ -155,7 +155,7 @@ class TareasRepository extends BaseRepository<Tarea> {
         // Creamos una nueva instancia con la lista filtrada
         return cache.copyWith(misTareas: tareasFiltradas);
       });
-    }, mensajeError: AppConstants.errorEliminar);
+    }, mensajeError: TareasConstantes.errorEliminar);
   }
 
   /// Actualiza una tarea existente y la caché
@@ -179,7 +179,7 @@ class TareasRepository extends BaseRepository<Tarea> {
         return cache.copyWith(misTareas: nuevasTareas);
       });
       return tareaActualizada;
-    }, mensajeError: AppConstants.errorActualizar);
+    }, mensajeError: TareasConstantes.errorActualizar);
   }
 
   Future<void> limpiarCache() async {

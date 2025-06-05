@@ -11,6 +11,7 @@ import 'package:psiemens/bloc/preferencia/preferencia_state.dart';
 import 'package:psiemens/domain/categoria.dart';
 import 'package:psiemens/helpers/snackbar_helper.dart';
 import 'package:psiemens/helpers/snackbar_manager.dart';
+import 'package:psiemens/theme/theme.dart';
 
 class PreferenciaScreen extends StatelessWidget {
   const PreferenciaScreen({super.key});
@@ -68,6 +69,8 @@ class PreferenciaScreen extends StatelessWidget {
           return Scaffold(
             appBar: AppBar(
               title: const Text('Preferencias'),
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
               centerTitle: true,
               actions: [
                 IconButton(
@@ -77,7 +80,7 @@ class PreferenciaScreen extends StatelessWidget {
                 ),
               ],
             ),
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.surface,
             body: _construirCuerpoPreferencias(context, prefState),
             bottomNavigationBar: _construirBarraInferior(context, prefState),
           );
@@ -92,8 +95,11 @@ class PreferenciaScreen extends StatelessWidget {
   ) {
     return BlocBuilder<CategoriaBloc, CategoriaState>(
       builder: (context, catState) {
-        if (catState is CategoriaLoading || prefState is PreferenciaLoading ||prefState is PreferenciasSaved) {
-          return const Center(child: CircularProgressIndicator());
+        if (catState is CategoriaLoading || prefState is PreferenciaLoading ||prefState is PreferenciasSaved) {          return Center(
+            child: CircularProgressIndicator(
+              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+            ),
+          );
         } else if (catState is CategoriaError) {
           return _construirWidgetError(
             context,
@@ -110,7 +116,14 @@ class PreferenciaScreen extends StatelessWidget {
           final categorias = catState.categorias;
           return _construirListaCategorias(context, prefState, categorias);
         }
-        return const Center(child: Text('Estado desconocido'));
+        return Center(
+        child: Text(
+          'Estado desconocido',
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+            color: AppColors.gray07,
+          ),
+        ),
+      );
       },
     );
   }
@@ -120,9 +133,13 @@ class PreferenciaScreen extends StatelessWidget {
     PreferenciaState state,
     List<Categoria> categorias,
   ) {
-    if (categorias.isEmpty) {
-      return const Center(
-        child: Text('No hay categorías disponibles'),
+    if (categorias.isEmpty) {      return Center(
+        child: Text(
+          'No hay categorías disponibles',
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+            color: AppColors.gray07,
+          ),
+        ),
       );
     }
 
@@ -202,13 +219,8 @@ class PreferenciaScreen extends StatelessWidget {
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: state is PreferenciaError ? Colors.red : null,
                 ),
-              ),
-              ElevatedButton(
+              ),              ElevatedButton(
                 onPressed: isEnabled ? () => _aplicarFiltros(context, state) : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).primaryColor,
-                  foregroundColor: Colors.white,
-                ),
                 child: const Text('Aplicar filtros'),
               ),
             ],
@@ -222,13 +234,12 @@ class PreferenciaScreen extends StatelessWidget {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.error_outline, size: 48, color: Colors.red),
+        children: [          const Icon(Icons.error_outline, size: 48, color: Colors.red),
           const SizedBox(height: 16),
           Text(
             message,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 16),
+            style: Theme.of(context).textTheme.bodyLarge,
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(

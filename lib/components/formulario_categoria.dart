@@ -138,24 +138,24 @@ class _FormularioCategoriaState extends State<FormularioCategoria> {
                   ),
                 ),
               const SizedBox(height: 20),
-              SizedBox(
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: _guardarCategoria,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).primaryColor,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text(
+                      'Cancelar',
+                    ),
+                  ),                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: _guardarCategoria,
+                    child: Text(
+                      widget.categoria == null ? 'Agregar' : 'Guardar',
                     ),
                   ),
-                  child: Text(
-                    widget.categoria == null ? 'CREAR CATEGORÍA' : 'GUARDAR CAMBIOS',
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                ),
+                ],
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
             ],
           ),
         ),

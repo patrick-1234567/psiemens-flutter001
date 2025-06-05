@@ -13,7 +13,7 @@ import 'package:psiemens/domain/task.dart';
 import 'package:psiemens/helpers/dialog_helper.dart';
 import 'package:psiemens/helpers/snackbar_helper.dart';
 import 'package:psiemens/helpers/snackbar_manager.dart';
-import 'package:psiemens/helpers/task_card_helper.dart';
+import 'package:psiemens/theme/theme.dart';
 import 'package:psiemens/views/task_detail_screen.dart';
 
 class TareaScreen extends StatelessWidget {
@@ -21,22 +21,14 @@ class TareaScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Limpiar cualquier SnackBar existente al entrar a esta pantalla
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!SnackBarManager().isConnectivitySnackBarShowing) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
       }
     });
 
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider<TareaBloc>(
-          create: (context) => TareaBloc()..add(LoadTareasEvent()),
-        ),
-        BlocProvider<TareaContadorBloc>(
-          create: (context) => TareaContadorBloc(),
-        ),
-      ],
+    return BlocProvider<TareaBloc>(
+      create: (context) => TareaBloc()..add(LoadTareasEvent()),
       child: const _TareaScreenContent(),
     );
   }
@@ -60,13 +52,14 @@ class _TareaScreenContent extends StatelessWidget {
             mensaje: TareasConstantes.listaVacia,
           );
         } else if (state is TareaCompletada) {
-          // Notificar a TareaContadorBloc si fue marcado o desmarcado
           if (state.tarea.completada) {
             context.read<TareaContadorBloc>().add(IncrementarContador());
-            SnackBarHelper.mostrarExito(context, mensaje: '¡Tarea marcada como completada!');
+            SnackBarHelper.mostrarExito(
+                context, mensaje: '¡Tarea marcada como completada!');
           } else {
             context.read<TareaContadorBloc>().add(DecrementarContador());
-            SnackBarHelper.mostrarInfo(context, mensaje: 'Tarea marcada como pendiente.');
+            SnackBarHelper.mostrarInfo(
+                context, mensaje: 'Tarea marcada como pendiente.');
           }
         }
       },
@@ -76,45 +69,56 @@ class _TareaScreenContent extends StatelessWidget {
           if (state is TareaLoaded) {
             lastUpdated = state.lastUpdated;
           }
-
           return Scaffold(
             appBar: AppBar(
               title: Text(
                 state is TareaLoaded
                     ? '${TareasConstantes.tituloAppBar} - Total: ${state.tareas.length}'
                     : TareasConstantes.tituloAppBar,
+                style: const TextStyle(color: Colors.white),
               ),
               centerTitle: true,
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              elevation: 0,
               leading: IconButton(
                 icon: const Icon(Icons.arrow_back),
                 onPressed: () => Navigator.of(context).pop(),
               ),
             ),
-            backgroundColor: Colors.grey[200],
+            backgroundColor: AppColors.surface,
             body: Column(
               children: [
-                // Progreso de tareas completadas
                 BlocBuilder<TareaContadorBloc, TareaContadorState>(
                   builder: (context, contadorState) {
-                    final total = (state is TareaLoaded) ? state.tareas.length : 0;
+                    final total =
+                        (state is TareaLoaded) ? state.tareas.length : 0;
                     final completadas = contadorState.completadas;
-                    final porcentaje = (total > 0) ? completadas / total : 0.0;
+                    final porcentaje =
+                        (total > 0) ? completadas / total : 0.0;
                     return Column(
                       children: [
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
                           child: Row(
                             children: [
                               Expanded(
                                 child: LinearProgressIndicator(
                                   value: porcentaje,
                                   minHeight: 8,
-                                  backgroundColor: Colors.grey[300],
-                                  color: Colors.green,
+                                  backgroundColor: AppColors.gray04,
+                                  color: AppColors.secondary,
                                 ),
                               ),
                               const SizedBox(width: 12),
-                              Text('$completadas/$total'),
+                              Text(
+                                '$completadas/$total',
+                                style: const TextStyle(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -129,6 +133,9 @@ class _TareaScreenContent extends StatelessWidget {
             floatingActionButton: FloatingActionButton(
               onPressed: () => _mostrarModalAgregarTarea(context),
               tooltip: 'Agregar Tarea',
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              elevation: 2,
               child: const Icon(Icons.add),
             ),
           );
@@ -147,7 +154,7 @@ class _TareaScreenContent extends StatelessWidget {
           children: [
             Text(
               state.error.message,
-              style: const TextStyle(color: Colors.red),
+              style: const TextStyle(color: AppColors.gray07),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
@@ -166,29 +173,37 @@ class _TareaScreenContent extends StatelessWidget {
             context.read<TareaBloc>().add(LoadTareasEvent(forzarRecarga: true));
           }
         },
-        child:
-            state.tareas.isEmpty
-                ? ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  children: [
-                    SizedBox(
-                      height: MediaQuery.of(context).size.height * 0.6,
-                      child: const Center(
-                        child: Text(TareasConstantes.listaVacia),
+        child: state.tareas.isEmpty
+            ? ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: [
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.6,
+                    child: const Center(
+                      child: const Text(
+                        TareasConstantes.listaVacia,
+                        style: TextStyle(color: AppColors.gray07),
                       ),
                     ),
-                  ],
-                )
-                : ListView.builder(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  itemCount: state.tareas.length,
-                  itemBuilder: (context, index) {
-                    final tarea = state.tareas[index];
-                    return Dismissible(
+                  ),
+                ],
+              )
+            : ListView.builder(
+                padding: const EdgeInsets.all(8),
+                physics: const AlwaysScrollableScrollPhysics(),
+                itemCount: state.tareas.length,
+                itemBuilder: (context, index) {
+                  final tarea = state.tareas[index];
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Dismissible(
                       key: Key(tarea.id.toString()),
                       background: Container(
-                        color: Colors.red,
-                        alignment: Alignment.centerRight,
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        alignment: Alignment.centerLeft,
                         padding: const EdgeInsets.symmetric(horizontal: 16.0),
                         child: const Icon(Icons.delete, color: Colors.white),
                       ),
@@ -202,39 +217,127 @@ class _TareaScreenContent extends StatelessWidget {
                           textoCancelar: 'Cancelar',
                           textoConfirmar: 'Eliminar',
                         );
-                      },
-                      onDismissed: (_) {
-                        context.read<TareaBloc>().add(
-                          DeleteTareaEvent(tarea.id!),
+                      },                      onDismissed: (_) {
+                        context
+                            .read<TareaBloc>()
+                            .add(DeleteTareaEvent(tarea.id!));
+                        SnackBarHelper.mostrarExito(
+                          context,
+                          mensaje: TareasConstantes.tareaEliminada,
                         );
                       },
-                      child: construirTarjetaDeportiva(
-                        tarea,
-                        tarea.id!,
-                        () => _mostrarModalEditarTarea(context, tarea),
-                        onCompletadaChanged: (checked) {
-                          context.read<TareaBloc>().add(
-                            CompletarTareaEvent(
-                              tarea.copyWith(completada: checked ?? false),
-                              checked ?? false,
-                            ),
-                          );
-                        },
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => TaskDetailsScreen(
-                                tareas: state.tareas,
-                                indice: index,
+                      child: Card(
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(
+                              color: AppColors.gray04.withOpacity(0.5)),
+                        ),
+                        child: InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => TaskDetailsScreen(
+                                  tareas: state.tareas,
+                                  indice: index,
+                                ),
                               ),
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(12),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(
+                                      tarea.tipo == 'urgente'
+                                          ? Icons.warning
+                                          : Icons.task_alt,
+                                      color: tarea.tipo == 'urgente'
+                                          ? Colors.red
+                                          : AppColors.primary,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        tarea.titulo,
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.primary,
+                                          decoration: tarea.completada
+                                              ? TextDecoration.lineThrough
+                                              : null,
+                                        ),
+                                      ),
+                                    ),
+                                    Checkbox(
+                                      value: tarea.completada,
+                                      onChanged: (checked) {
+                                        context.read<TareaBloc>().add(
+                                              CompletarTareaEvent(
+                                                tarea.copyWith(
+                                                    completada:
+                                                        checked ?? false),
+                                                checked ?? false,
+                                              ),
+                                            );
+                                      },
+                                      activeColor: AppColors.primary,
+                                    ),
+                                  ],
+                                ),
+                                if (tarea.fechaLimite != null)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 8.0),
+                                    child: Text(
+                                      'Fecha límite: ${tarea.fechaLimite!.day.toString().padLeft(2, '0')}/'
+                                      '${tarea.fechaLimite!.month.toString().padLeft(2, '0')}/'
+                                      '${tarea.fechaLimite!.year}',
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        color: AppColors.gray07,
+                                      ),
+                                    ),
+                                  ),
+                                if (tarea.descripcion?.isNotEmpty ?? false)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 8.0),
+                                    child: Text(
+                                      tarea.descripcion!,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        color: AppColors.gray07,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.edit,
+                                          color: AppColors.gray07),
+                                      onPressed: () => _mostrarModalEditarTarea(
+                                          context, tarea),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
-                          );
-                        },
+                          ),
+                        ),
                       ),
-                    );
-                  },
-                ),
+                    ),
+                  );
+                },
+              ),
       );
     }
     return const SizedBox.shrink();
@@ -243,25 +346,48 @@ class _TareaScreenContent extends StatelessWidget {
   void _mostrarModalEditarTarea(BuildContext context, Tarea tarea) {
     showDialog(
       context: context,
-      builder:
-          (dialogContext) => AddTaskModal(
-            taskToEdit: tarea,
-            onTaskAdded: (Tarea tareaEditada) {
-              context.read<TareaBloc>().add(UpdateTareaEvent(tareaEditada));
-            },
-          ),
+      builder: (dialogContext) => AddTaskModal(
+        taskToEdit: tarea,
+        onTaskAdded: (Tarea tareaEditada) {
+          context.read<TareaBloc>().add(UpdateTareaEvent(tareaEditada));
+        },
+      ),
     );
   }
 
   void _mostrarModalAgregarTarea(BuildContext context) {
-    showDialog(
-      context: context,
-      builder:
-          (dialogContext) => AddTaskModal(
-            onTaskAdded: (Tarea nuevaTarea) {
-              context.read<TareaBloc>().add(CreateTareaEvent(nuevaTarea));
+    // Obtener el estado actual del TareaBloc
+    final state = context.read<TareaBloc>().state;
+
+    // Verificar si hay 3 o más tareas
+    if (state is TareaLoaded && state.tareas.length >= 3) {
+      // Mostrar SnackBar con mensaje
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+              'No se pueden crear más tareas. Elimine una para continuar.'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 3),
+          action: SnackBarAction(
+            label: 'Entendido',
+            textColor: Colors.white,
+            onPressed: () {
+              ScaffoldMessenger.of(context).hideCurrentSnackBar();
             },
           ),
+        ),
+      );
+      return; // No mostrar el diálogo si ya hay 3 tareas
+    }
+
+    // Si hay menos de 3 tareas, mostrar el diálogo para crear
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AddTaskModal(
+        onTaskAdded: (Tarea nuevaTarea) {
+          context.read<TareaBloc>().add(CreateTareaEvent(nuevaTarea));
+        },
+      ),
     );
   }
 }

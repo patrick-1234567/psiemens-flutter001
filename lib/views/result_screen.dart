@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:psiemens/constants.dart';
 import 'package:psiemens/views/game_screen.dart';
+import 'package:psiemens/theme/theme.dart';
+
 class ResultScreen extends StatelessWidget {
-  final int finalScore; // Puntaje final
-  final int totalQuestions; // Total de preguntas
-  final double spacingHeight = 20.0; // Espaciado entre elementos
+  final int finalScore;
+  final int totalQuestions;
+  final double spacingHeight = 20.0;
 
   const ResultScreen({
     super.key,
@@ -14,39 +16,23 @@ class ResultScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Texto del puntaje
     final String scoreText = '${GameConstants.finalScore} $finalScore/$totalQuestions';
-
-    // Mensaje de retroalimentación
     final String feedbackMessage = finalScore > (totalQuestions / 2)
         ? '¡Buen trabajo!'
         : '¡Sigue practicando!';
 
-    // Determina el color del botón
+    // Usa los colores del theme
     final Color buttonColor = finalScore > (totalQuestions / 2)
-        ? Colors.blue // Azul si el puntaje es mayor a la mitad
-        : Colors.green; // Verde en caso contrario
-
-    // Estilo del texto del puntaje
-    const TextStyle scoreTextStyle = TextStyle(
-      fontSize: 24,
-      fontWeight: FontWeight.bold,
-      color: Colors.black,
-    );
-
-    // Estilo del mensaje de retroalimentación
-    const TextStyle feedbackTextStyle = TextStyle(
-      fontSize: 18,
-      color: Colors.grey,
-    );
+        ? AppColors.primary
+        : AppColors.secondary;
 
     return Scaffold(
-      backgroundColor: Colors.white, // Fondo blanco
+      backgroundColor: AppColors.surface,
       appBar: AppBar(
         title: const Text('Resultados'),
-        backgroundColor: Colors.white,
-        iconTheme: const IconThemeData(color: Colors.blue),
-        elevation: 0, // Sin sombra
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        elevation: 0,
       ),
       body: Center(
         child: Column(
@@ -54,16 +40,21 @@ class ResultScreen extends StatelessWidget {
           children: [
             Text(
               scoreText,
-              style: scoreTextStyle, // Estilo del puntaje
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: spacingHeight), // Espaciado entre puntaje y mensaje
+            SizedBox(height: spacingHeight),
             Text(
               feedbackMessage,
-              style: feedbackTextStyle, // Estilo del mensaje de retroalimentación
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: AppColors.gray07,
+                  ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 32), // Espaciado entre mensaje y botón
+            const SizedBox(height: 32),
             ElevatedButton(
               onPressed: () {
                 Navigator.pushReplacement(
@@ -72,12 +63,17 @@ class ResultScreen extends StatelessWidget {
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: buttonColor, // Usa el color determinado
-                foregroundColor: Colors.white, // Texto blanco
+                backgroundColor: buttonColor,
+                foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(24),
+                textStyle: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
                 ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 2,
               ),
               child: const Text(GameConstants.playAgain),
             ),

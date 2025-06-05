@@ -26,7 +26,7 @@ class QuoteRepository extends CacheableRepository<Quote> {
   @override
   Future<List<Quote>> cargarDatos() async {
     // Simula un retraso
-    await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(const Duration(seconds: 2));
 
     // Lista fija de cotizaciones
     return [

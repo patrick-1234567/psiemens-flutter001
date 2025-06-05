@@ -33,11 +33,3 @@ class CategoriaUpdateEvent extends CategoriaEvent {
   List<Object?> get props => [categoria];
 }
 
-class CategoriaDeleteEvent extends CategoriaEvent {
-  final String id;
-
-  CategoriaDeleteEvent(this.id);
-
-  @override
-  List<Object?> get props => [id];
-}

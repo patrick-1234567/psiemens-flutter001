@@ -12,6 +12,7 @@ import 'package:psiemens/domain/categoria.dart';
 import 'package:psiemens/helpers/modal_helper.dart';
 import 'package:psiemens/helpers/snackbar_helper.dart';
 import 'package:psiemens/helpers/snackbar_manager.dart';
+import 'package:psiemens/theme/theme.dart';
 
 class CategoriaScreen extends StatelessWidget {
   const CategoriaScreen({super.key});
@@ -45,7 +46,6 @@ class _CategoriaScreenContent extends StatelessWidget {
         return current is CategoriaError || // Cuando hay errores
                current is CategoriaCreated || // Cuando se crea una categoría
                current is CategoriaUpdated || // Cuando se actualiza una categoría
-               current is CategoriaDeleted || // Cuando se elimina una categoría
                current is CategoriaReloaded || // Cuando se recarga la caché forzadamente
                (current is CategoriaLoaded && current.categorias.isEmpty); // Cuando la lista está vacía
       },
@@ -65,11 +65,6 @@ class _CategoriaScreenContent extends StatelessWidget {
             context,
             mensaje: CategoriaConstantes.successUpdated,
           );
-        } else if (state is CategoriaDeleted) {
-          SnackBarHelper.mostrarExito(
-            context,
-            mensaje: CategoriaConstantes.successDeleted,
-          );
         } else if (state is CategoriaReloaded) {
           // Mensaje específico para cuando se recarga la caché forzadamente
           SnackBarHelper.mostrarExito(
@@ -88,20 +83,23 @@ class _CategoriaScreenContent extends StatelessWidget {
         DateTime? lastUpdated;
         if (state is CategoriaLoaded) {
           lastUpdated = state.lastUpdated;
-        }
-        return Scaffold(
+        }        return Scaffold(
           appBar: AppBar(
             title: const Text('Categorías de Noticias'),
             centerTitle: true,
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+            elevation: 0,
             actions: [
               IconButton(
                 icon: const Icon(Icons.refresh),
                 onPressed: () =>
+                    // Forzar la recarga de la caché desde el servidor cuando se presiona el icono de refresh
                     context.read<CategoriaBloc>().add(CategoriaInitEvent(forzarRecarga: true)),
               ),
             ],
           ),
-          backgroundColor: Colors.white,
+          backgroundColor: AppColors.surface,
           body: Column(
             children: [
               LastUpdatedHeader(lastUpdated: lastUpdated),
@@ -110,20 +108,24 @@ class _CategoriaScreenContent extends StatelessWidget {
           ),
           floatingActionButton: FloatingAddButton(
             onPressed: () async {
-              final categoriaResult = await ModalHelper.mostrarDialogo<Categoria>(
+              final categoria = await ModalHelper.mostrarDialogo<Categoria>(
                 context: context,
                 title: 'Agregar Categoría',
                 child: const FormularioCategoria(),
               );
-              if (categoriaResult != null && context.mounted) {
+
+              // Si se obtuvo una categoría del formulario y el contexto sigue montado
+              if (categoria != null && context.mounted) {
+                // Usar el BLoC para crear la categoría
                 context.read<CategoriaBloc>().add(
-                  CategoriaCreateEvent(categoriaResult),
+                  CategoriaCreateEvent(categoria),
                 );
               }
             },
             tooltip: 'Agregar Categoría',
-          ),
-          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+          ),          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
         );
       },
     );
@@ -161,12 +163,18 @@ class _CategoriaScreenContent extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  state.error.message,
-                  style: const TextStyle(color: Colors.red),
+                  state.error.message,                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.red,
+                  ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 16),                ElevatedButton(
+                const SizedBox(height: 16),
+                ElevatedButton(
                   onPressed: () => context.read<CategoriaBloc>().add(CategoriaInitEvent(forzarRecarga: true)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                  ),
                   child: const Text('Reintentar'),
                 ),
               ],
