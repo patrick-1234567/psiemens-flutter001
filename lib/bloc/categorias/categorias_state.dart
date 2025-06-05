@@ -9,7 +9,7 @@ abstract class CategoriaState extends Equatable {
 
 class CategoriaInitial extends CategoriaState {}
 
-enum TipoOperacion { cargar, crear, actualizar, eliminar }
+enum TipoOperacion { cargar, crear, actualizar}
 
 class CategoriaError extends CategoriaState {
   final ApiException error;
@@ -39,10 +39,6 @@ class CategoriaCreated extends CategoriaLoaded {
 
 class CategoriaUpdated extends CategoriaLoaded {
   CategoriaUpdated(super.categorias, super.lastUpdated);
-}
-
-class CategoriaDeleted extends CategoriaLoaded {
-  CategoriaDeleted(super.categorias, super.lastUpdated);
 }
 
 /// Estado especial para cuando se recarga la caché forzadamente

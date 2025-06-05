@@ -13,7 +13,6 @@ class CategoriaBloc extends Bloc<CategoriaEvent, CategoriaState> {
     on<CategoriaInitEvent>(_onInit);
     on<CategoriaCreateEvent>(_onCreate);
     on<CategoriaUpdateEvent>(_onUpdate);
-    on<CategoriaDeleteEvent>(_onDelete);
   }
 
   Future<void> _onInit(
@@ -94,33 +93,6 @@ class CategoriaBloc extends Bloc<CategoriaEvent, CategoriaState> {
     } catch (e) {
       if (e is ApiException) {
         emit(CategoriaError(e, TipoOperacion.actualizar));
-      }
-    }
-  }
-
-  Future<void> _onDelete(
-    CategoriaDeleteEvent event,
-    Emitter<CategoriaState> emit,
-  ) async {
-    List<Categoria> categoriasActuales = [];
-    if (state is CategoriaLoaded) {
-      categoriasActuales = [...(state as CategoriaLoaded).categorias];
-    }
-    emit(CategoriaLoading());
-
-    try {
-      await _categoriaRepository.eliminarCategoria(event.id);
-
-      // Filtrar la lista de categorías para quitar la categoría eliminada
-      final categoriasActualizadas =
-          categoriasActuales
-              .where((categoria) => categoria.id != event.id)
-              .toList();
-
-      emit(CategoriaDeleted(categoriasActualizadas, DateTime.now()));
-    } catch (e) {
-      if (e is ApiException) {
-        emit(CategoriaError(e, TipoOperacion.eliminar));
       }
     }
   }

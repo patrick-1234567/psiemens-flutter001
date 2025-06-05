@@ -46,7 +46,6 @@ class _CategoriaScreenContent extends StatelessWidget {
         return current is CategoriaError || // Cuando hay errores
                current is CategoriaCreated || // Cuando se crea una categoría
                current is CategoriaUpdated || // Cuando se actualiza una categoría
-               current is CategoriaDeleted || // Cuando se elimina una categoría
                current is CategoriaReloaded || // Cuando se recarga la caché forzadamente
                (current is CategoriaLoaded && current.categorias.isEmpty); // Cuando la lista está vacía
       },
@@ -65,11 +64,6 @@ class _CategoriaScreenContent extends StatelessWidget {
           SnackBarHelper.mostrarExito(
             context,
             mensaje: CategoriaConstantes.successUpdated,
-          );
-        } else if (state is CategoriaDeleted) {
-          SnackBarHelper.mostrarExito(
-            context,
-            mensaje: CategoriaConstantes.successDeleted,
           );
         } else if (state is CategoriaReloaded) {
           // Mensaje específico para cuando se recarga la caché forzadamente
