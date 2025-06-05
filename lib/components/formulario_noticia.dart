@@ -108,6 +108,8 @@ class _FormularioNoticiaState extends State<FormularioNoticia> {
             ? "https://picsum.photos/200/300" 
             : _imagenUrlController.text,
         categoriaId: _selectedCategoriaId,
+        contadorReportes: widget.noticia?.contadorReportes ?? 0,
+        contadorComentarios: widget.noticia?.contadorComentarios ?? 0,
       );
       Navigator.of(context).pop(noticia);
     }
