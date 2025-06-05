@@ -163,5 +163,12 @@ class CommentInputForm extends StatelessWidget {
       context,
       mensaje: 'Comentario agregado con éxito',
     );
+
+    // Recargar la lista de comentarios
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (context.mounted) {
+        bloc.add(LoadComentarios(noticiaId));
+      }
+    });
   }
 }

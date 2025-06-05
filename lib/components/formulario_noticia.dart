@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:psiemens/constants.dart';
 import 'package:psiemens/domain/categoria.dart';
 import 'package:psiemens/domain/noticia.dart';
+import 'package:psiemens/components/picsum_image_selector.dart';
 
 class FormularioNoticia extends StatefulWidget {
   final Noticia? noticia; // Noticia existente para edición (null para creación)
@@ -23,6 +24,7 @@ class _FormularioNoticiaState extends State<FormularioNoticia> {
   late TextEditingController _fechaController;
   DateTime _fechaSeleccionada = DateTime.now();
   String _selectedCategoriaId = CategoriaConstantes.defaultcategoriaId;
+
   @override
   void initState() {
     super.initState();
@@ -111,6 +113,31 @@ class _FormularioNoticiaState extends State<FormularioNoticia> {
     }
   }
 
+  void _mostrarSelectorImagenes() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            width: MediaQuery.of(context).size.width * 0.8,
+            height: MediaQuery.of(context).size.height * 0.7,
+            padding: const EdgeInsets.all(8.0),
+            child: PicsumImageSelector(
+              onImageSelected: (imageUrl) {
+                setState(() {
+                  _imagenUrlController.text = imageUrl;
+                });
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -180,9 +207,14 @@ class _FormularioNoticiaState extends State<FormularioNoticia> {
             const SizedBox(height: 16),
             TextFormField(
               controller: _imagenUrlController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'URL de la imagen',
-                border: OutlineInputBorder(),
+                border: const OutlineInputBorder(),
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.image_search),
+                  onPressed: _mostrarSelectorImagenes,
+                  tooltip: 'Seleccionar imagen',
+                ),
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {

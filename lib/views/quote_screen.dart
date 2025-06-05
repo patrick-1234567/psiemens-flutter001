@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:psiemens/api/service/quote_service.dart';
+import 'package:psiemens/constants.dart';
 import 'package:psiemens/data/quote_repository.dart';
 import 'package:psiemens/domain/quote.dart';
-// Asegúrate de que este import es necesario aquí, si no, puedes quitarlo.
-// import 'package:psiemens/constants.dart';
+import 'package:psiemens/theme/theme.dart';
 
 class QuoteScreen extends StatefulWidget {
   const QuoteScreen({super.key});
@@ -13,7 +14,6 @@ class QuoteScreen extends StatefulWidget {
 }
 
 class _QuoteScreenState extends State<QuoteScreen> {
-  // --- State Variables ---
   final List<Quote> _quotes = [];
   int _currentPageForRandom = 1;
   bool _isLoading = false;
@@ -23,9 +23,7 @@ class _QuoteScreenState extends State<QuoteScreen> {
 
   final QuoteService _quoteService = QuoteService(quoteRepository: QuoteRepository());
   final ScrollController _scrollController = ScrollController();
-
-  // --- Constantes de UI ---
-  final double spacingHeight = 10.0; // Variable para el espaciado
+  final double spacingHeight = 10.0;
 
   @override
   void initState() {
@@ -96,106 +94,151 @@ class _QuoteScreenState extends State<QuoteScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // --- Cambio de color de fondo ---
-      backgroundColor: Colors.grey[200],
-      // --- Fin cambio de color ---
+      backgroundColor: AppColors.surface,
       appBar: AppBar(
-        title: const Text('Stock Quotes'),
-        backgroundColor: Colors.blue,
-        // Puedes ajustar el color del AppBar si lo deseas para que combine
-        // backgroundColor: Colors.blueGrey, // Ejemplo
+        title: const Text(FinanceConstants.titleApp),
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        elevation: 0,
       ),
       body: _buildQuoteList(),
     );
   }
 
   Widget _buildQuoteList() {
-    // --- Manejo de Errores y Carga Inicial (sin cambios) ---
     if (_error != null && _quotes.isEmpty) {
-      return const Center( /* ... */ );
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: Colors.red),
+            const SizedBox(height: 16),
+            Text(
+              _error!,
+              style: const TextStyle(color: AppColors.gray07),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => _loadQuotes(isInitialLoad: true),
+              child: const Text('Reintentar'),
+            ),
+          ],
+        ),
+      );
     }
+
     if (_isLoading && _quotes.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const CircularProgressIndicator(),
+            const SizedBox(height: 16),
+            Text(
+              FinanceConstants.loadingMessage,
+              style: const TextStyle(
+                color: AppColors.gray07,
+                fontSize: 16,
+              ),
+            ),
+          ],
+        ),
+      );
     }
+
     if (!_isLoading && _error == null && _quotes.isEmpty && _initialLoadComplete) {
-       return const Center(child: Text('No initial quotes found.'));
+      return const Center(
+        child: Text(
+          FinanceConstants.emptyList,
+          style: TextStyle(color: AppColors.gray07),
+        ),
+      );
     }
-    // --- Fin Manejo Errores y Carga ---
 
     return ListView.builder(
       controller: _scrollController,
-      // Ajusta el padding si es necesario con el nuevo fondo
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       itemCount: _quotes.length + (_isLoading && _initialLoadComplete ? 1 : 0),
       itemBuilder: (context, index) {
-        // Muestra el indicador de carga al final si corresponde
         if (index == _quotes.length) {
-          return (_isLoading && _initialLoadComplete)
+          return _isLoading && _initialLoadComplete
               ? Center(
                   child: Padding(
-                    padding: EdgeInsets.symmetric(vertical: spacingHeight + 6.0), // Ajusta padding del indicador
+                    padding: EdgeInsets.symmetric(vertical: spacingHeight),
                     child: const CircularProgressIndicator(),
                   ),
                 )
               : const SizedBox.shrink();
         }
-
-        // --- Construcción de la Card y SizedBox ---
         final quote = _quotes[index];
-        final Color changeColor = quote.changePercentage >= 0 ? Colors.green : Colors.red;
+        final Color changeColor = quote.changePercentage >= 0 ? AppColors.secondary : Colors.red;
         final String formattedPrice = '\$${quote.stockPrice.toStringAsFixed(2)}';
         final String formattedPercentage = '${quote.changePercentage.toStringAsFixed(1)}%';
+        
+        // Corregir el formato de fecha usando DateFormat de intl
         final dateTime = quote.lastUpdated.toLocal();
-        final String formattedDate =
-            '${dateTime.day.toString().padLeft(2, '0')}/'
-            '${dateTime.month.toString().padLeft(2, '0')}/'
-            '${dateTime.year} '
-            '${dateTime.hour.toString().padLeft(2, '0')}:'
-            '${dateTime.minute.toString().padLeft(2, '0')}';
+        final String formattedDate = DateFormat(AppConstants.formatoFecha).format(dateTime);
 
-        // Envuelve la Card en una Column para añadir el SizedBox debajo
-        return Column(
-          children: [
-            Card(
-              elevation: 3,
-              // Quita el margen vertical de la Card si el SizedBox maneja el espacio
-              margin: const EdgeInsets.symmetric(horizontal: 4.0),
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      quote.companyName,
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 8.0),
+          child: Card(
+            elevation: 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(color: AppColors.gray04.withOpacity(0.5)),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    quote.companyName,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary,
                     ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(formattedPrice, style: const TextStyle(fontSize: 16)),
-                        Text(
-                          formattedPercentage,
-                          style: TextStyle(fontSize: 16, color: changeColor, fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        formattedPrice,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: AppColors.gray07,
+                          fontWeight: FontWeight.w500,
                         ),
-                      ],
+                      ),
+                      Text(
+                        formattedPercentage,
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: changeColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Actualizado: $formattedDate',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.gray07,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Updated: $formattedDate',
-                      style: TextStyle(fontSize: 12, color: Colors.grey[700]), // Ligeramente más oscuro para contraste
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
-            // --- Añade el SizedBox debajo de la Card ---
-            SizedBox(height: spacingHeight),
-            // --- Fin del SizedBox ---
-          ],
+          ),
         );
-        // --- Fin de la construcción ---
       },
     );
   }
+
+  // ... resto del código existente (métodos _onScroll, _loadQuotes, etc.)
 }

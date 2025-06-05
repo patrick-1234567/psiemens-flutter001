@@ -8,6 +8,7 @@ import 'package:psiemens/bloc/reportes/reportes_state.dart';
 import 'package:psiemens/domain/reporte.dart';
 import 'package:psiemens/domain/noticia.dart';
 import 'package:psiemens/helpers/snackbar_helper.dart';
+import 'package:psiemens/theme/theme.dart';
 import 'package:watch_it/watch_it.dart';
 
 /// Clase para mostrar el diálogo de reportes de noticias
@@ -25,11 +26,6 @@ class ReporteDialog {
           child: _ReporteDialogContent(
             noticiaId: noticia.id!,
             noticia: noticia,
-            estadisticas: {
-              'NoticiaInapropiada': 0,
-              'InformacionFalsa': 0,
-              'Otro': 0,
-            },
           ),
         );
       },
@@ -40,15 +36,15 @@ class ReporteDialog {
 class _ReporteDialogContent extends StatefulWidget {
   final String noticiaId;
   final Noticia noticia;
-  Map<String, int> estadisticas;
 
-  _ReporteDialogContent({required this.noticiaId, required this.noticia, required this.estadisticas});
+  _ReporteDialogContent({required this.noticiaId, required this.noticia});
 
   @override
   State<_ReporteDialogContent> createState() => _ReporteDialogContentState();
 }
 
 class _ReporteDialogContentState extends State<_ReporteDialogContent> {
+  bool get noticiaYaReportada => (widget.noticia.contadorReportes ?? 0) > 0;
 
   @override
   void initState() {
@@ -63,6 +59,11 @@ class _ReporteDialogContentState extends State<_ReporteDialogContent> {
 
   @override
   Widget build(BuildContext context) {
+    Map<String, int> estadisticas = {
+      'NoticiaInapropiada': 0,
+      'InformacionFalsa': 0,
+      'Otro': 0,
+    };
     return BlocConsumer<ReporteBloc, ReporteState>(
       listener: (context, state) {
         if (state is ReporteLoading && state.motivoActual == null) {
@@ -71,9 +72,7 @@ class _ReporteDialogContentState extends State<_ReporteDialogContent> {
             context: context,
             barrierDismissible: true,
             builder: (context) {
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
+              return const Center(child: CircularProgressIndicator());
             },
           );
         } else if (state is ReporteSuccess) {
@@ -101,23 +100,28 @@ class _ReporteDialogContentState extends State<_ReporteDialogContent> {
             Navigator.of(context).pop();
           }
         }
-      },      builder: (context, state) {
+      },
+      builder: (context, state) {
         // Verificar si estamos en estado de carga y obtener el motivo actual
         final bool isLoading = state is ReporteLoading;
         final motivoActual = isLoading ? (state).motivoActual : null;
 
-        
-        if (state is ReporteEstadisticasLoaded && state.noticia.id == widget.noticiaId) {
-          widget.estadisticas = {
-            'NoticiaInapropiada': state.estadisticas[MotivoReporte.noticiaInapropiada] ?? 0,
-            'InformacionFalsa': state.estadisticas[MotivoReporte.informacionFalsa] ?? 0,
+        if (state is ReporteEstadisticasLoaded &&
+            state.noticia.id == widget.noticiaId) {
+          estadisticas = {
+            'NoticiaInapropiada':
+                state.estadisticas[MotivoReporte.noticiaInapropiada] ?? 0,
+            'InformacionFalsa':
+                state.estadisticas[MotivoReporte.informacionFalsa] ?? 0,
             'Otro': state.estadisticas[MotivoReporte.otro] ?? 0,
           };
         }
-        
+
         return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          backgroundColor: const Color(0xFFFCEAE8), // Color rosa suave
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          backgroundColor: AppColors.gray04, // Color rosa suave
           insetPadding: const EdgeInsets.symmetric(
             horizontal: 70.0,
             vertical: 24.0,
@@ -127,68 +131,100 @@ class _ReporteDialogContentState extends State<_ReporteDialogContent> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'Reportar Noticia',
-                  style: TextStyle(
+                Text(
+                  noticiaYaReportada ? 'Noticia Reportada' : 'Reportar Noticia',
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 12),
-                const Text(
-                  'Selecciona el motivo:',
+                Text(
+                  noticiaYaReportada
+                      ? 'Esta noticia ya ha sido reportada'
+                      : 'Selecciona el motivo:',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 14),
+                  style: const TextStyle(fontSize: 14),
                 ),
                 const SizedBox(height: 16),
-                // Opciones de reporte con íconos y contadores
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildMotivoButton(
-                      context: context,
-                      motivo: MotivoReporte.noticiaInapropiada,
-                      icon: Icons.warning,
-                      color: Colors.red,
-                      label: 'Inapropiada',
-                      iconNumber: '${widget.estadisticas['NoticiaInapropiada']}',
-                      isLoading: isLoading && motivoActual == MotivoReporte.noticiaInapropiada,
-                      smallSize: true,
+                if (noticiaYaReportada)
+                  const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          color: AppColors.primary,
+                          size: 48,
+                        ),
+                        SizedBox(height: 12),
+                        Text(
+                          'Gracias por tu interés en reportar contenido. Esta noticia ya ha sido marcada para revisión.',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                      // Opciones de reporte con íconos y contadores
                     ),
-                    _buildMotivoButton(
-                      context: context,
-                      motivo: MotivoReporte.informacionFalsa,
-                      icon: Icons.info,
-                      color: Colors.amber,
-                      label: 'Falsa',
-                      iconNumber: '${widget.estadisticas['InformacionFalsa']}',
-                      isLoading: isLoading && motivoActual == MotivoReporte.informacionFalsa,
-                      smallSize: true,
-                    ),
-                    _buildMotivoButton(
-                      context: context,
-                      motivo: MotivoReporte.otro,
-                      icon: Icons.flag,
-                      color: Colors.blue,
-                      label: 'Otro',
-                      iconNumber: '${widget.estadisticas['Otro']}',
-                      isLoading: isLoading && motivoActual == MotivoReporte.otro,
-                      smallSize: true,
-                    ),
-                  ],
-                ),
+                  )
+                else
+                  // Opciones de reporte con íconos y contadores
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _buildMotivoButton(
+                        context: context,
+                        motivo: MotivoReporte.noticiaInapropiada,
+                        icon: Icons.warning,
+                        color: Colors.red,
+                        label: 'Inapropiada',
+                        iconNumber: '${estadisticas['NoticiaInapropiada']}',
+                        isLoading:
+                            isLoading &&
+                            motivoActual == MotivoReporte.noticiaInapropiada,
+                        smallSize: true,
+                        disabled: noticiaYaReportada,
+                      ),
+                      _buildMotivoButton(
+                        context: context,
+                        motivo: MotivoReporte.informacionFalsa,
+                        icon: Icons.info,
+                        color: Colors.amber,
+                        label: 'Falsa',
+                        iconNumber: '${estadisticas['InformacionFalsa']}',
+                        isLoading:
+                            isLoading &&
+                            motivoActual == MotivoReporte.informacionFalsa,
+                        smallSize: true,
+                        disabled: noticiaYaReportada,
+                      ),
+                      _buildMotivoButton(
+                        context: context,
+                        motivo: MotivoReporte.otro,
+                        icon: Icons.flag,
+                        color: Colors.blue,
+                        label: 'Otro',
+                        iconNumber: '${estadisticas['Otro']}',
+                        isLoading:
+                            isLoading && motivoActual == MotivoReporte.otro,
+                        smallSize: true,
+                        disabled: noticiaYaReportada,
+                      ),
+                    ],
+                  ),
                 const SizedBox(height: 16),
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: isLoading ? null : () => Navigator.of(context).pop(),
+                    onPressed:
+                        isLoading ? null : () => Navigator.of(context).pop(),
                     child: const Text(
                       'Cerrar',
-                      style: TextStyle(
-                        color: Colors.brown,
-                        fontSize: 14,
-                      ),
+                      style: TextStyle(color: AppColors.text, fontSize: 14),
                     ),
                   ),
                 ),
@@ -209,6 +245,7 @@ class _ReporteDialogContentState extends State<_ReporteDialogContent> {
     required String iconNumber,
     bool isLoading = false,
     bool smallSize = false,
+    bool disabled = false,
   }) {
     // Definir tamaños según el parámetro smallSize
     final buttonSize = smallSize ? 50.0 : 60.0;
@@ -216,15 +253,19 @@ class _ReporteDialogContentState extends State<_ReporteDialogContent> {
     final badgeSize = smallSize ? 16.0 : 18.0;
     final fontSize = smallSize ? 10.0 : 12.0;
 
+    // Si el botón está deshabilitado, no permite la interacción
+    final buttonColor = disabled ? Colors.grey.shade300 : Colors.white;
+    final iconColor = disabled ? Colors.grey.shade500 : color;
+
     return Column(
       children: [
         InkWell(
-          onTap: isLoading ? null : () => _enviarReporte(context, motivo),
+          onTap: (isLoading || disabled) ? null : () => _enviarReporte(context, motivo),
           child: Container(
             width: buttonSize,
             height: buttonSize,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: buttonColor,
               shape: BoxShape.circle,
               border: Border.all(color: Colors.grey.shade300),
             ),
@@ -242,7 +283,7 @@ class _ReporteDialogContentState extends State<_ReporteDialogContent> {
                     ),
                   )
                 else
-                  Icon(icon, color: color, size: iconSize),
+                  Icon(icon, color: iconColor, size: iconSize),
                 Positioned(
                   bottom: 0,
                   right: 0,
@@ -250,12 +291,14 @@ class _ReporteDialogContentState extends State<_ReporteDialogContent> {
                     width: badgeSize,
                     height: badgeSize,
                     decoration: BoxDecoration(
-                      color: color,
+                      color: disabled ? Colors.grey.shade500 : color,
                       shape: BoxShape.circle,
                     ),
                     child: Center(
                       child: Text(
-                        isLoading ? (int.parse(iconNumber) + 1).toString() : iconNumber,
+                        isLoading
+                            ? (int.parse(iconNumber) + 1).toString()
+                            : iconNumber,
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: fontSize,
@@ -270,10 +313,18 @@ class _ReporteDialogContentState extends State<_ReporteDialogContent> {
           ),
         ),
         SizedBox(height: smallSize ? 6.0 : 8.0),
-        Text(label, style: TextStyle(fontSize: fontSize)),
+        Text(
+          label, 
+          style: TextStyle(
+            fontSize: fontSize,
+            color: disabled ? Colors.grey.shade500 : null,
+          )
+        ),
       ],
     );
-  }  void _enviarReporte(BuildContext context, MotivoReporte motivo) {
+  }
+
+  void _enviarReporte(BuildContext context, MotivoReporte motivo) {
     // Enviar el reporte usando el bloc directamente
     context.read<ReporteBloc>().add(
       EnviarReporte(noticia: widget.noticia, motivo: motivo),

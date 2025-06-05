@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:psiemens/helpers/dialog_helper.dart';
 import 'package:psiemens/theme/theme.dart';
 import 'package:psiemens/views/acerca_de_screen.dart';
+import 'package:psiemens/views/app_container.dart';
 import 'package:psiemens/views/categoria_screen.dart';
 import 'package:psiemens/views/contador_screen.dart';
 import 'package:psiemens/views/login_screen.dart';
@@ -108,6 +109,16 @@ class WelcomeScreenState extends State<WelcomeScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const ContadorScreen()),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.countertops, color: AppColors.primary),
+              title: const Text('Mi App', style: TextStyle(color: AppColors.primary)),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ColorChangerScreen()),
                 );
               },
             ),

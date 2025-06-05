@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:psiemens/api/service/question_service.dart';
 import 'package:psiemens/data/question_repository.dart';
 import 'package:psiemens/domain/question.dart';
+import 'package:psiemens/theme/theme.dart';
 import 'package:psiemens/views/result_screen.dart';
 
 class GameScreen extends StatefulWidget {
@@ -14,58 +15,51 @@ class GameScreen extends StatefulWidget {
 class _GameScreenState extends State<GameScreen> {
   late QuestionService questionService;
   late List<Question> questionsList;
-  int currentQuestionIndex = 0; // Índice de la pregunta actual
-  int userScore = 0; // Puntaje del usuario
-  int? selectedAnswerIndex; // Índice de la respuesta seleccionada
-  bool? isCorrectAnswer; // Estado para manejar si la respuesta es correcta
+  int currentQuestionIndex = 0;
+  int userScore = 0;
+  int? selectedAnswerIndex;
+  bool? isCorrectAnswer;
+  Color? selectedButtonColor;
 
   @override
   void initState() {
     super.initState();
     questionService = QuestionService(QuestionRepository());
-    questionsList = questionService.getQuestions(); // Obtiene la lista de preguntas
+    questionsList = questionService.getQuestions();
+    selectedButtonColor = AppColors.primary;
   }
 
   void _answerQuestion(int selectedIndex) {
     setState(() {
       selectedAnswerIndex = selectedIndex;
       isCorrectAnswer = selectedIndex == questionsList[currentQuestionIndex].correctAnswerIndex;
+      selectedButtonColor = isCorrectAnswer == true ? Colors.green : Colors.red;
 
-      // Incrementa el puntaje si la respuesta es correcta
       if (isCorrectAnswer == true) {
         userScore++;
       }
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          isCorrectAnswer == true ? '¡Correcto!' : '¡Incorrecto!',
-          style: const TextStyle(fontSize: 16),
-        ),
-        backgroundColor: isCorrectAnswer == true ? Colors.green : Colors.red,
-        duration: const Duration(seconds: 1), // Duración del SnackBar
-      ),
-    );
-  });
+    });
 
-    // Retraso antes de avanzar a la siguiente pregunta o a la pantalla de resultados
-    Future.delayed(const Duration(seconds: 1), () {
-      if (currentQuestionIndex < questionsList.length - 1) {
-        setState(() {
-          currentQuestionIndex++; // Avanza a la siguiente pregunta
-          selectedAnswerIndex = null; // Reinicia el índice seleccionado
-          isCorrectAnswer = null; // Reinicia el estado de la respuesta
-        });
-      } else {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ResultScreen(
-              finalScore: userScore,
-              totalQuestions: questionsList.length,
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) {
+        if (currentQuestionIndex < questionsList.length - 1) {
+          setState(() {
+            currentQuestionIndex++;
+            selectedAnswerIndex = null;
+            isCorrectAnswer = null;
+            selectedButtonColor = AppColors.primary;
+          });
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ResultScreen(
+                finalScore: userScore,
+                totalQuestions: questionsList.length,
+              ),
             ),
-          ),
-        );
+          );
+        }
       }
     });
   }
@@ -73,19 +67,19 @@ class _GameScreenState extends State<GameScreen> {
   @override
   Widget build(BuildContext context) {
     final currentQuestion = questionsList[currentQuestionIndex];
-    final questionCounterText =
-        'Pregunta ${currentQuestionIndex + 1} de ${questionsList.length}';
+    final questionCounterText = 'Pregunta ${currentQuestionIndex + 1} de ${questionsList.length}';
 
     return Scaffold(
-      backgroundColor: Colors.white, // Fondo blanco
+      backgroundColor: AppColors.surface,
       appBar: AppBar(
-        title: Text(
-          questionCounterText,
-          style: const TextStyle(color: Colors.black), // Texto negro
+        title: Text(questionCounterText, style: const TextStyle(color: Colors.white)),
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
         ),
-        backgroundColor: Colors.white, // Fondo blanco
-        iconTheme: const IconThemeData(color: Colors.blue), // Íconos azules
-        elevation: 0, // Sin sombra
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -95,42 +89,49 @@ class _GameScreenState extends State<GameScreen> {
             Text(
               currentQuestion.questionText,
               style: const TextStyle(
-                fontSize: 20,
+                fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: Colors.black, // Texto negro
+                color: AppColors.primary,
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 16), // Espaciado entre la pregunta y las opciones
+            const SizedBox(height: 24),
             ...currentQuestion.answerOptions.asMap().entries.map((entry) {
               final index = entry.key;
               final answer = entry.value;
+              final isSelected = selectedAnswerIndex == index;
 
               return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0), // Espaciado entre botones
-                child: ElevatedButton(
-                  onPressed: () {
-                    if (selectedAnswerIndex == null) {
-                      _answerQuestion(index); // Llama al método para manejar la respuesta
-                  }
-              },
-            style: ElevatedButton.styleFrom(
-              foregroundColor: Colors.black, // Texto blanco
-              backgroundColor: selectedAnswerIndex == index
-                ? (isCorrectAnswer == true ? Colors.green : Colors.red) // Verde si es correcta, rojo si no
-                : Colors.blue, // Fondo azul por defecto
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
-            child: Text(
-              answer,
-              style: const TextStyle(fontSize: 16), // Tamaño de texto
-            ),
-          ),
-        );
-      }).toList(),
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                  decoration: BoxDecoration(
+                    color: isSelected ? selectedButtonColor : AppColors.primary,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: selectedAnswerIndex == null ? () => _answerQuestion(index) : null,
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        alignment: Alignment.center,
+                        child: Text(
+                          answer,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
           ],
         ),
       ),

@@ -19,6 +19,7 @@ import 'package:psiemens/helpers/dialog_helper.dart';
 import 'package:psiemens/helpers/modal_helper.dart';
 import 'package:psiemens/helpers/snackbar_helper.dart';
 import 'package:psiemens/helpers/snackbar_manager.dart';
+import 'package:psiemens/theme/theme.dart';
 import 'package:psiemens/views/categoria_screen.dart';
 import 'package:psiemens/views/preferencia_screen.dart';
 
@@ -93,6 +94,8 @@ class _NoticiaScreenContent extends StatelessWidget {
         return Scaffold(
           appBar: AppBar(
             title: const Text(NoticiaConstantes.tituloApp),
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
             centerTitle: true,
             actions: [              
               IconButton(
@@ -167,6 +170,8 @@ class _NoticiaScreenContent extends StatelessWidget {
                   }
                 },
                 tooltip: 'Agregar Noticia',
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
               );              
             },            
           ),

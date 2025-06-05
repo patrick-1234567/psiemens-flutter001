@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:psiemens/theme/theme.dart';
+
 //Prompt 3
 //Pregunta 1: se controla mediante el uso de setState
 //Pregunta 2: hace que sus hijos se organicen en vertical  
@@ -6,10 +8,9 @@ class MiApp extends StatelessWidget {
   const MiApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
+  Widget build(BuildContext context) {    return MaterialApp(
       title: 'Flutter Demo',
-      theme: ThemeData(primarySwatch: Colors.blue),
+      theme: AppTheme.bootcampTheme,
       home: const ColorChangerScreen(),
     );
   }
@@ -23,7 +24,7 @@ class ColorChangerScreen extends StatefulWidget {
 }
 
 class _ColorChangerScreenState extends State<ColorChangerScreen> {
-  final List<Color> _colors = [Colors.blue, Colors.red, Colors.green];
+  final List<Color> _colors = [AppColors.primary, AppColors.secondary, Colors.green];
   Color _currentColor = Colors.blue; // Inicializa con el primer color
 
   void _changeColor() {
@@ -41,35 +42,48 @@ class _ColorChangerScreenState extends State<ColorChangerScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) {    return Scaffold(
       appBar: AppBar(
         title: const Text('Color Changer'),
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
       ),
-      body: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 300,
-            height: 300,
-            color: _currentColor, // Usa la variable _currentColor
-            alignment: Alignment.center,
-            child: const Text(
-              'Cambio de color',
-              style: TextStyle(fontSize: 18, color: Colors.white),
-              textAlign: TextAlign.center,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                color: _currentColor,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              alignment: Alignment.center,              child: Text(
+                'Cambio de color',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: Colors.white,
+                ),
+                textAlign: TextAlign.center,
+              ),
             ),
-          ),
-          const SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: _changeColor,
-            child: const Text('Cambiar color'),
-          ),
-          ElevatedButton(
-            onPressed: _resetColor,
-            child: const Text('Resetear color'),
-          ),
-        ],
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                  onPressed: _changeColor,
+                  child: const Text('Cambiar color'),
+                ),
+                const SizedBox(width: 16),
+                ElevatedButton(
+                  onPressed: _resetColor,
+                  child: const Text('Resetear color'),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

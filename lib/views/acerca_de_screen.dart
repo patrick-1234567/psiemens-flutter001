@@ -20,89 +20,149 @@ class AcercaDeScreen extends StatelessWidget {
         title: const Text('Acerca de SODEP'),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
+        elevation: 0,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: Image.asset(
-                'assets/images/sodep_logo.png',
-                height: 120,
-                fit: BoxFit.contain,
-              ),
-            ),
-            const SizedBox(height: 32),
-            Text(
-              'Valores Sodepianos',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.bold,
+      body: SingleChildScrollView(
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [                Center(
+                  child: Image.asset(
+                    'assets/images/sodep_logo.png',
+                    height: 120,
+                    fit: BoxFit.contain,
                   ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: valoresSodepianos.map(
-                (valor) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                ),
+                const SizedBox(height: 32),
+                _buildSection(
+                  context,
+                  title: 'Valores Sodepianos',
+                  child: Column(
+                    children: valoresSodepianos.map((valor) => _buildValorItem(context, valor)).toList(),
+                  ),
+                ),
+                const SizedBox(height: 32),
+                _buildSection(
+                  context,
+                  title: 'Información de Contacto',
+                  child: Column(
                     children: [
-                      const SizedBox(width: 12),
-                      Text(
-                        valor,
-                        style: Theme.of(context).textTheme.bodyLarge,
+                      _buildInfoItem(context, Icons.phone, '(+595)981-131-694'),
+                      const SizedBox(height: 12),
+                      _buildInfoItem(context, Icons.email, 'info@sodep.com.py'),
+                      const SizedBox(height: 12),
+                      _buildInfoItem(
+                        context, 
+                        Icons.location_on,
+                        'Bélgica 839 c/ Eusebio Lillo\nAsunción, Paraguay',
                       ),
                     ],
                   ),
                 ),
-              ).toList(),
+                const SizedBox(height: 32),
+                Center(
+                  child: Text(
+                    '© 2025 SODEP',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.gray07,
+                        ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 32),
-            Text(
-              'Información',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 12),
-            // Espacio reservado para dirección y contacto
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              alignment: Alignment.center,
-              child: const Column(
-                children: const [
-                  Text(
-                    'Contacto: (+595)981-131-694',
-                    textAlign: TextAlign.center,
-                  ),
-                  Text(
-                    'Correo electrónico: info@sodep.com.py',
-                    textAlign: TextAlign.center,
-                  ),
-                  Text(
-                    'Dirección: Bélgica 839 c/ Eusebio Lillo. Asunción. Paraguay',
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
-            const Spacer(),
-            Text(
-              '© 2025 SODEP',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.gray07,
-                  ),
-            ),
-          ],
+          ),
         ),
       ),
+    );
+  }
+
+  Widget _buildSection(BuildContext context, {required String title, required Widget child}) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+          const SizedBox(height: 16),
+          child,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildValorItem(BuildContext context, String valor) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              Icons.check_circle_outline,
+              color: AppColors.primary,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            valor,
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: AppColors.text,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoItem(BuildContext context, IconData icon, String text) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: AppColors.primary.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            icon,
+            color: AppColors.primary,
+            size: 20,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            text,
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: AppColors.text,
+                ),
+          ),
+        ),
+      ],
     );
   }
 }

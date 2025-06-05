@@ -5,6 +5,7 @@ import 'package:psiemens/bloc/auth/auth_bloc.dart';
 import 'package:psiemens/bloc/comentarios/comentario_bloc.dart';
 import 'package:psiemens/bloc/reportes/reportes_bloc.dart';
 import 'package:psiemens/bloc/tarea/tarea_bloc.dart';
+import 'package:psiemens/bloc/tarea_contador/tarea_contador_bloc.dart';
 import 'package:psiemens/di/locator.dart';
 import 'package:psiemens/bloc/contador/contador_bloc.dart';
 import 'package:psiemens/bloc/connectivity/connectivity_bloc.dart';
@@ -19,14 +20,14 @@ import 'package:psiemens/bloc/noticias/noticias_bloc.dart';
 void main() async {
   try {
     WidgetsFlutterBinding.ensureInitialized();
-    
+
     // Cargar variables de entorno
     await dotenv.load(fileName: ".env");
-    
+
     // Inicializar servicios y dependencias
     await initLocator();
     await SharedPreferencesService().init();
-    
+
     // Limpiar datos de sesión anterior
     final secureStorage = di<SecureStorageService>();
     await secureStorage.clearJwt();
@@ -35,13 +36,13 @@ void main() async {
     runApp(const MyApp());
   } catch (e) {
     debugPrint('Error durante la inicialización: $e');
-    runApp(MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: Text('Error al iniciar la aplicación: $e'),
+    runApp(
+      MaterialApp(
+        home: Scaffold(
+          body: Center(child: Text('Error al iniciar la aplicación: $e')),
         ),
       ),
-    ));
+    );
   }
 }
 
@@ -58,15 +59,19 @@ class MyApp extends StatelessWidget {
         BlocProvider(create: (context) => AuthBloc()),
         // Agregamos NoticiaBloc como un provider global para mantener el estado entre navegaciones
         BlocProvider<NoticiaBloc>(create: (context) => NoticiaBloc()),
-                BlocProvider<TareaBloc>(
+        BlocProvider<TareaBloc>(
           create: (context) => TareaBloc(),
           lazy: false, // Esto asegura que el bloc se cree inmediatamente
+        ),
+        BlocProvider<TareaContadorBloc>(
+          create: (context) => TareaContadorBloc(),
+          lazy: false,
         ),
       ],
       child: MaterialApp(
         title: 'Flutter Demo',
         theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: AppColors.gray07)
+          colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primary),
         ),
         debugShowCheckedModeBanner: false,
         builder: (context, child) {
