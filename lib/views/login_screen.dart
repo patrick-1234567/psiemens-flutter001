@@ -71,7 +71,7 @@ class LoginScreen extends StatelessWidget {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [AppColors.primary, Color(0xFF1A237E)],
+                  colors: [Colors.white, Colors.white],
                 ),
               ),
               child: SafeArea(
