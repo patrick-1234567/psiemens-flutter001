@@ -56,29 +56,30 @@ class WelcomeScreenState extends State<WelcomeScreen> {
   }
   @override
   Widget build(BuildContext context) {
-    return Container(      decoration: BoxDecoration(
+    return Container(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: const Alignment(0.0, -1.8),
-          end: const Alignment(0.0, 0.8),
+          end: const Alignment(0.0, 0.1),
           colors: [
             AppColors.primary,
             AppColors.primary.withOpacity(0.8),
             Colors.white,
           ],
-          stops: const [0.0, 0.4, 1.0],
+          stops: const [0.3, 0.4, 1.0],
         ),
       ),
       child: Scaffold(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.white,
         appBar: AppBar(
           title: const Text(
-            'Patrick Flutter App',
+            'Flutter App',
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
             ),
           ),
-          backgroundColor: Colors.transparent,
+          backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
           elevation: 0,
         ),
